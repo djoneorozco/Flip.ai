@@ -45,3 +45,10 @@ app.post('/api/enhance', upload.single('image'), async (req, res) => {
     res.status(500).json({ error: "Failed to enhance image" });
   }
 });
+
+
+const PORT = process.env.PORT || 10000;
+
+app.listen(PORT, () => {
+  console.log(`🚀 Flip backend running on port ${PORT}`);
+});
