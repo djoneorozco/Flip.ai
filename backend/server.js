@@ -46,6 +46,9 @@ app.post('/api/enhance', upload.single('image'), async (req, res) => {
   }
 });
 
+app.get('/', (req, res) => {
+  res.send('✅ Flip.AI backend is alive!');
+});
 
 const PORT = process.env.PORT || 10000;
 
