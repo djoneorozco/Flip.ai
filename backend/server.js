@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const express = require('express');
+const cors = require('cors');
 require('dotenv').config();
 const OpenAI = require("openai");
 const openai = new OpenAI({
@@ -32,6 +33,13 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 app.use(express.json());
+app.use(cors({
+  origin: [
+    'http://localhost:3000',
+    'https://flip-ai.netlify.app',
+    'https://www.flip-ai.netlify.app'
+  ]
+}));
 
 // ============================================================
 // #7 ENHANCE IMAGE ROUTE (DALL·E VARIATION EXAMPLE)
