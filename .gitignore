@@ -1,0 +1,10 @@
+
+
+# Ignore secret env file
+backend/.env
+
+# Ignore Node modules
+node_modules/
+
+# Mac system files
+.DS_Store
