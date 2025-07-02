@@ -1,9 +1,11 @@
 const express = require('express');
 const app = express();
-const fileUpload = require('express-fileupload');
+
+// ✅ Using Multer for file uploads instead of express-fileupload
+const multer = require('multer');
+const upload = multer({ dest: 'uploads/' });
 
 app.use(express.json());
-app.use(fileUpload());
 
 // ============================================================
 // #7 ENHANCE IMAGE ROUTE (DALL·E VARIATION EXAMPLE)
@@ -16,10 +18,8 @@ app.post('/api/enhance', upload.single('image'), async (req, res) => {
   }
 
   try {
-    // Here you can save the uploaded file or transform it.
     console.log("✅ File buffer length:", req.file.buffer.length);
 
-    // Example: Create a variation of the uploaded image
     const dalleResponse = await openai.images.createVariation({
       image: req.file.buffer,
       n: 1,
