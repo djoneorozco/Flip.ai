@@ -39,19 +39,14 @@ app.post('/api/enhance', upload.single('image'), async (req, res) => {
     return res.status(400).json({ error: "No file uploaded" });
   }
 
+  const filePath = req.file.path; // get full path to file saved by Multer
+  console.log("✅ Uploaded file path:", filePath);
+
   try {
-    console.log("✅ Multer file object:", req.file);
-
-    if (!req.file.buffer) {
-      console.error("❌ File buffer is missing!");
-      return res.status(400).json({ error: "File buffer is missing" });
-    }
-
-    console.log("✅ File buffer length:", req.file.buffer.length);
-    console.log("✅ Calling OpenAI createVariation...");
+    const fileStream = fs.createReadStream(filePath);
 
     const dalleResponse = await openai.images.createVariation({
-      image: req.file.buffer,
+      image: fileStream,
       n: 1,
       size: "1024x1024",
     });
