@@ -1,3 +1,10 @@
+const express = require('express');
+const app = express();
+const fileUpload = require('express-fileupload');
+
+app.use(express.json());
+app.use(fileUpload());
+
 // ============================================================
 // #7 ENHANCE IMAGE ROUTE (DALL·E VARIATION EXAMPLE)
 // ============================================================
