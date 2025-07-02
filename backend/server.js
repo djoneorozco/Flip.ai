@@ -1,5 +1,16 @@
+const fs = require('fs');
+const path = require('path');
 const express = require('express');
 const app = express();
+
+// ✅ Ensure /tmp/uploads exists
+const uploadDir = '/tmp/uploads';
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+  console.log("✅ Created upload directory:", uploadDir);
+} else {
+  console.log("✅ Upload directory exists:", uploadDir);
+}
 
 // ✅ Using Multer with /tmp/uploads for Render compatibility
 const multer = require('multer');
@@ -24,11 +35,20 @@ app.post('/api/enhance', upload.single('image'), async (req, res) => {
   console.log("🖼️ Received image for enhancement!");
 
   if (!req.file) {
+    console.error("❌ No file uploaded");
     return res.status(400).json({ error: "No file uploaded" });
   }
 
   try {
+    console.log("✅ Multer file object:", req.file);
+
+    if (!req.file.buffer) {
+      console.error("❌ File buffer is missing!");
+      return res.status(400).json({ error: "File buffer is missing" });
+    }
+
     console.log("✅ File buffer length:", req.file.buffer.length);
+    console.log("✅ Calling OpenAI createVariation...");
 
     const dalleResponse = await openai.images.createVariation({
       image: req.file.buffer,
@@ -42,7 +62,7 @@ app.post('/api/enhance', upload.single('image'), async (req, res) => {
 
   } catch (err) {
     console.error("❌ Enhance error:", err);
-    res.status(500).json({ error: "Failed to enhance image" });
+    res.status(500).json({ error: "Failed to enhance image", details: err.message });
   }
 });
 
