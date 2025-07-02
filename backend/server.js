@@ -1,9 +1,19 @@
 const express = require('express');
 const app = express();
 
-// ✅ Using Multer for file uploads instead of express-fileupload
+// ✅ Using Multer with /tmp/uploads for Render compatibility
 const multer = require('multer');
-const upload = multer({ dest: 'uploads/' });
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, '/tmp/uploads'); // /tmp is writable on Render
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + '-' + file.originalname);
+  }
+});
+
+const upload = multer({ storage: storage });
 
 app.use(express.json());
 
