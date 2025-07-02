@@ -88,6 +88,9 @@
   <textarea id="prompt" placeholder="Details (optional)"></textarea>
   <br/>
 
+  <!-- ✅ Test Backend Button Restored -->
+  <button id="btn-test">Test Backend</button>
+
   <h3 style="margin-top:2rem;">Enhance Your Property Photo</h3>
   <input type="file" id="propertyImage" accept="image/*" />
   <button id="btn-enhance">Enhance Image & See ARV</button>
@@ -96,10 +99,9 @@
   <!-- Glass Box for ARV Pie Chart -->
   <div class="glass-box" id="glassBox">
     <h2>ARV Breakdown (70% Rule)</h2>
-    <canvas id="arvChart" width="400" height="400"></canvas>
+    <canvas id="arvChart"></canvas>
   </div>
 
-  <!-- Always load scripts at the end -->
   <script src="main.js"></script>
 </body>
 </html>
