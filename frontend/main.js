@@ -5,18 +5,18 @@ const btnTest = document.getElementById('btn-test');
 const btnAsk = document.getElementById('btn-ask');
 const zipInput = document.getElementById('zip');
 const priceInput = document.getElementById('price');
+const investInput = document.getElementById('investment');
 const promptInput = document.getElementById('prompt');
 const btnEnhance = document.getElementById('btn-enhance');
 const imageInput = document.getElementById('propertyImage');
 const enhancedImage = document.getElementById('enhancedImage');
 
 const glassBox = document.getElementById('glassBox');
+const chartContainer = document.getElementById('chartContainer'); // Not used here, kept for backward compat
 const resultEl = document.getElementById('result');
-const chartContainer = document.getElementById('chartContainer');
 const schoolList = document.getElementById('schoolList');
 const crimeInfo = document.getElementById('crimeInfo');
 
-// For ARV Pie Chart
 const arvCtx = document.getElementById('arvChart')?.getContext?.('2d');
 
 // ============================================================
@@ -62,7 +62,6 @@ btnAsk.addEventListener('click', async () => {
     });
 
     if (!response.ok) throw new Error(`Server error: ${response.status}`);
-
     const data = await response.json();
     console.log("✅ AI Response:", data);
 
@@ -72,35 +71,7 @@ btnAsk.addEventListener('click', async () => {
       ? `<ul>${data.schools.map(s => `<li>${s}</li>`).join('')}</ul>`
       : "";
 
-    // Show glass box
     glassBox.classList.add('show');
-
-    // If prices exist, draw chart
-    if (data.prices) {
-      chartContainer.style.display = 'block';
-      const ctx = document.getElementById('priceChart').getContext('2d');
-      new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: data.prices.map(p => p.label),
-          datasets: [{
-            label: 'Price Comparison',
-            data: data.prices.map(p => p.value),
-            backgroundColor: ['#36A2EB', '#FF6384'],
-            borderRadius: 5
-          }]
-        },
-        options: {
-          animation: {
-            duration: 1200,
-            easing: 'easeOutBounce'
-          },
-          scales: {
-            y: { beginAtZero: true }
-          }
-        }
-      });
-    }
 
   } catch (err) {
     console.error("❌ Ask FlipAI Error:", err);
@@ -114,7 +85,7 @@ btnAsk.addEventListener('click', async () => {
 btnEnhance.addEventListener('click', async () => {
   const file = imageInput.files[0];
   const price = parseFloat(priceInput.value);
-  const invest = parseFloat(promptInput.value); // Use prompt as planned investment if needed
+  const invest = parseFloat(investInput.value);
 
   if (!file) {
     alert("Please choose an image first!");
@@ -136,7 +107,6 @@ btnEnhance.addEventListener('click', async () => {
     const data = await response.json();
     console.log("✅ AI Enhanced Image:", data);
 
-    // Show enhanced image
     enhancedImage.src = data.enhancedImageUrl;
     enhancedImage.style.display = 'block';
 
@@ -146,9 +116,8 @@ btnEnhance.addEventListener('click', async () => {
       const profit = expectedARV - price - invest;
 
       glassBox.classList.add('show');
-      chartContainer.style.display = 'block';
 
-      new Chart(document.getElementById('priceChart').getContext('2d'), {
+      new Chart(arvCtx, {
         type: 'pie',
         data: {
           labels: ['Property Cost', 'Planned Investment', 'Expected Profit'],
@@ -156,6 +125,14 @@ btnEnhance.addEventListener('click', async () => {
             data: [price, invest, profit],
             backgroundColor: ['#36A2EB', '#FFCE56', '#4BC0C0']
           }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: 'bottom'
+            }
+          }
         }
       });
     }
