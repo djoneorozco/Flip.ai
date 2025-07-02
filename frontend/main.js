@@ -16,6 +16,9 @@ const chartContainer = document.getElementById('chartContainer');
 const schoolList = document.getElementById('schoolList');
 const crimeInfo = document.getElementById('crimeInfo');
 
+// For ARV Pie Chart
+const arvCtx = document.getElementById('arvChart')?.getContext?.('2d');
+
 // ============================================================
 // #2 BACKEND URL
 // ============================================================
@@ -106,10 +109,13 @@ btnAsk.addEventListener('click', async () => {
 });
 
 // ============================================================
-// #5 ENHANCE IMAGE BUTTON
+// #5 ENHANCE IMAGE BUTTON w/ ARV PIE
 // ============================================================
 btnEnhance.addEventListener('click', async () => {
   const file = imageInput.files[0];
+  const price = parseFloat(priceInput.value);
+  const invest = parseFloat(promptInput.value); // Use prompt as planned investment if needed
+
   if (!file) {
     alert("Please choose an image first!");
     return;
@@ -133,6 +139,26 @@ btnEnhance.addEventListener('click', async () => {
     // Show enhanced image
     enhancedImage.src = data.enhancedImageUrl;
     enhancedImage.style.display = 'block';
+
+    // Calculate ARV and show glass box with Pie Chart
+    if (!isNaN(price) && !isNaN(invest)) {
+      const expectedARV = Math.round((price + invest) / 0.7);
+      const profit = expectedARV - price - invest;
+
+      glassBox.classList.add('show');
+      chartContainer.style.display = 'block';
+
+      new Chart(document.getElementById('priceChart').getContext('2d'), {
+        type: 'pie',
+        data: {
+          labels: ['Property Cost', 'Planned Investment', 'Expected Profit'],
+          datasets: [{
+            data: [price, invest, profit],
+            backgroundColor: ['#36A2EB', '#FFCE56', '#4BC0C0']
+          }]
+        }
+      });
+    }
 
   } catch (err) {
     console.error("❌ Enhance Image Error:", err);
