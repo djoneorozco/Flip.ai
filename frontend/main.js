@@ -83,7 +83,7 @@ btnEnhance?.addEventListener('click', async () => {
     return;
   }
 
-  console.log("🖼️ Uploading image for enhancement...");
+  console.log("✅ AI Enhanced Image URL:", data.enhancedImageUrl);
 
   const formData = new FormData();
   formData.append('image', file);
