@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- #1 META + TITLE -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Flip.ai – Smart AI-Driven Flip Insights</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
+    /* #2 BASE STYLES */
     body {
       margin: 0;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -49,6 +51,7 @@
       color: #fff;
     }
 
+    /* #3 GLASS BOX */
     .glass-box {
       display: none;
       position: fixed;
@@ -69,48 +72,66 @@
       display: block;
     }
 
-    #chartContainer {
-      max-width: 400px;
-      margin: 0 auto;
-    }
-
+    /* #4 IMAGES */
     #enhancedImage {
+      display: none;
       width: 100%;
-      max-width: 500px;
+      max-width: 400px;
       margin-top: 1rem;
       border-radius: 8px;
+    }
+
+    #workingOverlay {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 150px;
+      opacity: 0.85;
+      z-index: 998;
+    }
+
+    /* #5 ARV CHART */
+    #arvChart {
+      max-width: 300px;
+      max-height: 300px;
+      margin: 1rem auto;
     }
   </style>
 </head>
 
 <body>
+  <!-- #6 HERO -->
   <h1>Welcome to Flip.ai</h1>
-  <p>#2 Smart AI-driven Flip Insights</p>
+  <p>Smart AI-driven Flip Insights</p>
 
-  <!-- INPUTS -->
+  <!-- #7 INPUTS -->
   <input id="zip" type="text" placeholder="ZIP Code (optional)" />
   <input id="price" type="number" placeholder="Property Purchase Cost" />
   <input id="investment" type="number" placeholder="Planned Investment Cost" />
   <textarea id="prompt" placeholder="Details (optional)"></textarea>
 
-  <!-- BUTTONS -->
+  <!-- #8 BUTTONS -->
   <button id="btn-test">Test Backend</button>
   <button id="btn-ask">Ask FlipAI</button>
 
-  <!-- IMAGE UPLOADER -->
+  <!-- #9 IMAGE UPLOAD -->
   <h3 style="margin-top:2rem;">Enhance Your Property Photo</h3>
   <input type="file" id="propertyImage" accept="image/*" />
   <button id="btn-enhance">Enhance Image & See ARV</button>
 
-  <!-- GLASS BOX WITH CHART + IMAGE -->
+  <!-- #10 WORKING OVERLAY -->
+  <img id="workingOverlay" src="static/images/working.png" alt="Working...">
+
+  <!-- #11 GLASS BOX -->
   <div class="glass-box" id="glassBox">
     <h2>Expected ARV</h2>
-    <div id="chartContainer">
-      <canvas id="arvChart"></canvas>
-    </div>
     <img id="enhancedImage" src="" alt="Enhanced Result" />
+    <canvas id="arvChart"></canvas>
   </div>
 
+  <!-- #12 SCRIPTS -->
   <script src="main.js"></script>
 </body>
 </html>
