@@ -76,6 +76,24 @@
       margin-top: 1rem;
       border-radius: 8px;
     }
+
+    /* ✅ Working overlay fade styles */
+    #workingOverlay {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      max-width: 250px;
+      z-index: 1000;
+      opacity: 0;
+      display: none;
+      transition: opacity 0.6s ease-in-out;
+    }
+
+    #workingOverlay.show {
+      display: block;
+      opacity: 1;
+    }
   </style>
 </head>
 
@@ -98,6 +116,9 @@
   <input type="file" id="propertyImage" accept="image/*" />
   <button id="btn-enhance">Enhance Image & See ARV</button>
   <img id="enhancedImage" src="" alt="Enhanced Result" />
+
+  <!-- ✅ Working overlay image -->
+  <img id="workingOverlay" src="working.png" alt="Working...">
 
   <!-- GLASS BOX FOR ARV PIE -->
   <div class="glass-box" id="glassBox">
