@@ -3,27 +3,24 @@
 // ============================================================
 const btnTest = document.getElementById('btn-test');
 const btnAsk = document.getElementById('btn-ask');
+const btnEnhance = document.getElementById('btn-enhance');
+
 const zipInput = document.getElementById('zip');
 const priceInput = document.getElementById('price');
 const investInput = document.getElementById('investment') || document.getElementById('prompt');
-const btnEnhance = document.getElementById('btn-enhance');
 const imageInput = document.getElementById('propertyImage');
-const enhancedImage = document.getElementById('enhancedImage');
 
 const glassBox = document.getElementById('glassBox');
 const arvCtx = document.getElementById('arvChart')?.getContext?.('2d');
-
+const enhancedImage = document.getElementById('enhancedImage');
 const workingOverlay = document.getElementById('workingOverlay');
 
-let arvChartInstance = null; // ✅ Save chart instance for reuse
+let arvChartInstance = null;
 
-// ============================================================
-// #2 BACKEND URL
-// ============================================================
 const backendURL = 'https://flip-ai.onrender.com';
 
 // ============================================================
-// #3 TEST BACKEND BUTTON
+// #2 TEST BACKEND BUTTON
 // ============================================================
 btnTest?.addEventListener('click', async () => {
   console.log("🧪 Testing backend...");
@@ -39,11 +36,10 @@ btnTest?.addEventListener('click', async () => {
 });
 
 // ============================================================
-// #4 ASK AI BUTTON
+// #3 ASK AI BUTTON
 // ============================================================
 btnAsk?.addEventListener('click', async () => {
   console.log("🤖 Ask AI clicked");
-  const zip = zipInput?.value.trim();
   const value = priceInput?.value.trim();
   const investment = investInput?.value.trim();
 
@@ -63,7 +59,7 @@ btnAsk?.addEventListener('click', async () => {
     const data = await response.json();
     console.log("✅ AI Response:", data);
 
-    if (glassBox) glassBox.classList.add('show');
+    glassBox.classList.add('show');
     alert(data.answer);
 
   } catch (err) {
@@ -73,7 +69,7 @@ btnAsk?.addEventListener('click', async () => {
 });
 
 // ============================================================
-// #5 ENHANCE IMAGE BUTTON w/ ARV PIE + Working Overlay
+// #4 ENHANCE IMAGE BUTTON w/ WORKING OVERLAY
 // ============================================================
 btnEnhance?.addEventListener('click', async () => {
   const file = imageInput?.files[0];
@@ -85,12 +81,12 @@ btnEnhance?.addEventListener('click', async () => {
     return;
   }
 
-  // ✅ Show working overlay
-  if (workingOverlay) workingOverlay.classList.add('show');
+  // Show working overlay
+  workingOverlay.classList.add('show');
 
   const formData = new FormData();
   formData.append('image', file);
-  formData.append('investment', invest); // Send budget!
+  formData.append('investment', invest);
 
   try {
     const response = await fetch(`${backendURL}/api/enhance`, {
@@ -102,19 +98,18 @@ btnEnhance?.addEventListener('click', async () => {
     const data = await response.json();
     console.log("✅ AI Enhanced Image:", data);
 
-    // ✅ Hide working overlay
-    if (workingOverlay) workingOverlay.classList.remove('show');
-
     // Show enhanced image
     enhancedImage.src = data.enhancedImageUrl;
     enhancedImage.style.display = 'block';
 
-    // ✅ Calculate ARV + Profit + Draw Pie Chart
+    // Fade out working overlay
+    workingOverlay.classList.remove('show');
+
     if (!isNaN(price) && !isNaN(invest)) {
       const expectedARV = Math.round((price + invest) / 0.7);
       const profit = expectedARV - price - invest;
 
-      if (glassBox) glassBox.classList.add('show');
+      glassBox.classList.add('show');
 
       const h2 = glassBox.querySelector('h2');
       if (h2) h2.innerText = `Expected ARV: $${expectedARV.toLocaleString()}`;
@@ -149,7 +144,6 @@ btnEnhance?.addEventListener('click', async () => {
   } catch (err) {
     console.error("❌ Enhance Image Error:", err);
     alert("Image enhancement failed — see console for details!");
-  } finally {
-    if (workingOverlay) workingOverlay.classList.remove('show');
+    workingOverlay.classList.remove('show'); // Hide if fail
   }
 });
