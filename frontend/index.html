@@ -1,42 +1,65 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- //#1 META + TITLE + CHART.JS -->
-  <meta charset="UTF-8"/>
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Flip.ai – Smart Realtor Enhancer</title>
+  <title>Flip.ai – Smart AI-Driven Flip Insights</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-  <!-- //#2 BASIC STYLES -->
   <style>
     body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: #0a192f;
       color: #fff;
-      text-align: center;
-      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: center;
+      min-height: 100vh;
+      padding: 2rem;
     }
-    input, button {
-      margin: 8px;
-      padding: 10px;
-      border-radius: 6px;
+
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    p {
+      margin-bottom: 2rem;
+    }
+
+    input, textarea {
+      width: 100%;
+      max-width: 300px;
+      margin-bottom: 1rem;
+      padding: 0.75rem;
       border: none;
+      border-radius: 6px;
+      font-size: 1rem;
     }
+
     button {
+      margin: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      cursor: pointer;
       background: #0ea5e9;
       color: #fff;
-      cursor: pointer;
     }
 
     .glass-box {
       display: none;
-      background: rgba(255,255,255,0.1);
-      backdrop-filter: blur(10px);
-      border-radius: 12px;
-      padding: 20px;
-      margin-top: 20px;
-      max-width: 500px;
-      margin-left: auto;
-      margin-right: auto;
+      position: relative;
+      top: 0;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(15px);
+      padding: 2rem;
+      border-radius: 16px;
+      text-align: center;
+      z-index: 999;
+      max-width: 600px;
       color: #000;
     }
 
@@ -46,53 +69,46 @@
 
     #enhancedImage {
       display: none;
-      max-width: 400px;
-      margin-top: 20px;
+      width: 100%;
+      max-width: 500px;
+      margin-top: 1rem;
       border-radius: 8px;
     }
 
-    #workingOverlay {
+    #workingImage {
       display: none;
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.7);
-      z-index: 999;
-    }
-
-    #workingOverlay img {
-      position: absolute;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      width: 120px;
+      width: 150px;
+      margin-top: 1rem;
     }
   </style>
 </head>
 
 <body>
-  <!-- //#3 HEADER -->
-  <h1>Flip.ai</h1>
-  <p>#1 Smart AI-Driven Realtor Enhancer</p>
+  <!-- #1: HEADER -->
+  <h1>Welcome to Flip.ai</h1>
+  <p>#1 Smart AI-Driven Flip Insights</p>
 
-  <!-- //#4 USER INPUTS -->
-  <input id="investment" type="number" placeholder="Planned Investment Cost"/>
-  <br/>
-  <input type="file" id="propertyImage" accept="image/*"/>
-  <br/>
+  <!-- #2: INPUTS -->
+  <input id="zip" type="text" placeholder="ZIP Code (optional)" />
+  <input id="price" type="number" placeholder="Property Purchase Cost" /> <!-- ✅ Added back -->
+  <input id="investment" type="number" placeholder="Planned Investment Cost" />
+  <textarea id="prompt" placeholder="Details (optional)"></textarea>
+
+  <!-- #3: FILE UPLOAD -->
+  <input type="file" id="propertyImage" accept="image/*" />
   <button id="btn-enhance">Enhance Image</button>
 
-  <!-- //#5 OUTPUT GLASS BOX -->
-  <div id="glassBox" class="glass-box">
-    <h2>Expected ARV</h2>
+  <!-- #4: WORKING IMAGE -->
+  <img id="workingImage" src="static/images/working.png" alt="Working..." />
+
+  <!-- #5: GLASS BOX (ARV + CHART + IMAGE) -->
+  <div class="glass-box" id="glassBox">
+    <h2 id="arvHeader">Expected ARV</h2>
     <canvas id="arvChart"></canvas>
-    <img id="enhancedImage" alt="Enhanced Property"/>
+    <img id="enhancedImage" src="" alt="Enhanced Property" />
   </div>
 
-  <!-- //#6 WORKING OVERLAY -->
-  <div id="workingOverlay">
-    <img src="flip.ai/frontend/static/images/working.png" alt="Working...">
-  </div>
-
-  <!-- //#7 MAIN JS -->
+  <!-- #6: SCRIPT -->
   <script src="main.js"></script>
 </body>
 </html>
