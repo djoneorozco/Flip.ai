@@ -1,5 +1,5 @@
 // ============================================================
-// ✅ Flip.ai Backend – Smart Budget Enhancer w/ Real DALL·E Edit
+// ✅ Flip.ai Backend – Smart Budget Enhancer (NO MASK VERSION)
 // ============================================================
 
 const fs = require('fs');
@@ -25,7 +25,7 @@ if (!fs.existsSync(uploadDir)) {
   console.log("✅ Upload directory exists:", uploadDir);
 }
 
-// ✅ Multer storage config
+// ✅ Multer storage config (only ONE file now)
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, uploadDir);
@@ -53,7 +53,7 @@ app.get('/', (req, res) => {
 });
 
 // ============================================================
-// ✅ Ask Route (unchanged example)
+// ✅ Ask Route (unchanged)
 // ============================================================
 app.post('/api/ask', async (req, res) => {
   const { value, investment } = req.body;
@@ -106,43 +106,43 @@ Please calculate ARV, 70% Rule, and advice.
 });
 
 // ============================================================
-// ✅ ENHANCE IMAGE ROUTE — DALL·E EDIT VERSION (WITH MASK)
+// ✅ ENHANCE IMAGE ROUTE — GENERATE VERSION (NO MASK)
 // ============================================================
-app.post('/api/enhance', upload.fields([{ name: 'image' }, { name: 'mask' }]), async (req, res) => {
-  console.log("🖼️ Received image + mask for enhancement!");
+app.post('/api/enhance', upload.single('image'), async (req, res) => {
+  console.log("🖼️ Received image for enhancement!");
 
-  if (!req.files || !req.files.image || !req.files.mask) {
-    console.error("❌ Both image and mask are required");
-    return res.status(400).json({ error: "Both image and mask files are required" });
+  if (!req.file) {
+    console.error("❌ No image uploaded");
+    return res.status(400).json({ error: "Image is required" });
   }
 
-  const imagePath = req.files.image[0].path;
-  const maskPath = req.files.mask[0].path;
+  const imagePath = req.file.path;
 
   console.log("✅ Uploaded image path:", imagePath);
-  console.log("✅ Uploaded mask path:", maskPath);
+
+  // ⚡ Use your strict prompt style!
+  const stylePrompt = `
+A photo of a light blue house with boarded-up windows. Replace only the boarded-up sections with clear glass windows matching the house’s original style. Do not change anything else — keep the grass, yard, sidewalk, siding, roof, paint, colors, trees, and lighting exactly the same. Preserve the slightly weathered, realistic look. No beautifying, no landscape improvements, no extra edits.
+  `.trim();
 
   try {
-    const dalleResponse = await openai.images.createEdit({
-      model: "dall-e-2",
-      image: fs.createReadStream(imagePath),
-      mask: fs.createReadStream(maskPath),
-      prompt: "Replace boarded windows with real glass windows that match the house’s style. Do not change anything else — preserve the grass, yard, sidewalk, siding, roof, paint, trees, and lighting exactly the same. Keep the slightly weathered, realistic look.",
+    const dalleResponse = await openai.images.generate({
+      model: "dall-e-3",
+      prompt: stylePrompt,
       n: 1,
       size: "1024x1024",
     });
 
-    console.log("✅ DALL·E edit generated:", dalleResponse.data[0].url);
+    console.log("✅ DALL·E generated image:", dalleResponse.data[0].url);
 
     res.json({ enhancedImageUrl: dalleResponse.data[0].url });
 
   } catch (err) {
-    console.error("❌ Enhance error:", err.response ? err.response.data : err);
+    console.error("❌ Enhance error:", err);
     res.status(500).json({ error: "Failed to enhance image", details: err.message });
   } finally {
-    // ✅ Clean up uploaded files on ephemeral FS
+    // ✅ Clean up uploaded file
     fs.unlink(imagePath, () => {});
-    fs.unlink(maskPath, () => {});
   }
 });
 
