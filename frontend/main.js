@@ -1,35 +1,46 @@
-// ✅ Inside your main.js
-console.log("Flip.ai main.js loaded");
+// ============================================================
+// ✅ Flip.ai Frontend JS – FINAL VERSION (Stable)
+// ============================================================
 
-document.getElementById('btn-enhance').addEventListener('click', async () => {
-  console.log("✅ Enhance Image Clicked");
+console.log("✅ Flip.ai main.js loaded");
 
-  const propertyImage = document.getElementById('propertyImage').files[0];
-  const investment = document.getElementById('investment').value;
+const enhanceBtn = document.getElementById('btn-enhance');
 
-  if (!propertyImage) {
-    alert("Please select an image first.");
+enhanceBtn.addEventListener('click', async () => {
+  console.log("✨ Enhance Image Clicked");
+
+  const zip = document.getElementById('zip').value.trim();
+  const price = parseFloat(document.getElementById('price').value.trim()) || 0;
+  const investment = parseFloat(document.getElementById('investment').value.trim()) || 0;
+  const prompt = document.getElementById('prompt').value.trim();
+  const imageFile = document.getElementById('propertyImage').files[0];
+
+  if (!imageFile) {
+    alert("Please select an image to enhance!");
     return;
   }
 
   const formData = new FormData();
-  formData.append('image', propertyImage);
+  formData.append('image', imageFile);
   formData.append('investment', investment);
+  formData.append('prompt', prompt);
 
   try {
-    const response = await fetch(
-      'https://flip-ai.onrender.com/api/enhance',   // ✅ FULL backend URL!
-      {
-        method: 'POST',
-        body: formData
-      }
-    );
+    const response = await fetch('https://flip-ai.onrender.com/api/enhance', {
+      method: 'POST',
+      body: formData
+    });
+
+    if (!response.ok) throw new Error('Backend returned an error');
 
     const result = await response.json();
     console.log("✅ Variation Response:", result);
 
-    // Use result as needed...
-  } catch (error) {
-    console.error("❌ Enhance Image Error:", error);
+    // TODO: Replace this with your DOM update logic
+    alert(`Enhanced URL: ${result.enhancedImageUrl}\nBudget: ${result.budget}\nTier: ${result.tier}`);
+
+  } catch (err) {
+    console.error("❌ Enhance Error:", err);
+    alert('Something went wrong. Check console for details.');
   }
 });
