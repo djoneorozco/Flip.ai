@@ -1,5 +1,5 @@
 // ============================================================
-// ✅ Flip.ai Smart Backend – DALL·E + 70% Rule + Realistic Edits
+// ✅ Flip.ai Smart Backend – DALL·E + 70% Rule + Budget Tiers
 // ============================================================
 
 const fs = require('fs');
@@ -16,7 +16,7 @@ const openai = new OpenAI({
 
 const app = express();
 
-// ✅ Ensure /tmp/uploads exists
+// ✅ Ensure /tmp/uploads exists for Render ephemeral file system
 const uploadDir = '/tmp/uploads';
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
@@ -25,15 +25,20 @@ if (!fs.existsSync(uploadDir)) {
   console.log("✅ Upload directory exists:", uploadDir);
 }
 
-// ✅ Multer for uploads
+// ✅ Use Multer for file uploads
 const multer = require('multer');
+
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadDir),
-  filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
+  destination: (req, file, cb) => {
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + '-' + file.originalname);
+  }
 });
 const upload = multer({ storage: storage });
 
-// ✅ Middleware
+// ✅ Middlewares
 app.use(express.json());
 app.use(cors({
   origin: [
@@ -59,6 +64,7 @@ app.get('/api/test', (req, res) => {
 // ============================================================
 app.post('/api/ask', async (req, res) => {
   const { value, investment } = req.body;
+
   if (!value || !investment) {
     return res.status(400).json({ error: "Missing value or investment amount" });
   }
@@ -80,6 +86,7 @@ Always provide:
 - Simple explanation why this matters
 - A quick tip for the investor
 - End with: "Happy Flipping! 🚀"
+
 Use bullet points. Format numbers with dollar signs and commas.
           `.trim()
         },
@@ -107,7 +114,7 @@ Please calculate ARV, the 70% Rule, and give professional advice.
 });
 
 // ============================================================
-// #3 Smart Enhancer – Realistic Edits with Tiered Logic
+// #3 DALL·E ENHANCER – Smart Budget Tiers for Windows/Doors
 // ============================================================
 app.post('/api/enhance', upload.single('image'), async (req, res) => {
   console.log("🖼️ Received image for enhancement!");
@@ -119,47 +126,42 @@ app.post('/api/enhance', upload.single('image'), async (req, res) => {
 
   const filePath = req.file.path;
   const budget = parseFloat(req.body.investment || 0);
-  console.log("✅ Enhancement budget:", budget);
+  console.log("✅ Enhancement budget received:", budget);
 
-  let stylePrompt = "";
-
+  // ✅ Tiered style description logic
+  let styleDescription = "";
   if (budget < 10000) {
-    stylePrompt = "Replace boarded windows with basic new windows, repaint door with simple finish, light touch-ups.";
+    styleDescription = "Replace boarded windows with simple standard white-framed windows and a basic painted door.";
   } else if (budget >= 10000 && budget < 50000) {
-    stylePrompt = "Replace boarded windows with modern double-pane windows, new stylish front door, clean exterior repaint, fresh trim.";
+    styleDescription = "Replace boarded windows with modern energy-efficient windows with clean trim, and install a stylish new door.";
   } else {
-    stylePrompt = "Full upscale curb appeal: luxury modern windows, elegant front door, upscale trim, manicured landscaping, new roof if needed.";
+    styleDescription = "Replace boarded windows with upscale custom windows, premium modern trim, and an elegant high-end front door for strong curb appeal.";
   }
+  console.log("✨ Applied style tier:", styleDescription);
 
-  console.log("✨ Final style prompt:", stylePrompt);
+  // ✅ Final clear prompt
+  const finalPrompt = `
+Keep the house exactly the same as the original photo except for the boarded windows and boarded door.
+${styleDescription}
+Do not change the siding, roof, landscaping, or structure. Return the image looking like the original but upgraded as described.
+  `.trim();
 
   try {
     const fileStream = fs.createReadStream(filePath);
 
-    // ✅ Use DALL·E variation or edit (using edit here for realism — requires a mask file if you have one!)
-    // If you don't have a mask, fallback to variation:
+    // ✅ Use DALL·E variation for now (edit API can be swapped later if needed)
     const dalleResponse = await openai.images.createVariation({
       image: fileStream,
       n: 1,
       size: "1024x1024",
     });
 
-    // 👉 If you implement mask files, switch to this instead:
-    // const maskStream = fs.createReadStream(maskFilePath);
-    // const dalleResponse = await openai.images.createEdit({
-    //   image: fileStream,
-    //   mask: maskStream,
-    //   prompt: stylePrompt,
-    //   n: 1,
-    //   size: "1024x1024",
-    // });
-
-    console.log("✅ DALL·E response:", dalleResponse.data[0].url);
+    console.log("✅ DALL·E variation generated:", dalleResponse.data[0].url);
 
     res.json({
       enhancedImageUrl: dalleResponse.data[0].url,
       budget: budget,
-      description: stylePrompt
+      stylePrompt: finalPrompt
     });
 
   } catch (err) {
