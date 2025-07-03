@@ -1,5 +1,5 @@
 // ============================================================
-// ✅ Flip.ai Backend – Smart Budget Enhancer w/ Edits
+// ✅ Flip.ai Backend – Smart Budget Enhancer w/ Edits or Variations
 // ============================================================
 
 const fs = require('fs');
@@ -110,54 +110,65 @@ Please calculate ARV, the 70% Rule, and give professional advice.
 });
 
 // ============================================================
-// #3 ENHANCE w/ SMART BUDGET TIERS + EDITS
+// #3 ENHANCE w/ SMART BUDGET TIERS + FALLBACK
 // ============================================================
 app.post('/api/enhance', upload.fields([
   { name: 'image', maxCount: 1 },
   { name: 'mask', maxCount: 1 }
 ]), async (req, res) => {
-  console.log("🖼️ Received image and mask for enhancement!");
+  console.log("🖼️ Received image and (optional) mask for enhancement!");
 
   const imageFile = req.files['image']?.[0];
   const maskFile = req.files['mask']?.[0];
   const budget = parseFloat(req.body.investment || 0);
 
-  if (!imageFile || !maskFile) {
-    console.error("❌ Missing original image or mask");
-    return res.status(400).json({ error: "Both original image and mask are required" });
+  if (!imageFile) {
+    console.error("❌ No image uploaded");
+    return res.status(400).json({ error: "Original image is required" });
   }
 
   console.log("✅ Budget received:", budget);
 
   // ✅ Build Tiered Prompt
-  let stylePrompt = `Keep the same house structure, same siding, same roofline, same angle.
+  let stylePrompt = `Keep the same house structure, siding, roofline, and angle.
 Focus only on replacing boarded windows and doors with realistic upgrades based on budget tier.
-No new landscaping or changes to other parts of the house.`;
+Do not add new landscaping or change other parts of the house.`;
 
   if (budget < 10000) {
-    stylePrompt += ` Use budget Tier 1: Replace boarded windows and doors with basic standard windows and a simple clean front door. Nothing fancy — just functional.`;
+    stylePrompt += ` Tier 1: Replace boarded windows and doors with basic standard windows and a simple clean front door. Functional only.`;
   } else if (budget >= 10000 && budget < 50000) {
-    stylePrompt += ` Use budget Tier 2: Replace boarded windows and doors with new modern windows and a modern front door with some stylish trim. Add moderate finishing touches like slight new paint around frames.`;
+    stylePrompt += ` Tier 2: New modern windows and a modern front door with some stylish trim. Moderate finishing touches like fresh paint around frames.`;
   } else {
-    stylePrompt += ` Use budget Tier 3: Replace all boarded windows and doors with upscale, high-end modern windows and a premium, stylish front door. Add elegant trim details. Make it look professionally renovated while keeping the same house shape.`;
+    stylePrompt += ` Tier 3: Upscale high-end windows, premium stylish front door, elegant trim details. Look professionally renovated while preserving shape.`;
   }
 
   console.log("✨ Final Prompt:", stylePrompt);
 
   try {
     const imageStream = fs.createReadStream(imageFile.path);
-    const maskStream = fs.createReadStream(maskFile.path);
 
-    const dalleResponse = await openai.images.createEdit({
-      model: "dall-e-2",
-      image: imageStream,
-      mask: maskStream,
-      prompt: stylePrompt,
-      n: 1,
-      size: "1024x1024"
-    });
+    let dalleResponse;
 
-    console.log("✅ DALL·E edit generated:", dalleResponse.data[0].url);
+    if (maskFile) {
+      const maskStream = fs.createReadStream(maskFile.path);
+
+      dalleResponse = await openai.images.createEdit({
+        model: "dall-e-2",
+        image: imageStream,
+        mask: maskStream,
+        prompt: stylePrompt,
+        n: 1,
+        size: "1024x1024"
+      });
+    } else {
+      dalleResponse = await openai.images.createVariation({
+        image: imageStream,
+        n: 1,
+        size: "1024x1024"
+      });
+    }
+
+    console.log("✅ DALL·E generated:", dalleResponse.data[0].url);
 
     res.json({
       enhancedImageUrl: dalleResponse.data[0].url,
