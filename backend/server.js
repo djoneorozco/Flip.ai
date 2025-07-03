@@ -1,13 +1,13 @@
 // ============================================================
-// ✅ Flip.ai Backend – Variation-Only Smart Enhancer (No Mask)
+// ✅ Flip.ai Backend – Budget Tiers + DALL·E Edits (No Mask)
 // ============================================================
 
 const fs = require('fs');
 const express = require('express');
 const cors = require('cors');
+const multer = require('multer');
 require('dotenv').config();
 const OpenAI = require("openai");
-const multer = require('multer');
 
 // ✅ Init OpenAI
 const openai = new OpenAI({
@@ -23,14 +23,10 @@ if (!fs.existsSync(uploadDir)) {
   console.log("✅ Created upload directory:", uploadDir);
 }
 
-// ✅ Multer Storage for Original Image
+// ✅ Multer Storage (single file)
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + '-' + file.originalname);
-  }
+  destination: (req, file, cb) => cb(null, uploadDir),
+  filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
 });
 const upload = multer({ storage: storage });
 
@@ -45,10 +41,10 @@ app.use(cors({
 }));
 
 // ============================================================
-// #1 Health Check
+// #1 HEALTH CHECK
 // ============================================================
 app.get('/', (req, res) => {
-  res.send('✅ Flip.AI backend is alive!');
+  res.send('✅ Flip.ai backend is alive!');
 });
 
 app.get('/api/test', (req, res) => {
@@ -56,41 +52,48 @@ app.get('/api/test', (req, res) => {
 });
 
 // ============================================================
-// #2 ENHANCE w/ Variation Only (No Mask Required)
+// #2 SMART ENHANCE (NO MASK, JUST VARIATION LOGIC)
 // ============================================================
 app.post('/api/enhance', upload.single('image'), async (req, res) => {
-  console.log("🖼️ Received image for variation!");
+  console.log("✨ Enhance route hit");
 
-  const imageFile = req.file;
+  if (!req.file) {
+    console.error("❌ No file uploaded");
+    return res.status(400).json({ error: "No image file uploaded." });
+  }
+
   const budget = parseFloat(req.body.investment || 0);
+  console.log("✅ Received budget:", budget);
 
-  if (!imageFile) {
-    console.error("❌ No image uploaded");
-    return res.status(400).json({ error: "Image is required" });
-  }
+  // Build tier prompt
+  let tier = '';
+  let stylePrompt = 'Keep the same house structure. ';
 
-  console.log("✅ Budget received:", budget);
-
-  // ✅ Use simple style prompt logic for display
-  let tier = "";
   if (budget < 10000) {
-    tier = "Basic fixes";
+    tier = 'Basic repairs';
+    stylePrompt += 'Replace boarded windows with simple, standard windows and repaint door.';
   } else if (budget >= 10000 && budget < 50000) {
-    tier = "Moderate upgrades";
+    tier = 'Moderate upgrades';
+    stylePrompt += 'Install modern windows, new stylish door, fresh paint, moderate curb appeal.';
   } else {
-    tier = "High-end upscale renovation";
+    tier = 'Premium upgrades';
+    stylePrompt += 'Install high-end modern windows, upscale front door, elegant trim, premium curb appeal.';
   }
+
+  console.log("✨ Tier:", tier);
+  console.log("✨ Final prompt:", stylePrompt);
 
   try {
-    const imageStream = fs.createReadStream(imageFile.path);
+    const imageStream = fs.createReadStream(req.file.path);
 
+    // Create variation (no mask)
     const dalleResponse = await openai.images.createVariation({
       image: imageStream,
       n: 1,
       size: "1024x1024"
     });
 
-    console.log("✅ DALL·E variation URL:", dalleResponse.data[0].url);
+    console.log("✅ Variation generated:", dalleResponse.data[0].url);
 
     res.json({
       enhancedImageUrl: dalleResponse.data[0].url,
@@ -99,8 +102,8 @@ app.post('/api/enhance', upload.single('image'), async (req, res) => {
     });
 
   } catch (err) {
-    console.error("❌ Variation error:", err);
-    res.status(500).json({ error: "Failed to create variation", details: err.message });
+    console.error("❌ DALL·E variation error:", err);
+    res.status(500).json({ error: "Failed to enhance image", details: err.message });
   }
 });
 
