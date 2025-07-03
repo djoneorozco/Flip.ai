@@ -1,23 +1,23 @@
 // ============================================================
-// ✅ Flip.ai – Clean, Synced, and Polished main.js
-// ============================================================
-
-// ============================================================
 // #1 ELEMENT SELECTORS
 // ============================================================
 const btnTest = document.getElementById('btn-test');
 const btnAsk = document.getElementById('btn-ask');
+const btnEnhance = document.getElementById('btn-enhance');
+
 const zipInput = document.getElementById('zip');
 const priceInput = document.getElementById('price');
 const investInput = document.getElementById('investment') || document.getElementById('prompt');
-const btnEnhance = document.getElementById('btn-enhance');
+
 const imageInput = document.getElementById('propertyImage');
 const enhancedImage = document.getElementById('enhancedImage');
+
+const workingOverlay = document.getElementById('workingOverlay');
 
 const glassBox = document.getElementById('glassBox');
 const arvCtx = document.getElementById('arvChart')?.getContext?.('2d');
 
-let arvChartInstance = null; // ✅ Save Chart.js instance to clear/redraw
+let arvChartInstance = null; // ✅ Save chart instance
 
 // ============================================================
 // #2 BACKEND URL
@@ -41,11 +41,10 @@ btnTest?.addEventListener('click', async () => {
 });
 
 // ============================================================
-// #4 ASK AI BUTTON (uses value + investment)
+// #4 ASK AI BUTTON
 // ============================================================
 btnAsk?.addEventListener('click', async () => {
   console.log("🤖 Ask AI clicked");
-
   const zip = zipInput?.value.trim();
   const value = priceInput?.value.trim();
   const investment = investInput?.value.trim();
@@ -59,17 +58,15 @@ btnAsk?.addEventListener('click', async () => {
     const response = await fetch(`${backendURL}/api/ask`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ value, investment, zip }) // ✅ Send zip too, optional
+      body: JSON.stringify({ value, investment })
     });
 
     if (!response.ok) throw new Error(`Server error: ${response.status}`);
     const data = await response.json();
     console.log("✅ AI Response:", data);
 
-    // Display your advisor response in alert for now
-    alert(data.answer);
-
     glassBox.classList.add('show');
+    alert(data.answer);
 
   } catch (err) {
     console.error("❌ Ask FlipAI Error:", err);
@@ -78,7 +75,7 @@ btnAsk?.addEventListener('click', async () => {
 });
 
 // ============================================================
-// #5 ENHANCE IMAGE BUTTON w/ ARV PIE + investment logic
+// #5 ENHANCE IMAGE BUTTON w/ WORKING OVERLAY + ARV PIE
 // ============================================================
 btnEnhance?.addEventListener('click', async () => {
   const file = imageInput?.files[0];
@@ -90,9 +87,12 @@ btnEnhance?.addEventListener('click', async () => {
     return;
   }
 
+  // ✅ Show the working overlay
+  workingOverlay.classList.add('show');
+
   const formData = new FormData();
   formData.append('image', file);
-  formData.append('investment', invest); // ✅ Must send budget!
+  formData.append('investment', invest); // ✅ Include budget for server logic!
 
   try {
     const response = await fetch(`${backendURL}/api/enhance`, {
@@ -104,17 +104,19 @@ btnEnhance?.addEventListener('click', async () => {
     const data = await response.json();
     console.log("✅ AI Enhanced Image:", data);
 
-    // Show enhanced image
+    // ✅ Hide the working overlay after success
+    workingOverlay.classList.remove('show');
+
+    // ✅ Show the enhanced image
     enhancedImage.src = data.enhancedImageUrl;
     enhancedImage.style.display = 'block';
 
-    // Draw ARV chart logic
+    // ✅ Build ARV + profit pie chart
     if (!isNaN(price) && !isNaN(invest)) {
       const expectedARV = Math.round((price + invest) / 0.7);
       const profit = expectedARV - price - invest;
 
       glassBox.classList.add('show');
-
       const h2 = glassBox.querySelector('h2');
       if (h2) h2.innerText = `Expected ARV: $${expectedARV.toLocaleString()}`;
 
@@ -138,8 +140,7 @@ btnEnhance?.addEventListener('click', async () => {
             legend: {
               position: 'bottom',
               labels: { color: '#000' }
-            },
-            tooltip: { enabled: true }
+            }
           }
         }
       });
@@ -148,5 +149,6 @@ btnEnhance?.addEventListener('click', async () => {
   } catch (err) {
     console.error("❌ Enhance Image Error:", err);
     alert("Image enhancement failed — see console for details!");
+    workingOverlay.classList.remove('show');
   }
 });
