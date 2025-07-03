@@ -1,28 +1,28 @@
 // ============================================================
-// ✅ Flip.AI main.js – Structured & Bulletproof
+// #1 ELEMENT SELECTORS
 // ============================================================
-
-//#1 ELEMENT SELECTORS
 const btnTest = document.getElementById('btn-test');
 const btnAsk = document.getElementById('btn-ask');
-const btnEnhance = document.getElementById('btn-enhance');
-
 const zipInput = document.getElementById('zip');
 const priceInput = document.getElementById('price');
 const investInput = document.getElementById('investment') || document.getElementById('prompt');
-
+const btnEnhance = document.getElementById('btn-enhance');
 const imageInput = document.getElementById('propertyImage');
+const maskInput = document.getElementById('propertyMask'); // <-- NEW if you have mask input
 const enhancedImage = document.getElementById('enhancedImage');
-
 const glassBox = document.getElementById('glassBox');
 const arvCtx = document.getElementById('arvChart')?.getContext?.('2d');
 
-let arvChartInstance = null; // ✅ For destroying old charts
+let arvChartInstance = null;
 
+// ============================================================
+// #2 BACKEND URL
+// ============================================================
 const backendURL = 'https://flip-ai.onrender.com';
 
 // ============================================================
-//#2 TEST BACKEND BUTTON
+// #3 TEST BACKEND BUTTON
+// ============================================================
 btnTest?.addEventListener('click', async () => {
   console.log("🧪 Testing backend...");
   try {
@@ -37,16 +37,15 @@ btnTest?.addEventListener('click', async () => {
 });
 
 // ============================================================
-//#3 ASK AI BUTTON
+// #4 ASK AI BUTTON
+// ============================================================
 btnAsk?.addEventListener('click', async () => {
   console.log("🤖 Ask AI clicked");
-
-  const zip = zipInput?.value.trim();
   const value = priceInput?.value.trim();
   const investment = investInput?.value.trim();
 
   if (!value) {
-    alert("Please enter Property Purchase Cost!");
+    alert("Please enter Property Price!");
     return;
   }
 
@@ -58,10 +57,8 @@ btnAsk?.addEventListener('click', async () => {
     });
 
     if (!response.ok) throw new Error(`Server error: ${response.status}`);
-
     const data = await response.json();
     console.log("✅ AI Response:", data);
-
     glassBox.classList.add('show');
     alert(data.answer);
 
@@ -72,30 +69,28 @@ btnAsk?.addEventListener('click', async () => {
 });
 
 // ============================================================
-//#4 ENHANCE IMAGE BUTTON w/ ARV PIE
+// #5 ENHANCE IMAGE BUTTON (w/ IMAGE + MASK)
+// ============================================================
 btnEnhance?.addEventListener('click', async () => {
   console.log("✨ Enhance Image clicked");
 
-  const file = imageInput?.files[0];
-  const price = parseFloat(priceInput?.value);
-  const invest = parseFloat(investInput?.value);
+  const imageFile = imageInput?.files[0];
+  const maskFile = maskInput?.files?.[0]; // <- Optional but server expects it
+  const investment = parseFloat(investInput?.value);
 
-  if (!file) {
-    alert("Please choose an image first!");
+  if (!imageFile || !maskFile) {
+    alert("Please choose BOTH an image and a mask file!");
     return;
   }
 
-  if (isNaN(invest)) {
-    alert("Please enter a valid Planned Investment Cost!");
-    return;
-  }
-
-  console.log("✅ Sending file:", file.name);
-  console.log("✅ Investment amount:", invest);
+  console.log(`✅ Sending file: ${imageFile.name}`);
+  console.log(`✅ Sending mask: ${maskFile.name}`);
+  console.log(`💰 Investment amount: ${investment}`);
 
   const formData = new FormData();
-  formData.append('image', file);
-  formData.append('investment', invest);
+  formData.append('image', imageFile);
+  formData.append('mask', maskFile);
+  formData.append('investment', investment);
 
   try {
     const response = await fetch(`${backendURL}/api/enhance`, {
@@ -104,45 +99,36 @@ btnEnhance?.addEventListener('click', async () => {
     });
 
     if (!response.ok) throw new Error(`Server error: ${response.status}`);
-
     const data = await response.json();
     console.log("✅ AI Enhanced Image:", data);
 
-    // Show enhanced image
     enhancedImage.src = data.enhancedImageUrl;
     enhancedImage.style.display = 'block';
 
-    // Draw ARV pie chart
-    if (!isNaN(price) && !isNaN(invest)) {
-      const expectedARV = Math.round((price + invest) / 0.7);
-      const profit = expectedARV - price - invest;
+    if (!isNaN(priceInput.value) && !isNaN(investment)) {
+      const expectedARV = Math.round((parseFloat(priceInput.value) + investment) / 0.7);
+      const profit = expectedARV - parseFloat(priceInput.value) - investment;
 
       glassBox.classList.add('show');
-
-      const h2 = glassBox.querySelector('h2');
-      if (h2) h2.innerText = `Expected ARV: $${expectedARV.toLocaleString()}`;
+      glassBox.querySelector('h2').innerText = `Expected ARV: $${expectedARV.toLocaleString()}`;
 
       if (arvChartInstance) arvChartInstance.destroy();
-
       arvChartInstance = new Chart(arvCtx, {
         type: 'pie',
         data: {
           labels: [
-            `Property: $${price.toLocaleString()}`,
-            `Investment: $${invest.toLocaleString()}`,
+            `Property: $${parseFloat(priceInput.value).toLocaleString()}`,
+            `Investment: $${investment.toLocaleString()}`,
             `Profit: $${profit.toLocaleString()}`
           ],
           datasets: [{
-            data: [price, invest, profit],
+            data: [parseFloat(priceInput.value), investment, profit],
             backgroundColor: ['#36A2EB', '#FFCE56', '#4BC0C0']
           }]
         },
         options: {
           plugins: {
-            legend: {
-              position: 'bottom',
-              labels: { color: '#000' }
-            },
+            legend: { position: 'bottom', labels: { color: '#000' } },
             tooltip: { enabled: true }
           }
         }
