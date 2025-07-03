@@ -3,7 +3,6 @@
 // ============================================================
 
 const fs = require('fs');
-const path = require('path');
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
@@ -35,7 +34,6 @@ const storage = multer.diskStorage({
     cb(null, Date.now() + '-' + file.originalname);
   }
 });
-
 const upload = multer({ storage: storage });
 
 app.use(express.json());
@@ -129,7 +127,7 @@ app.post('/api/enhance', upload.fields([{ name: 'image' }, { name: 'mask' }]), a
       model: "dall-e-2",
       image: fs.createReadStream(imagePath),
       mask: fs.createReadStream(maskPath),
-      prompt: "Replace boarded windows with real windows, keep everything else exactly the same.",
+      prompt: "Replace boarded windows with real glass windows that match the house’s style. Do not change anything else — preserve the grass, yard, sidewalk, siding, roof, paint, trees, and lighting exactly the same. Keep the slightly weathered, realistic look.",
       n: 1,
       size: "1024x1024",
     });
@@ -139,8 +137,12 @@ app.post('/api/enhance', upload.fields([{ name: 'image' }, { name: 'mask' }]), a
     res.json({ enhancedImageUrl: dalleResponse.data[0].url });
 
   } catch (err) {
-    console.error("❌ Enhance error:", err);
+    console.error("❌ Enhance error:", err.response ? err.response.data : err);
     res.status(500).json({ error: "Failed to enhance image", details: err.message });
+  } finally {
+    // ✅ Clean up uploaded files on ephemeral FS
+    fs.unlink(imagePath, () => {});
+    fs.unlink(maskPath, () => {});
   }
 });
 
