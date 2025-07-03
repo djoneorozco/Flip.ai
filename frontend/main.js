@@ -3,24 +3,25 @@
 // ============================================================
 const btnTest = document.getElementById('btn-test');
 const btnAsk = document.getElementById('btn-ask');
-const btnEnhance = document.getElementById('btn-enhance');
-
 const zipInput = document.getElementById('zip');
 const priceInput = document.getElementById('price');
 const investInput = document.getElementById('investment') || document.getElementById('prompt');
+const btnEnhance = document.getElementById('btn-enhance');
 const imageInput = document.getElementById('propertyImage');
+const enhancedImage = document.getElementById('enhancedImage');
 
 const glassBox = document.getElementById('glassBox');
 const arvCtx = document.getElementById('arvChart')?.getContext?.('2d');
-const enhancedImage = document.getElementById('enhancedImage');
-const workingOverlay = document.getElementById('workingOverlay');
 
 let arvChartInstance = null;
 
+// ============================================================
+// #2 BACKEND URL
+// ============================================================
 const backendURL = 'https://flip-ai.onrender.com';
 
 // ============================================================
-// #2 TEST BACKEND BUTTON
+// #3 TEST BACKEND BUTTON
 // ============================================================
 btnTest?.addEventListener('click', async () => {
   console.log("🧪 Testing backend...");
@@ -36,7 +37,7 @@ btnTest?.addEventListener('click', async () => {
 });
 
 // ============================================================
-// #3 ASK AI BUTTON
+// #4 ASK AI BUTTON
 // ============================================================
 btnAsk?.addEventListener('click', async () => {
   console.log("🤖 Ask AI clicked");
@@ -69,7 +70,7 @@ btnAsk?.addEventListener('click', async () => {
 });
 
 // ============================================================
-// #4 ENHANCE IMAGE BUTTON w/ WORKING OVERLAY
+// #5 ENHANCE IMAGE BUTTON
 // ============================================================
 btnEnhance?.addEventListener('click', async () => {
   const file = imageInput?.files[0];
@@ -80,9 +81,6 @@ btnEnhance?.addEventListener('click', async () => {
     alert("Please choose an image first!");
     return;
   }
-
-  // Show working overlay
-  workingOverlay.classList.add('show');
 
   const formData = new FormData();
   formData.append('image', file);
@@ -98,12 +96,8 @@ btnEnhance?.addEventListener('click', async () => {
     const data = await response.json();
     console.log("✅ AI Enhanced Image:", data);
 
-    // Show enhanced image
     enhancedImage.src = data.enhancedImageUrl;
     enhancedImage.style.display = 'block';
-
-    // Fade out working overlay
-    workingOverlay.classList.remove('show');
 
     if (!isNaN(price) && !isNaN(invest)) {
       const expectedARV = Math.round((price + invest) / 0.7);
@@ -144,6 +138,5 @@ btnEnhance?.addEventListener('click', async () => {
   } catch (err) {
     console.error("❌ Enhance Image Error:", err);
     alert("Image enhancement failed — see console for details!");
-    workingOverlay.classList.remove('show'); // Hide if fail
   }
 });
