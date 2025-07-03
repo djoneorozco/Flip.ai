@@ -1,29 +1,32 @@
 // ============================================================
-// ✅ Flip.ai Backend – Smart Budget Enhancer w/ Real DALL·E
+// ✅ Flip.ai Backend – Smart Budget Enhancer w/ Real DALL·E Edit
 // ============================================================
 
 const fs = require('fs');
+const path = require('path');
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 const OpenAI = require("openai");
 const multer = require('multer');
 
-// ✅ Init OpenAI
+// ✅ Init OpenAI with API Key
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
 const app = express();
 
-// ✅ Upload Dir for Render ephemeral FS
+// ✅ Ensure /tmp/uploads exists (Render ephemeral FS)
 const uploadDir = '/tmp/uploads';
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
   console.log("✅ Created upload directory:", uploadDir);
+} else {
+  console.log("✅ Upload directory exists:", uploadDir);
 }
 
-// ✅ Multer for single file uploads
+// ✅ Multer storage config
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, uploadDir);
@@ -32,9 +35,9 @@ const storage = multer.diskStorage({
     cb(null, Date.now() + '-' + file.originalname);
   }
 });
+
 const upload = multer({ storage: storage });
 
-// ✅ Middleware
 app.use(express.json());
 app.use(cors({
   origin: [
@@ -45,18 +48,14 @@ app.use(cors({
 }));
 
 // ============================================================
-// #1 Health Check
+// ✅ Health Check
 // ============================================================
 app.get('/', (req, res) => {
   res.send('✅ Flip.AI backend is alive!');
 });
 
-app.get('/api/test', (req, res) => {
-  res.json({ message: "✅ Backend test successful!" });
-});
-
 // ============================================================
-// #2 Ask Route (unchanged, optional)
+// ✅ Ask Route (unchanged example)
 // ============================================================
 app.post('/api/ask', async (req, res) => {
   const { value, investment } = req.body;
@@ -109,65 +108,47 @@ Please calculate ARV, 70% Rule, and advice.
 });
 
 // ============================================================
-// #3 ENHANCE w/ REAL DALL·E EDITS – PRODUCTION READY
+// ✅ ENHANCE IMAGE ROUTE — DALL·E EDIT VERSION (WITH MASK)
 // ============================================================
-app.post('/api/enhance', upload.single('image'), async (req, res) => {
-  console.log("🖼️ Enhance route hit!");
+app.post('/api/enhance', upload.fields([{ name: 'image' }, { name: 'mask' }]), async (req, res) => {
+  console.log("🖼️ Received image + mask for enhancement!");
 
-  const imageFile = req.file;
-  const budget = parseFloat(req.body.investment || 0);
-
-  if (!imageFile) {
-    console.error("❌ No image uploaded");
-    return res.status(400).json({ error: "Image is required" });
+  if (!req.files || !req.files.image || !req.files.mask) {
+    console.error("❌ Both image and mask are required");
+    return res.status(400).json({ error: "Both image and mask files are required" });
   }
 
-  console.log("✅ Image uploaded:", imageFile.path);
-  console.log("✅ Budget amount:", budget);
+  const imagePath = req.files.image[0].path;
+  const maskPath = req.files.mask[0].path;
 
-  // Build tiered stylePrompt
-  let stylePrompt = `Keep same house structure, siding, roofline, and angle. Replace boarded windows and doors with realistic upgrades.`;
-
-  if (budget < 10000) {
-    stylePrompt += ` Tier 1: Basic windows and a simple front door. No fancy trim.`;
-  } else if (budget >= 10000 && budget < 50000) {
-    stylePrompt += ` Tier 2: Modern windows, new front door, stylish trim, moderate paint.`;
-  } else {
-    stylePrompt += ` Tier 3: Upscale high-end windows, premium front door, elegant trim, pro-renovated look.`;
-  }
-
-  console.log("✨ Final prompt:", stylePrompt);
+  console.log("✅ Uploaded image path:", imagePath);
+  console.log("✅ Uploaded mask path:", maskPath);
 
   try {
     const dalleResponse = await openai.images.createEdit({
       model: "dall-e-2",
-      image: fs.createReadStream(imageFile.path),
-      // mask: fs.createReadStream(maskFile.path), // Optional if you have a mask
-      prompt: stylePrompt,
+      image: fs.createReadStream(imagePath),
+      mask: fs.createReadStream(maskPath),
+      prompt: "Replace boarded windows with real windows, keep everything else exactly the same.",
       n: 1,
-      size: "1024x1024"
+      size: "1024x1024",
     });
 
-    const enhancedImageUrl = dalleResponse.data[0].url;
+    console.log("✅ DALL·E edit generated:", dalleResponse.data[0].url);
 
-    console.log("✅ DALL·E enhanced image:", enhancedImageUrl);
-
-    res.json({
-      enhancedImageUrl,
-      budget,
-      tier: stylePrompt
-    });
+    res.json({ enhancedImageUrl: dalleResponse.data[0].url });
 
   } catch (err) {
-    console.error("❌ DALL·E Enhance error:", err);
-    res.status(500).json({ error: "Enhancement failed", details: err.message });
+    console.error("❌ Enhance error:", err);
+    res.status(500).json({ error: "Failed to enhance image", details: err.message });
   }
 });
 
 // ============================================================
-// #4 Start Server
+// ✅ Start Server
 // ============================================================
 const PORT = process.env.PORT || 10000;
+
 app.listen(PORT, () => {
-  console.log(`🚀 Flip.ai backend running on port ${PORT}`);
+  console.log(`🚀 Flip backend running on port ${PORT}`);
 });
