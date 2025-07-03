@@ -76,56 +76,34 @@
       margin-top: 1rem;
       border-radius: 8px;
     }
-
-    /* //# Working Overlay */
-    #workingOverlay {
-      display: none;
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 200px;
-      z-index: 1000;
-      opacity: 0;
-      transition: opacity 0.5s ease;
-    }
-
-    #workingOverlay.show {
-      display: block;
-      opacity: 1;
-    }
   </style>
 </head>
 
 <body>
-  <!-- #1 HEADER -->
   <h1>Welcome to Flip.ai</h1>
   <p>#2 Smart AI-driven Flip Insights</p>
 
-  <!-- #3 INPUTS -->
+  <!-- INPUTS -->
   <input id="zip" type="text" placeholder="ZIP Code (optional)" />
   <input id="price" type="number" placeholder="Property Purchase Cost" />
   <input id="investment" type="number" placeholder="Planned Investment Cost" />
   <textarea id="prompt" placeholder="Details (optional)"></textarea>
 
-  <!-- #4 BUTTONS -->
+  <!-- BUTTONS -->
   <button id="btn-test">Test Backend</button>
   <button id="btn-ask">Ask FlipAI</button>
 
-  <!-- #5 IMAGE UPLOADER -->
+  <!-- IMAGE UPLOADER -->
   <h3 style="margin-top:2rem;">Enhance Your Property Photo</h3>
   <input type="file" id="propertyImage" accept="image/*" />
   <button id="btn-enhance">Enhance Image & See ARV</button>
   <img id="enhancedImage" src="" alt="Enhanced Result" />
 
-  <!-- #6 GLASS BOX FOR ARV PIE -->
+  <!-- GLASS BOX FOR ARV PIE -->
   <div class="glass-box" id="glassBox">
     <h2>Expected ARV</h2>
     <canvas id="arvChart"></canvas>
   </div>
-
-  <!-- #7 WORKING OVERLAY -->
-  <img id="workingOverlay" src="working.png" alt="Working..." />
 
   <script src="main.js"></script>
 </body>
