@@ -1,27 +1,27 @@
-console.log("✅ Flip.ai main.js loaded");
+console.log("Flip.ai main.js loaded");
 
-// ✅ DOM Elements
-const btn = document.getElementById('btn-enhance');
-const zip = document.getElementById('zip');
-const propertyValue = document.getElementById('price');
-const investment = document.getElementById('investment');
-const details = document.getElementById('prompt');
-const imageInput = document.getElementById('propertyImage');
+// Get elements
+const enhanceButton = document.getElementById('btn-enhance');
+const propertyInput = document.getElementById('price');
+const investmentInput = document.getElementById('investment');
+const propertyImage = document.getElementById('propertyImage');
 
-btn.addEventListener('click', async () => {
+enhanceButton.addEventListener('click', async () => {
   console.log("✨ Enhance Image Clicked");
 
-  const file = imageInput.files[0];
+  const propertyValue = propertyInput.value;
+  const investment = investmentInput.value;
+  const file = propertyImage.files[0];
+
   if (!file) {
-    alert("Please choose an image file.");
+    alert("Please upload an image");
     return;
   }
 
   const formData = new FormData();
   formData.append('image', file);
-  formData.append('propertyValue', propertyValue.value);
-  formData.append('investment', investment.value);
-  formData.append('details', details.value);
+  formData.append('propertyValue', propertyValue);
+  formData.append('investment', investment);
 
   try {
     const response = await fetch('https://flip-ai.onrender.com/api/enhance', {
@@ -33,7 +33,6 @@ btn.addEventListener('click', async () => {
 
     const data = await response.json();
     console.log("✅ Variation Response:", data);
-
     alert(`Enhanced URL: ${data.enhancedImageUrl}\nBudget: ${data.budget}\nTier: ${data.tier}`);
 
   } catch (err) {
