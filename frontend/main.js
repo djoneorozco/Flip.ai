@@ -1,4 +1,8 @@
 // ============================================================
+// ✅ Flip.ai – Clean, Synced, and Polished main.js
+// ============================================================
+
+// ============================================================
 // #1 ELEMENT SELECTORS
 // ============================================================
 const btnTest = document.getElementById('btn-test');
@@ -13,7 +17,7 @@ const enhancedImage = document.getElementById('enhancedImage');
 const glassBox = document.getElementById('glassBox');
 const arvCtx = document.getElementById('arvChart')?.getContext?.('2d');
 
-let arvChartInstance = null; // ✅ Save chart instance for reuse
+let arvChartInstance = null; // ✅ Save Chart.js instance to clear/redraw
 
 // ============================================================
 // #2 BACKEND URL
@@ -37,11 +41,12 @@ btnTest?.addEventListener('click', async () => {
 });
 
 // ============================================================
-// #4 ASK AI BUTTON (uses value + investment keys to match backend)
+// #4 ASK AI BUTTON (uses value + investment)
 // ============================================================
 btnAsk?.addEventListener('click', async () => {
   console.log("🤖 Ask AI clicked");
-  const zip = zipInput?.value.trim(); // Optional
+
+  const zip = zipInput?.value.trim();
   const value = priceInput?.value.trim();
   const investment = investInput?.value.trim();
 
@@ -54,16 +59,17 @@ btnAsk?.addEventListener('click', async () => {
     const response = await fetch(`${backendURL}/api/ask`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ value, investment }) // ✅ Match backend keys
+      body: JSON.stringify({ value, investment, zip }) // ✅ Send zip too, optional
     });
 
     if (!response.ok) throw new Error(`Server error: ${response.status}`);
     const data = await response.json();
     console.log("✅ AI Response:", data);
 
-    // Display your result — add your own output logic here if you want!
-    glassBox.classList.add('show');
+    // Display your advisor response in alert for now
     alert(data.answer);
+
+    glassBox.classList.add('show');
 
   } catch (err) {
     console.error("❌ Ask FlipAI Error:", err);
@@ -72,7 +78,7 @@ btnAsk?.addEventListener('click', async () => {
 });
 
 // ============================================================
-// #5 ENHANCE IMAGE BUTTON w/ ARV PIE + clear chart
+// #5 ENHANCE IMAGE BUTTON w/ ARV PIE + investment logic
 // ============================================================
 btnEnhance?.addEventListener('click', async () => {
   const file = imageInput?.files[0];
@@ -86,6 +92,7 @@ btnEnhance?.addEventListener('click', async () => {
 
   const formData = new FormData();
   formData.append('image', file);
+  formData.append('investment', invest); // ✅ Must send budget!
 
   try {
     const response = await fetch(`${backendURL}/api/enhance`, {
@@ -101,21 +108,18 @@ btnEnhance?.addEventListener('click', async () => {
     enhancedImage.src = data.enhancedImageUrl;
     enhancedImage.style.display = 'block';
 
-    // ✅ Calculate ARV + Profit + Draw Pie Chart
+    // Draw ARV chart logic
     if (!isNaN(price) && !isNaN(invest)) {
       const expectedARV = Math.round((price + invest) / 0.7);
       const profit = expectedARV - price - invest;
 
       glassBox.classList.add('show');
 
-      // Update header to show ARV $
       const h2 = glassBox.querySelector('h2');
       if (h2) h2.innerText = `Expected ARV: $${expectedARV.toLocaleString()}`;
 
-      // Destroy old chart if it exists
       if (arvChartInstance) arvChartInstance.destroy();
 
-      // Draw new chart
       arvChartInstance = new Chart(arvCtx, {
         type: 'pie',
         data: {
