@@ -1,5 +1,5 @@
 // ============================================================
-// ✅ Flip.ai Smart Backend – DALL·E + 70% Rule + Budget Logic
+// ✅ Flip.ai Smart Backend – DALL·E Edits + 70% Rule + Budget Logic
 // ============================================================
 
 const fs = require('fs');
@@ -9,25 +9,20 @@ const cors = require('cors');
 require('dotenv').config();
 const OpenAI = require("openai");
 
-// ✅ Init OpenAI
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
 const app = express();
 
-// ✅ Ensure /tmp/uploads exists for Render ephemeral file system
+// ✅ Ensure /tmp/uploads exists
 const uploadDir = '/tmp/uploads';
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
   console.log("✅ Created upload directory:", uploadDir);
-} else {
-  console.log("✅ Upload directory exists:", uploadDir);
 }
 
-// ✅ Use Multer for file uploads
 const multer = require('multer');
-
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, uploadDir);
@@ -38,7 +33,6 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 
-// ✅ Middlewares
 app.use(express.json());
 app.use(cors({
   origin: [
@@ -49,7 +43,7 @@ app.use(cors({
 }));
 
 // ============================================================
-// #1 HEALTH CHECK
+// #1 HEALTH
 // ============================================================
 app.get('/', (req, res) => {
   res.send('✅ Flip.AI backend is alive!');
@@ -60,7 +54,7 @@ app.get('/api/test', (req, res) => {
 });
 
 // ============================================================
-// #2 70% Rule Advisor
+// #2 70% Rule
 // ============================================================
 app.post('/api/ask', async (req, res) => {
   const { value, investment } = req.body;
@@ -79,15 +73,14 @@ app.post('/api/ask', async (req, res) => {
         {
           role: "system",
           content: `
-You are a professional, clear, and motivating real estate flip advisor.
-Always provide:
-- The After Repair Value (ARV)
-- A 70% Rule estimate for maximum offer price
-- Simple explanation why this matters
-- A quick tip for the investor
-- End with: "Happy Flipping! 🚀"
-
-Use bullet points. Format numbers with dollar signs and commas.
+You are a motivating real estate flip advisor.
+Always include:
+- ARV
+- 70% Rule estimate
+- Explanation why it matters
+- Quick investor tip
+End with "Happy Flipping! 🚀"
+Use bullet points and dollar formatting.
           `.trim()
         },
         {
@@ -95,7 +88,7 @@ Use bullet points. Format numbers with dollar signs and commas.
           content: `
 Current Property Value: $${Number(value).toLocaleString()}
 Planned Investment: $${Number(investment).toLocaleString()}
-Please calculate ARV, the 70% Rule, and give professional advice.
+Please calculate ARV and give advice.
           `.trim()
         }
       ],
@@ -114,7 +107,7 @@ Please calculate ARV, the 70% Rule, and give professional advice.
 });
 
 // ============================================================
-// #3 DALL·E ENHANCER – Smart Budget Logic
+// #3 DALL·E Edits – Smart Budget Logic
 // ============================================================
 app.post('/api/enhance', upload.single('image'), async (req, res) => {
   console.log("🖼️ Received image for enhancement!");
@@ -125,33 +118,30 @@ app.post('/api/enhance', upload.single('image'), async (req, res) => {
   }
 
   const filePath = req.file.path;
-
-  // ✅ Grab planned investment budget
   const budget = parseFloat(req.body.investment || 0);
-  console.log("✅ Enhancement budget received:", budget);
+  console.log("✅ Enhancement budget:", budget);
+
+  let stylePrompt = "";
+  if (budget < 10000) {
+    stylePrompt = "Light cleanup: remove boarded windows, basic paint touch-up, minor yard work.";
+  } else if (budget >= 10000 && budget < 50000) {
+    stylePrompt = "Moderate renovation: new siding, new windows, new porch, landscaped yard, fresh paint.";
+  } else {
+    stylePrompt = "Upscale full transformation: modern siding, new roof, stylish porch, upscale landscaping, curb appeal.";
+  }
+  console.log("✨ Using prompt:", stylePrompt);
 
   try {
     const fileStream = fs.createReadStream(filePath);
 
-    // ✅ Build enhancement prompt based on budget
-    let stylePrompt = "";
-    if (budget < 10000) {
-      stylePrompt = "Basic exterior cleanup: remove boarded windows, small repairs, simple repaint.";
-    } else if (budget >= 10000 && budget < 50000) {
-      stylePrompt = "Moderate renovation: fresh paint, new windows, basic landscaping, fixed roof.";
-    } else {
-      stylePrompt = "Full upscale flip: modern siding, new roof, new porch, luxury curb appeal, beautiful landscaping.";
-    }
-    console.log("✨ Using style prompt:", stylePrompt);
-
-    // ✅ Call DALL·E with edits — swap for createEdit if available
-    const dalleResponse = await openai.images.createVariation({
+    const dalleResponse = await openai.images.createEdit({
       image: fileStream,
+      prompt: stylePrompt,
       n: 1,
       size: "1024x1024",
     });
 
-    console.log("✅ DALL·E variation generated:", dalleResponse.data[0].url);
+    console.log("✅ DALL·E edit generated:", dalleResponse.data[0].url);
 
     res.json({
       enhancedImageUrl: dalleResponse.data[0].url,
@@ -166,10 +156,9 @@ app.post('/api/enhance', upload.single('image'), async (req, res) => {
 });
 
 // ============================================================
-// #4 START SERVER
+// #4 Start Server
 // ============================================================
 const PORT = process.env.PORT || 10000;
-
 app.listen(PORT, () => {
   console.log(`🚀 Flip backend running on port ${PORT}`);
 });
