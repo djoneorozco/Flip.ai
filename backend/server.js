@@ -1,5 +1,5 @@
 // ============================================================
-// ✅ Flip.ai Backend – Budget-Smart DALL·E Enhancer
+// ✅ Flip.ai Smart Backend – DALL·E + 70% Rule + Budget Logic
 // ============================================================
 
 const fs = require('fs');
@@ -8,24 +8,37 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 const OpenAI = require("openai");
-const multer = require('multer');
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+// ✅ Init OpenAI
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 const app = express();
 
-// ✅ Ensure upload dir
+// ✅ Ensure /tmp/uploads exists for Render ephemeral file system
 const uploadDir = '/tmp/uploads';
-if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+  console.log("✅ Created upload directory:", uploadDir);
+} else {
+  console.log("✅ Upload directory exists:", uploadDir);
+}
 
-// ✅ Multer config
+// ✅ Use Multer for file uploads
+const multer = require('multer');
+
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadDir),
-  filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
+  destination: (req, file, cb) => {
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + '-' + file.originalname);
+  }
 });
-const upload = multer({ storage });
+const upload = multer({ storage: storage });
 
-// ✅ Middleware
+// ✅ Middlewares
 app.use(express.json());
 app.use(cors({
   origin: [
@@ -36,10 +49,10 @@ app.use(cors({
 }));
 
 // ============================================================
-// #1 HEALTH + TEST
+// #1 HEALTH CHECK
 // ============================================================
 app.get('/', (req, res) => {
-  res.send('✅ Flip.ai backend is alive!');
+  res.send('✅ Flip.AI backend is alive!');
 });
 
 app.get('/api/test', (req, res) => {
@@ -47,13 +60,13 @@ app.get('/api/test', (req, res) => {
 });
 
 // ============================================================
-// #2 /api/ask – 70% Rule Advisor
+// #2 70% Rule Advisor
 // ============================================================
 app.post('/api/ask', async (req, res) => {
   const { value, investment } = req.body;
 
   if (!value || !investment) {
-    return res.status(400).json({ error: "Missing value or investment" });
+    return res.status(400).json({ error: "Missing value or investment amount" });
   }
 
   const arv = Number(value) + Number(investment);
@@ -66,23 +79,26 @@ app.post('/api/ask', async (req, res) => {
         {
           role: "system",
           content: `
-You are a pro flip advisor. Always include:
-- After Repair Value (ARV)
-- 70% Rule max offer
-- Quick explanation
-- Tip for investor
-End with: "Happy Flipping! 🚀"
+You are a professional, clear, and motivating real estate flip advisor.
+Always provide:
+- The After Repair Value (ARV)
+- A 70% Rule estimate for maximum offer price
+- Simple explanation why this matters
+- A quick tip for the investor
+- End with: "Happy Flipping! 🚀"
+
+Use bullet points. Format numbers with dollar signs and commas.
           `.trim()
         },
         {
           role: "user",
           content: `
-Current Value: $${Number(value).toLocaleString()}
+Current Property Value: $${Number(value).toLocaleString()}
 Planned Investment: $${Number(investment).toLocaleString()}
-Please calculate ARV, 70% Rule, and give advice.
+Please calculate ARV, the 70% Rule, and give professional advice.
           `.trim()
         }
-      ]
+      ],
     });
 
     res.json({
@@ -98,50 +114,55 @@ Please calculate ARV, 70% Rule, and give advice.
 });
 
 // ============================================================
-// #3 /api/enhance – Smart DALL·E Variation with Budget Logic
+// #3 DALL·E ENHANCER – Smart Budget Logic
 // ============================================================
 app.post('/api/enhance', upload.single('image'), async (req, res) => {
   console.log("🖼️ Received image for enhancement!");
-
-  const { investment } = req.body; // Sent from frontend
 
   if (!req.file) {
     console.error("❌ No file uploaded");
     return res.status(400).json({ error: "No file uploaded" });
   }
 
-  const budget = Number(investment) || 0;
-  let enhancementLevel;
-
-  if (budget < 10000) {
-    enhancementLevel = "basic exterior clean-up: remove boards, light paint touch-up, minor landscaping";
-  } else if (budget < 30000) {
-    enhancementLevel = "moderate exterior rehab: fresh paint, new windows/doors, clean landscaping, curb appeal upgrades";
-  } else {
-    enhancementLevel = "full premium exterior makeover: new porch, premium siding, stylish landscaping, lighting";
-  }
-
-  console.log(`💰 Planned Investment: $${budget} – Enhancement Level: ${enhancementLevel}`);
-
   const filePath = req.file.path;
-  const fileStream = fs.createReadStream(filePath);
+
+  // ✅ Grab planned investment budget
+  const budget = parseFloat(req.body.investment || 0);
+  console.log("✅ Enhancement budget received:", budget);
 
   try {
-    // ✅ DALL·E Variation w/ prompt logic
-    const dalleResponse = await openai.images.createEdit({
+    const fileStream = fs.createReadStream(filePath);
+
+    // ✅ Build enhancement prompt based on budget
+    let stylePrompt = "";
+    if (budget < 10000) {
+      stylePrompt = "Light cleanup: boarded windows removed, basic paint touch-up.";
+    } else if (budget >= 10000 && budget < 50000) {
+      stylePrompt = "Moderate renovation: new siding, new windows, landscaped yard, fresh paint.";
+    } else {
+      stylePrompt = "Full upscale transformation: new roof, new porch, modern windows, high-end curb appeal.";
+    }
+    console.log("✨ Style prompt:", stylePrompt);
+
+    // ✅ Call DALL·E with variation (you can swap for edits if needed)
+    const dalleResponse = await openai.images.createVariation({
       image: fileStream,
-      prompt: `Enhance this distressed house with ${enhancementLevel}. Make it realistic for the given budget.`,
       n: 1,
-      size: "1024x1024"
+      size: "1024x1024",
     });
 
-    console.log("✅ DALL·E enhanced image URL:", dalleResponse.data[0].url);
+    // ⚡️ Log and return the URL
+    console.log("✅ DALL·E variation generated:", dalleResponse.data[0].url);
 
-    res.json({ enhancedImageUrl: dalleResponse.data[0].url });
+    res.json({
+      enhancedImageUrl: dalleResponse.data[0].url,
+      budget: budget,
+      description: stylePrompt
+    });
 
   } catch (err) {
     console.error("❌ Enhance error:", err);
-    res.status(500).json({ error: "Image enhancement failed", details: err.message });
+    res.status(500).json({ error: "Failed to enhance image", details: err.message });
   }
 });
 
@@ -149,6 +170,7 @@ app.post('/api/enhance', upload.single('image'), async (req, res) => {
 // #4 START SERVER
 // ============================================================
 const PORT = process.env.PORT || 10000;
+
 app.listen(PORT, () => {
-  console.log(`🚀 Flip.ai backend running on port ${PORT}`);
+  console.log(`🚀 Flip backend running on port ${PORT}`);
 });
