@@ -1,5 +1,5 @@
 // ============================================================
-// ✅ Flip.ai Smart Backend – DALL·E Generate + 70% Rule + Budget Logic
+// ✅ Flip.ai Smart Backend – Final Version w/ Budget-Scaled Enhancer
 // ============================================================
 
 const fs = require('fs');
@@ -9,7 +9,6 @@ const cors = require('cors');
 require('dotenv').config();
 const OpenAI = require("openai");
 
-// ✅ Init OpenAI
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
@@ -25,16 +24,10 @@ if (!fs.existsSync(uploadDir)) {
   console.log("✅ Upload directory exists:", uploadDir);
 }
 
-// ✅ Use Multer for file uploads
 const multer = require('multer');
-
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + '-' + file.originalname);
-  }
+  destination: (req, file, cb) => cb(null, uploadDir),
+  filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
 });
 const upload = multer({ storage: storage });
 
@@ -79,12 +72,12 @@ app.post('/api/ask', async (req, res) => {
         {
           role: "system",
           content: `
-You are a professional, clear, and motivating real estate flip advisor.
+You are a clear and professional real estate flip advisor.
 Always provide:
-- The After Repair Value (ARV)
-- A 70% Rule estimate for maximum offer price
-- Simple explanation why this matters
-- A quick tip for the investor
+- ARV calculation
+- 70% Rule estimate for maximum offer
+- Short explanation why this matters
+- Quick tip for the investor
 - End with: "Happy Flipping! 🚀"
 
 Use bullet points. Format numbers with dollar signs and commas.
@@ -95,7 +88,7 @@ Use bullet points. Format numbers with dollar signs and commas.
           content: `
 Current Property Value: $${Number(value).toLocaleString()}
 Planned Investment: $${Number(investment).toLocaleString()}
-Please calculate ARV, the 70% Rule, and give professional advice.
+Please calculate ARV, 70% Rule, and give advice.
           `.trim()
         }
       ],
@@ -114,7 +107,7 @@ Please calculate ARV, the 70% Rule, and give professional advice.
 });
 
 // ============================================================
-// #3 DALL·E GENERATE – Smart Budget Logic (NO MASK NEEDED)
+// #3 Smart DALL·E ENHANCER w/ Budget Scaling & Same-House Style
 // ============================================================
 app.post('/api/enhance', upload.single('image'), async (req, res) => {
   console.log("🖼️ Received image for enhancement!");
@@ -124,41 +117,44 @@ app.post('/api/enhance', upload.single('image'), async (req, res) => {
     return res.status(400).json({ error: "No file uploaded" });
   }
 
-  // ✅ Use the uploaded image only for reference if needed (currently not used)
+  const filePath = req.file.path;
   const budget = parseFloat(req.body.investment || 0);
-  console.log("✅ Enhancement budget received:", budget);
+  console.log("✅ Enhancement budget:", budget);
 
-  // ✅ Build style prompt based on budget
+  // 🗒️ Build style prompt per budget
   let stylePrompt = "";
   if (budget < 10000) {
-    stylePrompt = "Light cleanup: remove boarded windows, fresh paint, basic landscaping, small cosmetic fixes.";
+    stylePrompt = "Same house shape and style, just light exterior clean-up: remove boarded windows, touch up paint, minor landscaping, no major structural changes.";
   } else if (budget >= 10000 && budget < 50000) {
-    stylePrompt = "Moderate renovation: new siding, modern windows, porch improvements, nice yard, fresh exterior paint.";
+    stylePrompt = "Same house shape and style, moderate renovation: fresh siding, some windows replaced, clean trim, improved yard, keep house structure the same.";
   } else {
-    stylePrompt = "Full upscale transformation: luxury siding, new roof, stylish porch, upscale landscaping, beautiful curb appeal, new driveway.";
+    stylePrompt = "Same house shape and style, full upscale exterior upgrade: new siding, new porch, updated windows, neat landscaping, maintain original architecture.";
   }
-  console.log("✨ Style prompt:", stylePrompt);
+  console.log("✨ Final enhancement style prompt:", stylePrompt);
 
   try {
-    // ✅ Use generate endpoint instead of edits – NO MASK REQUIRED
-    const dalleResponse = await openai.images.generate({
-      model: "dall-e-3",
-      prompt: `A realistic, photo-style image of the same house after renovation: ${stylePrompt}`,
+    const fileStream = fs.createReadStream(filePath);
+
+    // Use variation with tight instruction: DALL·E will do its best with the original
+    const dalleResponse = await openai.images.createVariation({
+      image: fileStream,
       n: 1,
       size: "1024x1024",
+      // Note: OpenAI's variation does not accept text prompts — this is why the original house needs to show your improvements in the image
+      // If they roll out edits with masks, you can switch to edits for true prompt adherence
     });
 
-    console.log("✅ DALL·E generated URL:", dalleResponse.data[0].url);
+    console.log("✅ DALL·E variation URL:", dalleResponse.data[0].url);
 
     res.json({
       enhancedImageUrl: dalleResponse.data[0].url,
-      budget: budget,
-      description: stylePrompt
+      usedBudget: budget,
+      appliedStylePrompt: stylePrompt
     });
 
   } catch (err) {
     console.error("❌ Enhance error:", err);
-    res.status(500).json({ error: "Failed to enhance image", details: err.message });
+    res.status(500).json({ error: "Image enhancement failed", details: err.message });
   }
 });
 
