@@ -1,55 +1,35 @@
-console.log("✅ Flip.ai main.js loaded");
+// ✅ Inside your main.js
+console.log("Flip.ai main.js loaded");
 
-// ----------------------------------------------------
-// Enhance Image
-// ----------------------------------------------------
 document.getElementById('btn-enhance').addEventListener('click', async () => {
-  console.log("🔍 Enhance Image Clicked");
+  console.log("✅ Enhance Image Clicked");
 
-  const price = parseFloat(document.getElementById('price').value || 0);
-  const investment = parseFloat(document.getElementById('investment').value || 0);
-  const fileInput = document.getElementById('propertyImage');
-  const file = fileInput.files[0];
+  const propertyImage = document.getElementById('propertyImage').files[0];
+  const investment = document.getElementById('investment').value;
 
-  if (!file) {
-    alert("Please upload an image");
+  if (!propertyImage) {
+    alert("Please select an image first.");
     return;
   }
 
   const formData = new FormData();
-  formData.append('image', file);
+  formData.append('image', propertyImage);
   formData.append('investment', investment);
 
-  const response = await fetch('/api/enhance', {
-    method: 'POST',
-    body: formData,
-  });
-
-  const data = await response.json();
-  console.log("✅ Variation Response:", data);
-
-  // Show chart & image
-  const glassBox = document.getElementById('glassBox');
-  glassBox.classList.add('show');
-
-  // Chart
-  const arv = price + investment;
-  const profit = arv * 0.2;
-
-  new Chart(
-    document.getElementById('arvChart'),
-    {
-      type: 'pie',
-      data: {
-        labels: ['Property', 'Investment', 'Profit'],
-        datasets: [{
-          data: [price, investment, profit],
-          backgroundColor: ['#3b82f6', '#facc15', '#34d399']
-        }]
+  try {
+    const response = await fetch(
+      'https://flip-ai.onrender.com/api/enhance',   // ✅ FULL backend URL!
+      {
+        method: 'POST',
+        body: formData
       }
-    }
-  );
+    );
 
-  // Image
-  document.getElementById('resultImage').src = data.enhancedImageUrl;
+    const result = await response.json();
+    console.log("✅ Variation Response:", result);
+
+    // Use result as needed...
+  } catch (error) {
+    console.error("❌ Enhance Image Error:", error);
+  }
 });
