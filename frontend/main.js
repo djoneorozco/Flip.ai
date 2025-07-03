@@ -3,21 +3,19 @@
 // ============================================================
 const btnTest = document.getElementById('btn-test');
 const btnAsk = document.getElementById('btn-ask');
-const btnEnhance = document.getElementById('btn-enhance');
-
 const zipInput = document.getElementById('zip');
 const priceInput = document.getElementById('price');
 const investInput = document.getElementById('investment') || document.getElementById('prompt');
-
+const btnEnhance = document.getElementById('btn-enhance');
 const imageInput = document.getElementById('propertyImage');
 const enhancedImage = document.getElementById('enhancedImage');
-
-const workingOverlay = document.getElementById('workingOverlay');
 
 const glassBox = document.getElementById('glassBox');
 const arvCtx = document.getElementById('arvChart')?.getContext?.('2d');
 
-let arvChartInstance = null; // ✅ Save chart instance
+const workingOverlay = document.getElementById('workingOverlay');
+
+let arvChartInstance = null; // ✅ Save chart instance for reuse
 
 // ============================================================
 // #2 BACKEND URL
@@ -65,7 +63,7 @@ btnAsk?.addEventListener('click', async () => {
     const data = await response.json();
     console.log("✅ AI Response:", data);
 
-    glassBox.classList.add('show');
+    if (glassBox) glassBox.classList.add('show');
     alert(data.answer);
 
   } catch (err) {
@@ -75,7 +73,7 @@ btnAsk?.addEventListener('click', async () => {
 });
 
 // ============================================================
-// #5 ENHANCE IMAGE BUTTON w/ WORKING OVERLAY + ARV PIE
+// #5 ENHANCE IMAGE BUTTON w/ ARV PIE + Working Overlay
 // ============================================================
 btnEnhance?.addEventListener('click', async () => {
   const file = imageInput?.files[0];
@@ -87,12 +85,12 @@ btnEnhance?.addEventListener('click', async () => {
     return;
   }
 
-  // ✅ Show the working overlay
-  workingOverlay.classList.add('show');
+  // ✅ Show working overlay
+  if (workingOverlay) workingOverlay.classList.add('show');
 
   const formData = new FormData();
   formData.append('image', file);
-  formData.append('investment', invest); // ✅ Include budget for server logic!
+  formData.append('investment', invest); // Send budget!
 
   try {
     const response = await fetch(`${backendURL}/api/enhance`, {
@@ -104,19 +102,20 @@ btnEnhance?.addEventListener('click', async () => {
     const data = await response.json();
     console.log("✅ AI Enhanced Image:", data);
 
-    // ✅ Hide the working overlay after success
-    workingOverlay.classList.remove('show');
+    // ✅ Hide working overlay
+    if (workingOverlay) workingOverlay.classList.remove('show');
 
-    // ✅ Show the enhanced image
+    // Show enhanced image
     enhancedImage.src = data.enhancedImageUrl;
     enhancedImage.style.display = 'block';
 
-    // ✅ Build ARV + profit pie chart
+    // ✅ Calculate ARV + Profit + Draw Pie Chart
     if (!isNaN(price) && !isNaN(invest)) {
       const expectedARV = Math.round((price + invest) / 0.7);
       const profit = expectedARV - price - invest;
 
-      glassBox.classList.add('show');
+      if (glassBox) glassBox.classList.add('show');
+
       const h2 = glassBox.querySelector('h2');
       if (h2) h2.innerText = `Expected ARV: $${expectedARV.toLocaleString()}`;
 
@@ -140,7 +139,8 @@ btnEnhance?.addEventListener('click', async () => {
             legend: {
               position: 'bottom',
               labels: { color: '#000' }
-            }
+            },
+            tooltip: { enabled: true }
           }
         }
       });
@@ -149,6 +149,7 @@ btnEnhance?.addEventListener('click', async () => {
   } catch (err) {
     console.error("❌ Enhance Image Error:", err);
     alert("Image enhancement failed — see console for details!");
-    workingOverlay.classList.remove('show');
+  } finally {
+    if (workingOverlay) workingOverlay.classList.remove('show');
   }
 });
