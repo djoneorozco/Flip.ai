@@ -1,5 +1,5 @@
 // ============================================================
-// ✅ Flip.ai Backend – Smart Budget Enhancer w/ Edits or Variations
+// ✅ Flip.ai Backend – Smart Budget Enhancer w/ Clear Tiers
 // ============================================================
 
 const fs = require('fs');
@@ -56,7 +56,7 @@ app.get('/api/test', (req, res) => {
 });
 
 // ============================================================
-// #2 Ask Route (No changes)
+// #2 Ask Route
 // ============================================================
 app.post('/api/ask', async (req, res) => {
   const { value, investment } = req.body;
@@ -110,65 +110,60 @@ Please calculate ARV, the 70% Rule, and give professional advice.
 });
 
 // ============================================================
-// #3 ENHANCE w/ SMART BUDGET TIERS + FALLBACK
+// #3 ENHANCE w/ SMART BUDGET TIERS + STRONG PROMPT
 // ============================================================
 app.post('/api/enhance', upload.fields([
   { name: 'image', maxCount: 1 },
   { name: 'mask', maxCount: 1 }
 ]), async (req, res) => {
-  console.log("🖼️ Received image and (optional) mask for enhancement!");
+  console.log("🖼️ Received image and mask for enhancement!");
 
   const imageFile = req.files['image']?.[0];
   const maskFile = req.files['mask']?.[0];
   const budget = parseFloat(req.body.investment || 0);
 
-  if (!imageFile) {
-    console.error("❌ No image uploaded");
-    return res.status(400).json({ error: "Original image is required" });
+  if (!imageFile || !maskFile) {
+    console.error("❌ Missing original image or mask");
+    return res.status(400).json({ error: "Both original image and mask are required" });
   }
 
   console.log("✅ Budget received:", budget);
 
-  // ✅ Build Tiered Prompt
-  let stylePrompt = `Keep the same house structure, siding, roofline, and angle.
-Focus only on replacing boarded windows and doors with realistic upgrades based on budget tier.
-Do not add new landscaping or change other parts of the house.`;
+  // ✅ Build Tiered Prompt – clear and direct
+  let stylePrompt = `Keep the house exactly the same: same roofline, siding, angle, and surroundings. 
+Replace ALL boarded windows and doors — do not leave any boards. 
+Focus only on realistic upgrades that match this budget tier:`;
 
   if (budget < 10000) {
-    stylePrompt += ` Tier 1: Replace boarded windows and doors with basic standard windows and a simple clean front door. Functional only.`;
+    stylePrompt += `
+Tier 1 (Low budget): Basic functional replacements. Simple standard windows and a plain front door. No fancy trim or extra details.`;
   } else if (budget >= 10000 && budget < 50000) {
-    stylePrompt += ` Tier 2: New modern windows and a modern front door with some stylish trim. Moderate finishing touches like fresh paint around frames.`;
+    stylePrompt += `
+Tier 2 (Moderate budget): Modern energy-efficient windows with simple but stylish trim. A clean, modern front door with fresh framing. Light fresh paint around frames if needed.`;
   } else {
-    stylePrompt += ` Tier 3: Upscale high-end windows, premium stylish front door, elegant trim details. Look professionally renovated while preserving shape.`;
+    stylePrompt += `
+Tier 3 (High budget): High-end windows with upscale design. Premium stylish front door with elegant framing and upscale trim. Make it look fully renovated and professionally finished.`;
   }
+
+  stylePrompt += `
+Do not change the house’s shape, size, roof, or landscaping. Just realistic window and door improvements.`
 
   console.log("✨ Final Prompt:", stylePrompt);
 
   try {
     const imageStream = fs.createReadStream(imageFile.path);
+    const maskStream = fs.createReadStream(maskFile.path);
 
-    let dalleResponse;
+    const dalleResponse = await openai.images.createEdit({
+      model: "dall-e-2",
+      image: imageStream,
+      mask: maskStream,
+      prompt: stylePrompt,
+      n: 1,
+      size: "1024x1024"
+    });
 
-    if (maskFile) {
-      const maskStream = fs.createReadStream(maskFile.path);
-
-      dalleResponse = await openai.images.createEdit({
-        model: "dall-e-2",
-        image: imageStream,
-        mask: maskStream,
-        prompt: stylePrompt,
-        n: 1,
-        size: "1024x1024"
-      });
-    } else {
-      dalleResponse = await openai.images.createVariation({
-        image: imageStream,
-        n: 1,
-        size: "1024x1024"
-      });
-    }
-
-    console.log("✅ DALL·E generated:", dalleResponse.data[0].url);
+    console.log("✅ DALL·E edit generated:", dalleResponse.data[0].url);
 
     res.json({
       enhancedImageUrl: dalleResponse.data[0].url,
