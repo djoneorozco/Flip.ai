@@ -1,42 +1,49 @@
-console.log("Flip.ai main.js loaded");
+// =============================================================
+// ✅ Flip.ai — main.js for One Image Upload
+// =============================================================
 
-// Get elements
-const enhanceButton = document.getElementById('btn-enhance');
-const propertyInput = document.getElementById('price');
-const investmentInput = document.getElementById('investment');
-const propertyImage = document.getElementById('propertyImage');
+console.log("✅ Flip.ai main.js loaded");
 
-enhanceButton.addEventListener('click', async () => {
-  console.log("✨ Enhance Image Clicked");
+document.getElementById('uploadBtn').addEventListener('click', async () => {
+  const imageFile = document.getElementById('imageFileInput').files[0];
 
-  const propertyValue = propertyInput.value;
-  const investment = investmentInput.value;
-  const file = propertyImage.files[0];
-
-  if (!file) {
-    alert("Please upload an image");
+  if (!imageFile) {
+    alert("⚠️ You must select an image to enhance!");
     return;
   }
 
   const formData = new FormData();
-  formData.append('image', file);
-  formData.append('propertyValue', propertyValue);
-  formData.append('investment', investment);
+  formData.append('image', imageFile);
 
   try {
+    console.log("✨ Sending image to backend...");
+
     const response = await fetch('https://flip-ai.onrender.com/api/enhance', {
       method: 'POST',
       body: formData
+      // ❌ DO NOT set Content-Type! Browser handles it for FormData.
     });
 
-    if (!response.ok) throw new Error(`Server error: ${response.status}`);
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Server responded with ${response.status}: ${errorText}`);
+    }
 
     const data = await response.json();
-    console.log("✅ Variation Response:", data);
-    alert(`Enhanced URL: ${data.enhancedImageUrl}\nBudget: ${data.budget}\nTier: ${data.tier}`);
+    console.log("✅ Enhanced image URL:", data.enhancedImageUrl);
 
-  } catch (err) {
-    console.error("❌ Enhance Image Error:", err);
-    alert(`Enhance failed: ${err.message}`);
+    // ============================
+    // Show the result on the page
+    // ============================
+    document.getElementById('result').innerHTML = `
+      <p><strong>Enhanced Image URL:</strong>
+        <a href="${data.enhancedImageUrl}" target="_blank">${data.enhancedImageUrl}</a>
+      </p>
+      <img src="${data.enhancedImageUrl}" alt="Enhanced" style="max-width:500px; border:1px solid #333;">
+    `;
+
+  } catch (error) {
+    console.error("❌ Enhance Image Error:", error);
+    alert(`Enhance failed: ${error.message}`);
   }
 });
