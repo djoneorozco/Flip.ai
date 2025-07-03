@@ -12,7 +12,6 @@ const imageInput = document.getElementById('propertyImage');
 const enhancedImage = document.getElementById('enhancedImage');
 
 const glassBox = document.getElementById('glassBox');
-const chartContainer = document.getElementById('chartContainer'); // Not used here, kept for backward compat
 const resultEl = document.getElementById('result');
 const schoolList = document.getElementById('schoolList');
 const crimeInfo = document.getElementById('crimeInfo');
@@ -78,13 +77,14 @@ btnAsk.addEventListener('click', async () => {
     alert("Ask FlipAI failed — see console for details!");
   }
 });
+
 // ============================================================
 // #5 ENHANCE IMAGE BUTTON w/ ARV PIE + $ amounts
 // ============================================================
 btnEnhance.addEventListener('click', async () => {
   const file = imageInput.files[0];
   const price = parseFloat(priceInput.value);
-  const invest = parseFloat(document.getElementById('investment').value);
+  const invest = parseFloat(investInput.value);
 
   if (!file) {
     alert("Please choose an image first!");
@@ -148,4 +148,3 @@ btnEnhance.addEventListener('click', async () => {
     alert("Image enhancement failed — see console for details!");
   }
 });
-
