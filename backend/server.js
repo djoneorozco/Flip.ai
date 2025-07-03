@@ -1,5 +1,5 @@
 // ============================================================
-// ✅ Flip.ai Backend – Realistic Smart Enhancer (No Masks)
+// ✅ Flip.ai Backend – Variation-Only Smart Enhancer (No Mask)
 // ============================================================
 
 const fs = require('fs');
@@ -9,18 +9,21 @@ require('dotenv').config();
 const OpenAI = require("openai");
 const multer = require('multer');
 
+// ✅ Init OpenAI
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
 const app = express();
 
+// ✅ Upload Dir for Render
 const uploadDir = '/tmp/uploads';
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
   console.log("✅ Created upload directory:", uploadDir);
 }
 
+// ✅ Multer Storage for Original Image
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, uploadDir);
@@ -31,6 +34,7 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 
+// ✅ Middleware
 app.use(express.json());
 app.use(cors({
   origin: [
@@ -47,134 +51,61 @@ app.get('/', (req, res) => {
   res.send('✅ Flip.AI backend is alive!');
 });
 
-// ============================================================
-// #2 Ask AI (unchanged)
-// ============================================================
-app.post('/api/ask', async (req, res) => {
-  const { value, investment } = req.body;
-
-  if (!value || !investment) {
-    return res.status(400).json({ error: "Missing value or investment amount" });
-  }
-
-  const arv = Number(value) + Number(investment);
-  const maxOffer = arv * 0.7;
-
-  try {
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        {
-          role: "system",
-          content: `
-You are a clear and motivating real estate flip advisor. Always provide:
-- ARV
-- 70% rule estimate
-- One line explanation
-- One quick tip
-- End with: Happy Flipping! 🚀
-Format numbers with dollar signs and commas.
-          `.trim()
-        },
-        {
-          role: "user",
-          content: `
-Current Property Value: $${Number(value).toLocaleString()}
-Planned Investment: $${Number(investment).toLocaleString()}
-Please calculate ARV and 70% rule.
-          `.trim()
-        }
-      ],
-    });
-
-    res.json({
-      answer: completion.choices[0].message.content,
-      arv: `$${arv.toLocaleString()}`,
-      maxOffer: `$${maxOffer.toLocaleString()}`
-    });
-
-  } catch (err) {
-    console.error("❌ AI error:", err);
-    res.status(500).json({ error: "OpenAI request failed" });
-  }
+app.get('/api/test', (req, res) => {
+  res.json({ message: "✅ Backend test successful!" });
 });
 
 // ============================================================
-// #3 ENHANCE REALISTIC FLOW
+// #2 ENHANCE w/ Variation Only (No Mask Required)
 // ============================================================
 app.post('/api/enhance', upload.single('image'), async (req, res) => {
-  console.log("🖼️ Received image for enhancement!");
+  console.log("🖼️ Received image for variation!");
 
-  const file = req.file;
+  const imageFile = req.file;
   const budget = parseFloat(req.body.investment || 0);
 
-  if (!file) {
+  if (!imageFile) {
     console.error("❌ No image uploaded");
-    return res.status(400).json({ error: "Image required" });
+    return res.status(400).json({ error: "Image is required" });
   }
 
   console.log("✅ Budget received:", budget);
 
-  // ✅ Smart prompt
-  let stylePrompt = `
-Same house, same angle, same structure.
-Enhance boarded windows and doors based on budget:
-`;
-
+  // ✅ Use simple style prompt logic for display
+  let tier = "";
   if (budget < 10000) {
-    stylePrompt += `
-Tier: Low Budget.
-- Replace boarded windows with basic clean windows.
-- Simple front door.
-- No extra landscaping.
-- Keep siding as is.
-    `;
+    tier = "Basic fixes";
   } else if (budget >= 10000 && budget < 50000) {
-    stylePrompt += `
-Tier: Moderate Budget.
-- Replace boarded windows with modern white framed windows.
-- Add fresh front door.
-- Repaint siding.
-- Minor curb appeal upgrade.
-    `;
+    tier = "Moderate upgrades";
   } else {
-    stylePrompt += `
-Tier: High Budget.
-- Replace all boarded windows with upscale premium windows.
-- High-end front door.
-- Add elegant trim details.
-- New fresh landscaping.
-- Keep house structure identical.
-    `;
+    tier = "High-end upscale renovation";
   }
 
-  console.log("✨ Final Prompt:", stylePrompt);
-
   try {
-    const fileStream = fs.createReadStream(file.path);
+    const imageStream = fs.createReadStream(imageFile.path);
 
     const dalleResponse = await openai.images.createVariation({
-      image: fileStream,
+      image: imageStream,
       n: 1,
       size: "1024x1024"
     });
 
-    console.log("✅ Variation generated:", dalleResponse.data[0].url);
+    console.log("✅ DALL·E variation URL:", dalleResponse.data[0].url);
 
     res.json({
       enhancedImageUrl: dalleResponse.data[0].url,
       budget: budget,
-      description: stylePrompt
+      tier: tier
     });
 
   } catch (err) {
-    console.error("❌ Enhance error:", err);
-    res.status(500).json({ error: "Failed to enhance image", details: err.message });
+    console.error("❌ Variation error:", err);
+    res.status(500).json({ error: "Failed to create variation", details: err.message });
   }
 });
 
 // ============================================================
-// #4 START SERVER
+// #3 START SERVER
 // ============================================================
 const PORT = process.env.PORT || 10000;
 
