@@ -1,5 +1,5 @@
 // ============================================================
-// ✅ Flip.ai Backend – Smart Budget Enhancer w/ Clear Tiers
+// ✅ Flip.ai Option A – Smart GPT Plan + DALL·E Variation
 // ============================================================
 
 const fs = require('fs');
@@ -9,179 +9,117 @@ require('dotenv').config();
 const OpenAI = require("openai");
 const multer = require('multer');
 
-// ✅ Init OpenAI
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const app = express();
 
-// ✅ Upload Dir for Render
+// 📁 Use /tmp/uploads for ephemeral file system
 const uploadDir = '/tmp/uploads';
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
   console.log("✅ Created upload directory:", uploadDir);
 }
 
-// ✅ Multer Storage for Original + Mask
+// ✅ Multer for single file
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + '-' + file.originalname);
-  }
+  destination: (req, file, cb) => cb(null, uploadDir),
+  filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
 });
 const upload = multer({ storage: storage });
 
-// ✅ Middleware
 app.use(express.json());
 app.use(cors({
   origin: [
     'http://localhost:3000',
-    'https://flip-ai.netlify.app',
-    'https://www.flip-ai.netlify.app'
+    'https://flip-ai.netlify.app'
   ]
 }));
 
-// ============================================================
-// #1 Health Check
-// ============================================================
+// Health check
 app.get('/', (req, res) => {
-  res.send('✅ Flip.AI backend is alive!');
+  res.send('✅ Flip.ai Option A backend alive!');
 });
 
 app.get('/api/test', (req, res) => {
-  res.json({ message: "✅ Backend test successful!" });
+  res.json({ message: "✅ Test successful!" });
 });
 
 // ============================================================
-// #2 Ask Route
+// 🧮 Ask Route – 70% Rule + GPT Plan
 // ============================================================
 app.post('/api/ask', async (req, res) => {
   const { value, investment } = req.body;
 
   if (!value || !investment) {
-    return res.status(400).json({ error: "Missing value or investment amount" });
+    return res.status(400).json({ error: "Missing value or investment" });
   }
 
   const arv = Number(value) + Number(investment);
   const maxOffer = arv * 0.7;
 
+  const messages = [
+    {
+      role: "system",
+      content: `
+You are a professional flip advisor.
+Provide:
+- ARV & 70% Rule max offer
+- Clear flip plan: upgrades for boarded windows, doors, paint, etc.
+- Tier recommendation: low, moderate, or high
+- End with: "Happy Flipping! 🚀"
+      `.trim()
+    },
+    {
+      role: "user",
+      content: `Property Value: $${value}, Investment: $${investment}.`
+    }
+  ];
+
   try {
     const completion = await openai.chat.completions.create({
       model: "gpt-4o",
-      messages: [
-        {
-          role: "system",
-          content: `
-You are a professional, clear, and motivating real estate flip advisor.
-Always provide:
-- The After Repair Value (ARV)
-- A 70% Rule estimate for maximum offer price
-- A simple explanation why this matters
-- A quick tip for the investor
-- End with: "Happy Flipping! 🚀"
-
-Use bullet points. Format numbers with dollar signs and commas.
-          `.trim()
-        },
-        {
-          role: "user",
-          content: `
-Current Property Value: $${Number(value).toLocaleString()}
-Planned Investment: $${Number(investment).toLocaleString()}
-Please calculate ARV, the 70% Rule, and give professional advice.
-          `.trim()
-        }
-      ],
+      messages
     });
 
     res.json({
-      answer: completion.choices[0].message.content,
+      plan: completion.choices[0].message.content,
       arv: `$${arv.toLocaleString()}`,
       maxOffer: `$${maxOffer.toLocaleString()}`
     });
 
   } catch (err) {
-    console.error("❌ AI error:", err);
-    res.status(500).json({ error: "OpenAI request failed" });
+    console.error(err);
+    res.status(500).json({ error: "Failed to generate plan." });
   }
 });
 
 // ============================================================
-// #3 ENHANCE w/ SMART BUDGET TIERS + STRONG PROMPT
+// 🎨 Enhance – DALL·E Variation (No Mask Needed)
 // ============================================================
-app.post('/api/enhance', upload.fields([
-  { name: 'image', maxCount: 1 },
-  { name: 'mask', maxCount: 1 }
-]), async (req, res) => {
-  console.log("🖼️ Received image and mask for enhancement!");
-
-  const imageFile = req.files['image']?.[0];
-  const maskFile = req.files['mask']?.[0];
-  const budget = parseFloat(req.body.investment || 0);
-
-  if (!imageFile || !maskFile) {
-    console.error("❌ Missing original image or mask");
-    return res.status(400).json({ error: "Both original image and mask are required" });
+app.post('/api/enhance', upload.single('image'), async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: "No file uploaded" });
   }
 
-  console.log("✅ Budget received:", budget);
-
-  // ✅ Build Tiered Prompt – clear and direct
-  let stylePrompt = `Keep the house exactly the same: same roofline, siding, angle, and surroundings. 
-Replace ALL boarded windows and doors — do not leave any boards. 
-Focus only on realistic upgrades that match this budget tier:`;
-
-  if (budget < 10000) {
-    stylePrompt += `
-Tier 1 (Low budget): Basic functional replacements. Simple standard windows and a plain front door. No fancy trim or extra details.`;
-  } else if (budget >= 10000 && budget < 50000) {
-    stylePrompt += `
-Tier 2 (Moderate budget): Modern energy-efficient windows with simple but stylish trim. A clean, modern front door with fresh framing. Light fresh paint around frames if needed.`;
-  } else {
-    stylePrompt += `
-Tier 3 (High budget): High-end windows with upscale design. Premium stylish front door with elegant framing and upscale trim. Make it look fully renovated and professionally finished.`;
-  }
-
-  stylePrompt += `
-Do not change the house’s shape, size, roof, or landscaping. Just realistic window and door improvements.`
-
-  console.log("✨ Final Prompt:", stylePrompt);
+  const fileStream = fs.createReadStream(req.file.path);
 
   try {
-    const imageStream = fs.createReadStream(imageFile.path);
-    const maskStream = fs.createReadStream(maskFile.path);
-
-    const dalleResponse = await openai.images.createEdit({
-      model: "dall-e-2",
-      image: imageStream,
-      mask: maskStream,
-      prompt: stylePrompt,
+    const dalleResponse = await openai.images.createVariation({
+      image: fileStream,
       n: 1,
       size: "1024x1024"
     });
 
-    console.log("✅ DALL·E edit generated:", dalleResponse.data[0].url);
-
     res.json({
-      enhancedImageUrl: dalleResponse.data[0].url,
-      budget: budget,
-      description: stylePrompt
+      enhancedImageUrl: dalleResponse.data[0].url
     });
 
   } catch (err) {
-    console.error("❌ Enhance error:", err);
-    res.status(500).json({ error: "Failed to enhance image", details: err.message });
+    console.error(err);
+    res.status(500).json({ error: "Failed to enhance image." });
   }
 });
 
-// ============================================================
-// #4 START SERVER
-// ============================================================
 const PORT = process.env.PORT || 10000;
-
 app.listen(PORT, () => {
-  console.log(`🚀 Flip backend running on port ${PORT}`);
+  console.log(`🚀 Flip.ai backend running on ${PORT}`);
 });
