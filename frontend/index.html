@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- //#1 META + TITLE -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Flip.ai – Smart AI-Driven Flip Insights</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
+    /* //#2 BASE STYLES */
     body {
       margin: 0;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -13,102 +15,72 @@
       color: #fff;
       display: flex;
       flex-direction: column;
-      justify-content: flex-start;
       align-items: center;
       min-height: 100vh;
       padding: 2rem;
     }
 
-    h1 {
-      font-size: 2.5rem;
-      margin-bottom: 0.5rem;
-    }
-
-    p {
-      margin-bottom: 2rem;
-    }
+    h1 { font-size: 2rem; margin-bottom: 1rem; }
 
     input, textarea {
-      width: 100%;
-      max-width: 300px;
+      width: 100%; max-width: 300px;
       margin-bottom: 1rem;
       padding: 0.75rem;
-      border: none;
-      border-radius: 6px;
+      border: none; border-radius: 6px;
       font-size: 1rem;
     }
 
     button {
-      margin: 0.5rem;
       padding: 0.75rem 1.5rem;
-      border: none;
-      border-radius: 6px;
+      border: none; border-radius: 6px;
       font-size: 1rem;
       cursor: pointer;
-      background: #0ea5e9;
-      color: #fff;
+      background: #0ea5e9; color: #fff;
     }
 
     .glass-box {
       display: none;
       position: relative;
-      top: 0;
       background: rgba(255, 255, 255, 0.1);
       backdrop-filter: blur(15px);
       padding: 2rem;
       border-radius: 16px;
       text-align: center;
-      z-index: 999;
-      max-width: 600px;
+      margin-top: 2rem;
       color: #000;
+      max-width: 600px;
     }
 
-    .glass-box.show {
-      display: block;
-    }
+    .glass-box.show { display: block; }
 
     #enhancedImage {
-      display: none;
       width: 100%;
       max-width: 500px;
       margin-top: 1rem;
       border-radius: 8px;
     }
-
-    #workingImage {
-      display: none;
-      width: 150px;
-      margin-top: 1rem;
-    }
   </style>
 </head>
 
 <body>
-  <!-- #1: HEADER -->
-  <h1>Welcome to Flip.ai</h1>
-  <p>#1 Smart AI-Driven Flip Insights</p>
+  <!-- //#3 HEADLINE -->
+  <h1>Flip.ai – Smart AI-Driven Flip Insights</h1>
 
-  <!-- #2: INPUTS -->
-  <input id="zip" type="text" placeholder="ZIP Code (optional)" />
-  <input id="price" type="number" placeholder="Property Purchase Cost" /> <!-- ✅ Added back -->
-  <input id="investment" type="number" placeholder="Planned Investment Cost" />
-  <textarea id="prompt" placeholder="Details (optional)"></textarea>
-
-  <!-- #3: FILE UPLOAD -->
+  <!-- //#4 INPUT FIELDS -->
+  <input id="price" type="number" placeholder="Property Purchase Cost (required)" />
+  <input id="investment" type="number" placeholder="Planned Investment Cost (required)" />
   <input type="file" id="propertyImage" accept="image/*" />
-  <button id="btn-enhance">Enhance Image</button>
 
-  <!-- #4: WORKING IMAGE -->
-  <img id="workingImage" src="static/images/working.png" alt="Working..." />
+  <!-- //#5 ENHANCE BUTTON -->
+  <button id="btn-enhance">Enhance Image & Calculate ARV</button>
 
-  <!-- #5: GLASS BOX (ARV + CHART + IMAGE) -->
+  <!-- //#6 OUTPUT -->
   <div class="glass-box" id="glassBox">
     <h2 id="arvHeader">Expected ARV</h2>
     <canvas id="arvChart"></canvas>
-    <img id="enhancedImage" src="" alt="Enhanced Property" />
+    <img id="enhancedImage" src="" alt="Enhanced Result" />
   </div>
 
-  <!-- #6: SCRIPT -->
   <script src="main.js"></script>
 </body>
 </html>
