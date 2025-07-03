@@ -1,103 +1,86 @@
-// ============================================================
-// #1 ELEMENT SELECTORS
-// ============================================================
-
-const btnEnhance = document.getElementById('btn-enhance');
-const imageInput = document.getElementById('propertyImage');
-const priceInput = document.getElementById('price');
-const investInput = document.getElementById('investment');
-
-const glassBox = document.getElementById('glassBox');
-const arvCtx = document.getElementById('arvChart')?.getContext?.('2d');
-const enhancedImage = document.getElementById('enhancedImage');
-
-let arvChartInstance = null;
-
-// ============================================================
-// #2 BACKEND URL
-// ============================================================
-
-const backendURL = 'https://flip-ai.onrender.com';
-
-// ============================================================
-// #3 ENHANCE IMAGE BUTTON – VARIATION ONLY
-// ============================================================
-
-btnEnhance?.addEventListener('click', async () => {
-  console.log("✨ Enhance Image clicked");
-
-  const file = imageInput?.files[0];
-  const price = parseFloat(priceInput?.value);
-  const invest = parseFloat(investInput?.value);
-
-  if (!file) {
-    alert("Please choose an image first!");
-    return;
-  }
-
-  console.log("✅ Sending file:", file.name);
-  console.log("✅ Investment amount:", invest);
-
-  const formData = new FormData();
-  formData.append('image', file);
-  formData.append('investment', invest);
-
-  try {
-    const response = await fetch(`${backendURL}/api/enhance`, {
-      method: 'POST',
-      body: formData
-    });
-
-    if (!response.ok) throw new Error(`Server error: ${response.status}`);
-    const data = await response.json();
-    console.log("✅ Variation Response:", data);
-
-    // ✅ Show enhanced image inside glass box
-    enhancedImage.src = data.enhancedImageUrl;
-    enhancedImage.style.display = 'block';
-
-    // ✅ Calculate ARV + Profit + Draw Chart
-    if (!isNaN(price) && !isNaN(invest)) {
-      const expectedARV = Math.round((price + invest) / 0.7);
-      const profit = expectedARV - price - invest;
-
-      glassBox.classList.add('show');
-
-      // Update header
-      const h2 = glassBox.querySelector('h2');
-      if (h2) h2.innerText = `Expected ARV: $${expectedARV.toLocaleString()}`;
-
-      // Destroy old chart if needed
-      if (arvChartInstance) arvChartInstance.destroy();
-
-      // Draw new pie chart
-      arvChartInstance = new Chart(arvCtx, {
-        type: 'pie',
-        data: {
-          labels: [
-            `Property: $${price.toLocaleString()}`,
-            `Investment: $${invest.toLocaleString()}`,
-            `Profit: $${profit.toLocaleString()}`
-          ],
-          datasets: [{
-            data: [price, invest, profit],
-            backgroundColor: ['#36A2EB', '#FFCE56', '#4BC0C0']
-          }]
-        },
-        options: {
-          plugins: {
-            legend: {
-              position: 'bottom',
-              labels: { color: '#000' }
-            },
-            tooltip: { enabled: true }
-          }
-        }
-      });
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- //#1 META + TITLE -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Flip.ai – Smart AI-Driven Flip Insights</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    /* //#2 BASE STYLES */
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #0a192f;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 2rem;
     }
 
-  } catch (err) {
-    console.error("❌ Enhance Image Error:", err);
-    alert("Enhance failed — see console for details!");
-  }
-});
+    h1 { font-size: 2rem; margin-bottom: 1rem; }
+
+    input, textarea {
+      width: 100%; max-width: 300px;
+      margin-bottom: 1rem;
+      padding: 0.75rem;
+      border: none; border-radius: 6px;
+      font-size: 1rem;
+    }
+
+    button {
+      padding: 0.75rem 1.5rem;
+      border: none; border-radius: 6px;
+      font-size: 1rem;
+      cursor: pointer;
+      background: #0ea5e9; color: #fff;
+    }
+
+    .glass-box {
+      display: none;
+      position: relative;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(15px);
+      padding: 2rem;
+      border-radius: 16px;
+      text-align: center;
+      margin-top: 2rem;
+      color: #000;
+      max-width: 600px;
+    }
+
+    .glass-box.show { display: block; }
+
+    #enhancedImage {
+      width: 100%;
+      max-width: 500px;
+      margin-top: 1rem;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- //#3 HEADLINE -->
+  <h1>Flip.ai – Smart AI-Driven Flip Insights</h1>
+
+  <!-- //#4 INPUT FIELDS -->
+  <input id="price" type="number" placeholder="Property Purchase Cost (required)" />
+  <input id="investment" type="number" placeholder="Planned Investment Cost (required)" />
+  <input type="file" id="propertyImage" accept="image/*" />
+
+  <!-- //#5 ENHANCE BUTTON -->
+  <button id="btn-enhance">Enhance Image & Calculate ARV</button>
+
+  <!-- //#6 OUTPUT -->
+  <div class="glass-box" id="glassBox">
+    <h2 id="arvHeader">Expected ARV</h2>
+    <canvas id="arvChart"></canvas>
+    <img id="enhancedImage" src="" alt="Enhanced Result" />
+  </div>
+
+  <script src="main.js"></script>
+</body>
+</html>
