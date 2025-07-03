@@ -16,7 +16,7 @@ const openai = new OpenAI({
 
 const app = express();
 
-// ✅ Ensure /tmp/uploads exists (Render ephemeral FS)
+// ✅ Ensure /tmp/uploads exists (Fly ephemeral FS)
 const uploadDir = '/tmp/uploads';
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
@@ -25,7 +25,7 @@ if (!fs.existsSync(uploadDir)) {
   console.log("✅ Upload directory exists:", uploadDir);
 }
 
-// ✅ Multer storage config (only ONE file now)
+// ✅ Multer storage config (ONE file only)
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, uploadDir);
@@ -53,7 +53,7 @@ app.get('/', (req, res) => {
 });
 
 // ============================================================
-// ✅ Ask Route (unchanged)
+// ✅ Ask Route (Smart Budget)
 // ============================================================
 app.post('/api/ask', async (req, res) => {
   const { value, investment } = req.body;
@@ -100,13 +100,13 @@ Please calculate ARV, 70% Rule, and advice.
     });
 
   } catch (err) {
-    console.error("❌ Ask error:", err);
+    console.error("❌ /api/ask error:", err);
     res.status(500).json({ error: "OpenAI request failed" });
   }
 });
 
 // ============================================================
-// ✅ ENHANCE IMAGE ROUTE — GENERATE VERSION (NO MASK)
+// ✅ Enhance Image Route — DALL·E (No Mask)
 // ============================================================
 app.post('/api/enhance', upload.single('image'), async (req, res) => {
   console.log("🖼️ Received image for enhancement!");
@@ -117,12 +117,10 @@ app.post('/api/enhance', upload.single('image'), async (req, res) => {
   }
 
   const imagePath = req.file.path;
-
   console.log("✅ Uploaded image path:", imagePath);
 
-  // ⚡ Use your strict prompt style!
   const stylePrompt = `
-A photo of a light blue house with boarded-up windows. Replace only the boarded-up sections with clear glass windows matching the house’s original style. Do not change anything else — keep the grass, yard, sidewalk, siding, roof, paint, colors, trees, and lighting exactly the same. Preserve the slightly weathered, realistic look. No beautifying, no landscape improvements, no extra edits.
+Photo of a light blue house with boarded-up windows. Replace only the boarded-up sections with clear glass windows matching the house’s original style. Do not change anything else — keep the grass, yard, sidewalk, siding, roof, paint, colors, trees, and lighting exactly the same. Preserve the slightly weathered, realistic look. No beautifying, no landscape improvements, no extra edits.
   `.trim();
 
   try {
@@ -138,19 +136,18 @@ A photo of a light blue house with boarded-up windows. Replace only the boarded-
     res.json({ enhancedImageUrl: dalleResponse.data[0].url });
 
   } catch (err) {
-    console.error("❌ Enhance error:", err);
+    console.error("❌ /api/enhance error:", err);
     res.status(500).json({ error: "Failed to enhance image", details: err.message });
   } finally {
-    // ✅ Clean up uploaded file
     fs.unlink(imagePath, () => {});
   }
 });
 
 // ============================================================
-// ✅ Start Server
+// ✅ Start Server — Fly expects 0.0.0.0:8080
 // ============================================================
 const PORT = process.env.PORT || 8080;
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Flip backend running on port ${PORT}`);
 });
