@@ -1,13 +1,13 @@
 // ============================================================
-// ✅ Flip.ai Smart Backend – DALL·E + 70% Rule + Budget Tiers
+// ✅ Flip.ai Backend – Smart Budget Enhancer w/ Edits
 // ============================================================
 
 const fs = require('fs');
-const path = require('path');
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 const OpenAI = require("openai");
+const multer = require('multer');
 
 // ✅ Init OpenAI
 const openai = new OpenAI({
@@ -16,18 +16,14 @@ const openai = new OpenAI({
 
 const app = express();
 
-// ✅ Ensure /tmp/uploads exists for Render ephemeral file system
+// ✅ Upload Dir for Render
 const uploadDir = '/tmp/uploads';
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
   console.log("✅ Created upload directory:", uploadDir);
-} else {
-  console.log("✅ Upload directory exists:", uploadDir);
 }
 
-// ✅ Use Multer for file uploads
-const multer = require('multer');
-
+// ✅ Multer Storage for Original + Mask
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, uploadDir);
@@ -38,7 +34,7 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 
-// ✅ Middlewares
+// ✅ Middleware
 app.use(express.json());
 app.use(cors({
   origin: [
@@ -49,7 +45,7 @@ app.use(cors({
 }));
 
 // ============================================================
-// #1 HEALTH CHECK
+// #1 Health Check
 // ============================================================
 app.get('/', (req, res) => {
   res.send('✅ Flip.AI backend is alive!');
@@ -60,7 +56,7 @@ app.get('/api/test', (req, res) => {
 });
 
 // ============================================================
-// #2 70% Rule Advisor
+// #2 Ask Route (No changes)
 // ============================================================
 app.post('/api/ask', async (req, res) => {
   const { value, investment } = req.body;
@@ -83,7 +79,7 @@ You are a professional, clear, and motivating real estate flip advisor.
 Always provide:
 - The After Repair Value (ARV)
 - A 70% Rule estimate for maximum offer price
-- Simple explanation why this matters
+- A simple explanation why this matters
 - A quick tip for the investor
 - End with: "Happy Flipping! 🚀"
 
@@ -114,54 +110,59 @@ Please calculate ARV, the 70% Rule, and give professional advice.
 });
 
 // ============================================================
-// #3 DALL·E ENHANCER – Smart Budget Tiers for Windows/Doors
+// #3 ENHANCE w/ SMART BUDGET TIERS + EDITS
 // ============================================================
-app.post('/api/enhance', upload.single('image'), async (req, res) => {
-  console.log("🖼️ Received image for enhancement!");
+app.post('/api/enhance', upload.fields([
+  { name: 'image', maxCount: 1 },
+  { name: 'mask', maxCount: 1 }
+]), async (req, res) => {
+  console.log("🖼️ Received image and mask for enhancement!");
 
-  if (!req.file) {
-    console.error("❌ No file uploaded");
-    return res.status(400).json({ error: "No file uploaded" });
-  }
-
-  const filePath = req.file.path;
+  const imageFile = req.files['image']?.[0];
+  const maskFile = req.files['mask']?.[0];
   const budget = parseFloat(req.body.investment || 0);
-  console.log("✅ Enhancement budget received:", budget);
 
-  // ✅ Tiered style description logic
-  let styleDescription = "";
-  if (budget < 10000) {
-    styleDescription = "Replace boarded windows with simple standard white-framed windows and a basic painted door.";
-  } else if (budget >= 10000 && budget < 50000) {
-    styleDescription = "Replace boarded windows with modern energy-efficient windows with clean trim, and install a stylish new door.";
-  } else {
-    styleDescription = "Replace boarded windows with upscale custom windows, premium modern trim, and an elegant high-end front door for strong curb appeal.";
+  if (!imageFile || !maskFile) {
+    console.error("❌ Missing original image or mask");
+    return res.status(400).json({ error: "Both original image and mask are required" });
   }
-  console.log("✨ Applied style tier:", styleDescription);
 
-  // ✅ Final clear prompt
-  const finalPrompt = `
-Keep the house exactly the same as the original photo except for the boarded windows and boarded door.
-${styleDescription}
-Do not change the siding, roof, landscaping, or structure. Return the image looking like the original but upgraded as described.
-  `.trim();
+  console.log("✅ Budget received:", budget);
+
+  // ✅ Build Tiered Prompt
+  let stylePrompt = `Keep the same house structure, same siding, same roofline, same angle.
+Focus only on replacing boarded windows and doors with realistic upgrades based on budget tier.
+No new landscaping or changes to other parts of the house.`;
+
+  if (budget < 10000) {
+    stylePrompt += ` Use budget Tier 1: Replace boarded windows and doors with basic standard windows and a simple clean front door. Nothing fancy — just functional.`;
+  } else if (budget >= 10000 && budget < 50000) {
+    stylePrompt += ` Use budget Tier 2: Replace boarded windows and doors with new modern windows and a modern front door with some stylish trim. Add moderate finishing touches like slight new paint around frames.`;
+  } else {
+    stylePrompt += ` Use budget Tier 3: Replace all boarded windows and doors with upscale, high-end modern windows and a premium, stylish front door. Add elegant trim details. Make it look professionally renovated while keeping the same house shape.`;
+  }
+
+  console.log("✨ Final Prompt:", stylePrompt);
 
   try {
-    const fileStream = fs.createReadStream(filePath);
+    const imageStream = fs.createReadStream(imageFile.path);
+    const maskStream = fs.createReadStream(maskFile.path);
 
-    // ✅ Use DALL·E variation for now (edit API can be swapped later if needed)
-    const dalleResponse = await openai.images.createVariation({
-      image: fileStream,
+    const dalleResponse = await openai.images.createEdit({
+      model: "dall-e-2",
+      image: imageStream,
+      mask: maskStream,
+      prompt: stylePrompt,
       n: 1,
-      size: "1024x1024",
+      size: "1024x1024"
     });
 
-    console.log("✅ DALL·E variation generated:", dalleResponse.data[0].url);
+    console.log("✅ DALL·E edit generated:", dalleResponse.data[0].url);
 
     res.json({
       enhancedImageUrl: dalleResponse.data[0].url,
       budget: budget,
-      stylePrompt: finalPrompt
+      description: stylePrompt
     });
 
   } catch (err) {
