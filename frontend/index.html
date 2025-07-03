@@ -2,36 +2,45 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Flip.ai — Full Dashboard</title>
+  <title>✅ Flip.ai — Real Estate Smart Enhancer</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    img { max-width: 400px; border: 1px solid #ccc; margin: 10px 0; }
-    input { margin: 5px 0; }
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 40px auto;
+    }
+    input, button {
+      display: block;
+      margin: 10px 0;
+    }
+    img {
+      max-width: 100%;
+      margin-top: 20px;
+    }
   </style>
 </head>
 <body>
-  <h1>✅ Flip.ai — One Image Upload + Smart Budget</h1>
 
-  <!-- Upload Image -->
-  <label for="imageFileInput">Select Property Image:</label><br>
-  <input type="file" id="imageFileInput" accept="image/*" /><br><br>
+  <h1>✅ Flip.ai — Smart Budget + Photo Enhancer</h1>
 
-  <!-- Budget Inputs -->
-  <label for="purchasePrice">Purchase Price ($):</label><br>
-  <input type="number" id="purchasePrice" /><br><br>
+  <label for="propertyImage">Select Property Image:</label>
+  <input type="file" id="propertyImage" accept="image/*" />
 
-  <label for="investmentAmount">Planned Rehab Investment ($):</label><br>
-  <input type="number" id="investmentAmount" /><br><br>
+  <label for="purchasePrice">Purchase Price ($):</label>
+  <input type="number" id="purchasePrice" placeholder="e.g. 150000" />
 
-  <button id="processBtn">Generate Flip Report</button>
+  <label for="rehabInvestment">Planned Rehab Investment ($):</label>
+  <input type="number" id="rehabInvestment" placeholder="e.g. 30000" />
 
-  <h2>📊 Result:</h2>
+  <button id="generateReport">Generate Flip Report</button>
+
+  <hr />
+
   <div id="result"></div>
+  <div id="graph"></div>
 
-  <h2>📈 Graph:</h2>
-  <canvas id="flipChart" width="600" height="300"></canvas>
-
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- ✅ Always load your script at the end -->
   <script src="main.js"></script>
+
 </body>
 </html>
