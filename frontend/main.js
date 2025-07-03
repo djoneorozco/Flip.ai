@@ -5,18 +5,15 @@ const btnTest = document.getElementById('btn-test');
 const btnAsk = document.getElementById('btn-ask');
 const zipInput = document.getElementById('zip');
 const priceInput = document.getElementById('price');
-const investInput = document.getElementById('investment');
-const promptInput = document.getElementById('prompt');
+const investInput = document.getElementById('investment') || document.getElementById('prompt');
 const btnEnhance = document.getElementById('btn-enhance');
 const imageInput = document.getElementById('propertyImage');
 const enhancedImage = document.getElementById('enhancedImage');
 
 const glassBox = document.getElementById('glassBox');
-const resultEl = document.getElementById('result');
-const schoolList = document.getElementById('schoolList');
-const crimeInfo = document.getElementById('crimeInfo');
-
 const arvCtx = document.getElementById('arvChart')?.getContext?.('2d');
+
+let arvChartInstance = null; // 🔥 #1b Save chart instance to destroy later
 
 // ============================================================
 // #2 BACKEND URL
@@ -26,7 +23,7 @@ const backendURL = 'https://flip-ai.onrender.com';
 // ============================================================
 // #3 TEST BACKEND BUTTON
 // ============================================================
-btnTest.addEventListener('click', async () => {
+btnTest?.addEventListener('click', async () => {
   console.log("🧪 Testing backend...");
   try {
     const response = await fetch(`${backendURL}/api/test`);
@@ -40,16 +37,16 @@ btnTest.addEventListener('click', async () => {
 });
 
 // ============================================================
-// #4 ASK AI BUTTON
+// #4 ASK AI BUTTON (Zip optional now)
 // ============================================================
-btnAsk.addEventListener('click', async () => {
+btnAsk?.addEventListener('click', async () => {
   console.log("🤖 Ask AI clicked");
-  const zip = zipInput.value.trim();
-  const price = priceInput.value.trim();
-  const prompt = promptInput.value.trim();
+  const zip = zipInput?.value.trim();
+  const price = priceInput?.value.trim();
+  const prompt = investInput?.value.trim();
 
-  if (!zip || !price) {
-    alert("Please enter ZIP and Price!");
+  if (!price) {
+    alert("Please enter Property Price!");
     return;
   }
 
@@ -64,13 +61,8 @@ btnAsk.addEventListener('click', async () => {
     const data = await response.json();
     console.log("✅ AI Response:", data);
 
-    resultEl.innerText = data.answer || "No answer provided.";
-    crimeInfo.innerText = data.crime || "";
-    schoolList.innerHTML = data.schools
-      ? `<ul>${data.schools.map(s => `<li>${s}</li>`).join('')}</ul>`
-      : "";
-
     glassBox.classList.add('show');
+    // Add your result display logic here if needed
 
   } catch (err) {
     console.error("❌ Ask FlipAI Error:", err);
@@ -79,12 +71,12 @@ btnAsk.addEventListener('click', async () => {
 });
 
 // ============================================================
-// #5 ENHANCE IMAGE BUTTON w/ ARV PIE + $ amounts
+// #5 ENHANCE IMAGE BUTTON w/ ARV PIE + clear chart
 // ============================================================
-btnEnhance.addEventListener('click', async () => {
-  const file = imageInput.files[0];
-  const price = parseFloat(priceInput.value);
-  const invest = parseFloat(investInput.value);
+btnEnhance?.addEventListener('click', async () => {
+  const file = imageInput?.files[0];
+  const price = parseFloat(priceInput?.value);
+  const invest = parseFloat(investInput?.value);
 
   if (!file) {
     alert("Please choose an image first!");
@@ -110,7 +102,6 @@ btnEnhance.addEventListener('click', async () => {
     enhancedImage.src = data.enhancedImageUrl;
     enhancedImage.style.display = 'block';
 
-    // Calculate ARV and show glass box with Pie Chart + $ amounts
     if (!isNaN(price) && !isNaN(invest)) {
       const expectedARV = Math.round((price + invest) / 0.7);
       const profit = expectedARV - price - invest;
@@ -120,8 +111,11 @@ btnEnhance.addEventListener('click', async () => {
       // Update header to show ARV $
       glassBox.querySelector('h2').innerText = `Expected ARV: $${expectedARV.toLocaleString()}`;
 
-      // Draw Pie Chart with $ labels
-      new Chart(document.getElementById('arvChart').getContext('2d'), {
+      // Destroy old chart if exists
+      if (arvChartInstance) arvChartInstance.destroy();
+
+      // New Chart
+      arvChartInstance = new Chart(arvCtx, {
         type: 'pie',
         data: {
           labels: [
@@ -136,7 +130,10 @@ btnEnhance.addEventListener('click', async () => {
         },
         options: {
           plugins: {
-            legend: { position: 'bottom' },
+            legend: {
+              position: 'bottom',
+              labels: { color: '#000' } // ✅ Text color for contrast
+            },
             tooltip: { enabled: true }
           }
         }
