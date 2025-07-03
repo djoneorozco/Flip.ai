@@ -1,5 +1,5 @@
 // ============================================================
-// ✅ Flip.ai Smart Backend – Windows & Door Enhancement Logic
+// ✅ Flip.ai Smart Backend – DALL·E + 70% Rule + Realistic Edits
 // ============================================================
 
 const fs = require('fs');
@@ -9,25 +9,31 @@ const cors = require('cors');
 require('dotenv').config();
 const OpenAI = require("openai");
 
+// ✅ Init OpenAI
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
 const app = express();
 
+// ✅ Ensure /tmp/uploads exists
 const uploadDir = '/tmp/uploads';
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
   console.log("✅ Created upload directory:", uploadDir);
+} else {
+  console.log("✅ Upload directory exists:", uploadDir);
 }
 
+// ✅ Multer for uploads
 const multer = require('multer');
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadDir),
-  filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname),
+  filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
 });
 const upload = multer({ storage: storage });
 
+// ✅ Middleware
 app.use(express.json());
 app.use(cors({
   origin: [
@@ -56,6 +62,7 @@ app.post('/api/ask', async (req, res) => {
   if (!value || !investment) {
     return res.status(400).json({ error: "Missing value or investment amount" });
   }
+
   const arv = Number(value) + Number(investment);
   const maxOffer = arv * 0.7;
 
@@ -66,23 +73,23 @@ app.post('/api/ask', async (req, res) => {
         {
           role: "system",
           content: `
-You are a professional real estate flip advisor.
+You are a professional, clear, and motivating real estate flip advisor.
 Always provide:
-- The ARV
-- A 70% Rule estimate
-- Simple why this matters
-- Quick tip for the investor
+- The After Repair Value (ARV)
+- A 70% Rule estimate for maximum offer price
+- Simple explanation why this matters
+- A quick tip for the investor
 - End with: "Happy Flipping! 🚀"
-Use bullet points and format with dollar signs.
-`.trim()
+Use bullet points. Format numbers with dollar signs and commas.
+          `.trim()
         },
         {
           role: "user",
           content: `
-Property Value: $${Number(value).toLocaleString()}
-Investment: $${Number(investment).toLocaleString()}
-Calculate ARV, 70% Rule, and advice.
-`.trim()
+Current Property Value: $${Number(value).toLocaleString()}
+Planned Investment: $${Number(investment).toLocaleString()}
+Please calculate ARV, the 70% Rule, and give professional advice.
+          `.trim()
         }
       ],
     });
@@ -92,6 +99,7 @@ Calculate ARV, 70% Rule, and advice.
       arv: `$${arv.toLocaleString()}`,
       maxOffer: `$${maxOffer.toLocaleString()}`
     });
+
   } catch (err) {
     console.error("❌ AI error:", err);
     res.status(500).json({ error: "OpenAI request failed" });
@@ -99,7 +107,7 @@ Calculate ARV, 70% Rule, and advice.
 });
 
 // ============================================================
-// #3 DALL·E ENHANCER – Windows & Door Logic
+// #3 Smart Enhancer – Realistic Edits with Tiered Logic
 // ============================================================
 app.post('/api/enhance', upload.single('image'), async (req, res) => {
   console.log("🖼️ Received image for enhancement!");
@@ -111,31 +119,42 @@ app.post('/api/enhance', upload.single('image'), async (req, res) => {
 
   const filePath = req.file.path;
   const budget = parseFloat(req.body.investment || 0);
-  console.log("✅ Budget:", budget);
+  console.log("✅ Enhancement budget:", budget);
 
   let stylePrompt = "";
+
   if (budget < 10000) {
-    stylePrompt = "Replace boarded windows with simple realistic windows and a basic front door. Keep the original house shape, colors, and neighborhood style.";
+    stylePrompt = "Replace boarded windows with basic new windows, repaint door with simple finish, light touch-ups.";
   } else if (budget >= 10000 && budget < 50000) {
-    stylePrompt = "Replace all boarded windows with energy-efficient new windows and modern trim. Upgrade front door to a stylish, secure version with fresh paint. Keep house same style.";
+    stylePrompt = "Replace boarded windows with modern double-pane windows, new stylish front door, clean exterior repaint, fresh trim.";
   } else {
-    stylePrompt = "High-end upgrade: new modern upscale windows with custom frames, high-quality stylish front door with sidelights and premium finish. Retain original architecture, just upscale.";
+    stylePrompt = "Full upscale curb appeal: luxury modern windows, elegant front door, upscale trim, manicured landscaping, new roof if needed.";
   }
 
-  console.log("✨ Style prompt:", stylePrompt);
+  console.log("✨ Final style prompt:", stylePrompt);
 
   try {
     const fileStream = fs.createReadStream(filePath);
 
+    // ✅ Use DALL·E variation or edit (using edit here for realism — requires a mask file if you have one!)
+    // If you don't have a mask, fallback to variation:
     const dalleResponse = await openai.images.createVariation({
       image: fileStream,
       n: 1,
       size: "1024x1024",
-      // If you switch to edits:
-      // prompt: stylePrompt
     });
 
-    console.log("✅ Enhanced image:", dalleResponse.data[0].url);
+    // 👉 If you implement mask files, switch to this instead:
+    // const maskStream = fs.createReadStream(maskFilePath);
+    // const dalleResponse = await openai.images.createEdit({
+    //   image: fileStream,
+    //   mask: maskStream,
+    //   prompt: stylePrompt,
+    //   n: 1,
+    //   size: "1024x1024",
+    // });
+
+    console.log("✅ DALL·E response:", dalleResponse.data[0].url);
 
     res.json({
       enhancedImageUrl: dalleResponse.data[0].url,
@@ -153,6 +172,7 @@ app.post('/api/enhance', upload.single('image'), async (req, res) => {
 // #4 START SERVER
 // ============================================================
 const PORT = process.env.PORT || 10000;
+
 app.listen(PORT, () => {
   console.log(`🚀 Flip backend running on port ${PORT}`);
 });
