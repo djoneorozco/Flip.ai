@@ -2,54 +2,61 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Flip.ai – Smart AI-Driven Flip Insights</title>
-  <style>
-    body {
-      background: #0a192f;
-      color: #fff;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 4rem;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-    h1 {
-      font-size: 2.5rem;
-      margin-bottom: 0.5rem;
-    }
-    p {
-      margin-bottom: 2rem;
-    }
-    input, textarea {
-      width: 100%;
-      max-width: 300px;
-      margin-bottom: 1rem;
-      padding: 0.75rem;
-      border: none;
-      border-radius: 6px;
-      font-size: 1rem;
-    }
-    button {
-      padding: 0.75rem 2rem;
-      border: none;
-      border-radius: 6px;
-      background: #0ea5e9;
-      color: #fff;
-      font-size: 1rem;
-      cursor: pointer;
-    }
-  </style>
+  <title>Flip.ai Test Upload</title>
 </head>
 <body>
-  <h1>Welcome to Flip.ai</h1>
-  <p>#1 Smart AI-driven Flip Insights</p>
-  <input id="zip" type="text" placeholder="ZIP Code (optional)" />
-  <input id="price" type="number" placeholder="Property Purchase Cost" />
-  <input id="investment" type="number" placeholder="Planned Investment Cost" />
-  <textarea id="prompt" placeholder="Details (optional)"></textarea>
-  <input type="file" id="propertyImage" accept="image/*" />
-  <button id="btn-enhance">Enhance Image & See ARV</button>
-  <script src="main.js"></script>
+  <h1>✅ Flip.ai Test Upload</h1>
+
+  <label>Select Base Image:</label><br>
+  <input type="file" id="imageFileInput" /><br><br>
+
+  <label>Select Mask Image:</label><br>
+  <input type="file" id="maskFileInput" /><br><br>
+
+  <button id="uploadBtn">Enhance Image</button>
+
+  <h3>Result:</h3>
+  <div id="result"></div>
+
+  <script>
+    document.getElementById('uploadBtn').addEventListener('click', async () => {
+      const imageFile = document.getElementById('imageFileInput').files[0];
+      const maskFile = document.getElementById('maskFileInput').files[0];
+
+      if (!imageFile || !maskFile) {
+        alert("⚠️ You must select BOTH an image and a mask!");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('image', imageFile);
+      formData.append('mask', maskFile);
+
+      try {
+        const response = await fetch('https://flip-ai.onrender.com/api/enhance', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Server responded with ${response.status}: ${errorText}`);
+        }
+
+        const data = await response.json();
+        console.log("✅ Enhanced image URL:", data.enhancedImageUrl);
+
+        // Show result
+        document.getElementById('result').innerHTML = `
+          <p><strong>Enhanced Image URL:</strong> <a href="${data.enhancedImageUrl}" target="_blank">${data.enhancedImageUrl}</a></p>
+          <img src="${data.enhancedImageUrl}" alt="Enhanced" style="max-width:500px;">
+        `;
+
+      } catch (error) {
+        console.error("❌ Enhance error:", error);
+        alert(`Enhance failed: ${error.message}`);
+      }
+    });
+  </script>
 </body>
 </html>
