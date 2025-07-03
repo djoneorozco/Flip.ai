@@ -13,7 +13,7 @@ const enhancedImage = document.getElementById('enhancedImage');
 const glassBox = document.getElementById('glassBox');
 const arvCtx = document.getElementById('arvChart')?.getContext?.('2d');
 
-let arvChartInstance = null; // 🔥 #1b Save chart instance to destroy later
+let arvChartInstance = null; // ✅ Save chart instance for reuse
 
 // ============================================================
 // #2 BACKEND URL
@@ -37,15 +37,15 @@ btnTest?.addEventListener('click', async () => {
 });
 
 // ============================================================
-// #4 ASK AI BUTTON (Zip optional now)
+// #4 ASK AI BUTTON (uses value + investment keys to match backend)
 // ============================================================
 btnAsk?.addEventListener('click', async () => {
   console.log("🤖 Ask AI clicked");
-  const zip = zipInput?.value.trim();
-  const price = priceInput?.value.trim();
-  const prompt = investInput?.value.trim();
+  const zip = zipInput?.value.trim(); // Optional
+  const value = priceInput?.value.trim();
+  const investment = investInput?.value.trim();
 
-  if (!price) {
+  if (!value) {
     alert("Please enter Property Price!");
     return;
   }
@@ -54,15 +54,16 @@ btnAsk?.addEventListener('click', async () => {
     const response = await fetch(`${backendURL}/api/ask`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ zip, price, prompt })
+      body: JSON.stringify({ value, investment }) // ✅ Match backend keys
     });
 
     if (!response.ok) throw new Error(`Server error: ${response.status}`);
     const data = await response.json();
     console.log("✅ AI Response:", data);
 
+    // Display your result — add your own output logic here if you want!
     glassBox.classList.add('show');
-    // Add your result display logic here if needed
+    alert(data.answer);
 
   } catch (err) {
     console.error("❌ Ask FlipAI Error:", err);
@@ -83,8 +84,6 @@ btnEnhance?.addEventListener('click', async () => {
     return;
   }
 
-  console.log("✅ AI Enhanced Image URL:", data.enhancedImageUrl);
-
   const formData = new FormData();
   formData.append('image', file);
 
@@ -102,6 +101,7 @@ btnEnhance?.addEventListener('click', async () => {
     enhancedImage.src = data.enhancedImageUrl;
     enhancedImage.style.display = 'block';
 
+    // ✅ Calculate ARV + Profit + Draw Pie Chart
     if (!isNaN(price) && !isNaN(invest)) {
       const expectedARV = Math.round((price + invest) / 0.7);
       const profit = expectedARV - price - invest;
@@ -109,12 +109,13 @@ btnEnhance?.addEventListener('click', async () => {
       glassBox.classList.add('show');
 
       // Update header to show ARV $
-      glassBox.querySelector('h2').innerText = `Expected ARV: $${expectedARV.toLocaleString()}`;
+      const h2 = glassBox.querySelector('h2');
+      if (h2) h2.innerText = `Expected ARV: $${expectedARV.toLocaleString()}`;
 
-      // Destroy old chart if exists
+      // Destroy old chart if it exists
       if (arvChartInstance) arvChartInstance.destroy();
 
-      // New Chart
+      // Draw new chart
       arvChartInstance = new Chart(arvCtx, {
         type: 'pie',
         data: {
@@ -132,7 +133,7 @@ btnEnhance?.addEventListener('click', async () => {
           plugins: {
             legend: {
               position: 'bottom',
-              labels: { color: '#000' } // ✅ Text color for contrast
+              labels: { color: '#000' }
             },
             tooltip: { enabled: true }
           }
