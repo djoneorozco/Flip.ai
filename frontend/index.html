@@ -80,31 +80,35 @@
 </head>
 
 <body>
+
+  <!-- //#1 PAGE HEADER -->
   <h1>Welcome to Flip.ai</h1>
   <p>#2 Smart AI-driven Flip Insights</p>
 
-  <!-- INPUTS -->
+  <!-- //#2 USER INPUTS -->
   <input id="zip" type="text" placeholder="ZIP Code (optional)" />
   <input id="price" type="number" placeholder="Property Purchase Cost" />
   <input id="investment" type="number" placeholder="Planned Investment Cost" />
   <textarea id="prompt" placeholder="Details (optional)"></textarea>
 
-  <!-- BUTTONS -->
+  <!-- //#3 ACTION BUTTONS -->
   <button id="btn-test">Test Backend</button>
   <button id="btn-ask">Ask FlipAI</button>
 
-  <!-- IMAGE UPLOADER -->
+  <!-- //#4 IMAGE UPLOADER -->
   <h3 style="margin-top:2rem;">Enhance Your Property Photo</h3>
   <input type="file" id="propertyImage" accept="image/*" />
   <button id="btn-enhance">Enhance Image & See ARV</button>
   <img id="enhancedImage" src="" alt="Enhanced Result" />
 
-  <!-- GLASS BOX FOR ARV PIE -->
+  <!-- //#5 GLASS BOX FOR ARV PIE -->
   <div class="glass-box" id="glassBox">
     <h2>Expected ARV</h2>
     <canvas id="arvChart"></canvas>
   </div>
 
+  <!-- //#6 MAIN SCRIPT -->
   <script src="main.js"></script>
+
 </body>
 </html>
