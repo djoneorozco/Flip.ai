@@ -136,22 +136,21 @@ app.post('/api/enhance', upload.single('image'), async (req, res) => {
     // ✅ Build enhancement prompt based on budget
     let stylePrompt = "";
     if (budget < 10000) {
-      stylePrompt = "Light cleanup: boarded windows removed, basic paint touch-up.";
+      stylePrompt = "Basic exterior cleanup: remove boarded windows, small repairs, simple repaint.";
     } else if (budget >= 10000 && budget < 50000) {
-      stylePrompt = "Moderate renovation: new siding, new windows, landscaped yard, fresh paint.";
+      stylePrompt = "Moderate renovation: fresh paint, new windows, basic landscaping, fixed roof.";
     } else {
-      stylePrompt = "Full upscale transformation: new roof, new porch, modern windows, high-end curb appeal.";
+      stylePrompt = "Full upscale flip: modern siding, new roof, new porch, luxury curb appeal, beautiful landscaping.";
     }
-    console.log("✨ Style prompt:", stylePrompt);
+    console.log("✨ Using style prompt:", stylePrompt);
 
-    // ✅ Call DALL·E with variation (you can swap for edits if needed)
+    // ✅ Call DALL·E with edits — swap for createEdit if available
     const dalleResponse = await openai.images.createVariation({
       image: fileStream,
       n: 1,
       size: "1024x1024",
     });
 
-    // ⚡️ Log and return the URL
     console.log("✅ DALL·E variation generated:", dalleResponse.data[0].url);
 
     res.json({
