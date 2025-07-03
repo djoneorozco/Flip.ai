@@ -1,46 +1,94 @@
-// ============================================================
-// ✅ Flip.ai Frontend JS – FINAL VERSION (Stable)
-// ============================================================
+// =======================================
+// ✅ Flip.ai – main.js (FINAL)
+// =======================================
 
 console.log("✅ Flip.ai main.js loaded");
 
+// Elements
 const enhanceBtn = document.getElementById('btn-enhance');
+const propertyInput = document.getElementById('price');
+const investmentInput = document.getElementById('investment');
+const zipInput = document.getElementById('zip');
+const promptInput = document.getElementById('prompt');
+const propertyImageInput = document.getElementById('propertyImage');
 
+const enhancedImage = document.getElementById('enhancedImage');
+const glassBox = document.getElementById('glassBox');
+const arvTitle = document.getElementById('arvTitle');
+const arvChartCanvas = document.getElementById('arvChart');
+
+// Chart instance
+let arvChart;
+
+// =======================================
+// ✅ Enhance Image Click Handler
+// =======================================
 enhanceBtn.addEventListener('click', async () => {
   console.log("✨ Enhance Image Clicked");
 
-  const zip = document.getElementById('zip').value.trim();
-  const price = parseFloat(document.getElementById('price').value.trim()) || 0;
-  const investment = parseFloat(document.getElementById('investment').value.trim()) || 0;
-  const prompt = document.getElementById('prompt').value.trim();
-  const imageFile = document.getElementById('propertyImage').files[0];
-
-  if (!imageFile) {
-    alert("Please select an image to enhance!");
+  const propertyFile = propertyImageInput.files[0];
+  if (!propertyFile) {
+    alert("Please select a property image first!");
     return;
   }
 
+  const propertyValue = parseFloat(propertyInput.value) || 0;
+  const investmentAmount = parseFloat(investmentInput.value) || 0;
+
+  console.log("📁 Sending file:", propertyFile.name);
+  console.log("💰 Property Value:", propertyValue);
+  console.log("💰 Investment Amount:", investmentAmount);
+
   const formData = new FormData();
-  formData.append('image', imageFile);
-  formData.append('investment', investment);
-  formData.append('prompt', prompt);
+  formData.append('image', propertyFile);
+  formData.append('propertyValue', propertyValue);
+  formData.append('investment', investmentAmount);
 
   try {
-    const response = await fetch('https://flip-ai.onrender.com/api/enhance', {
+    const response = await fetch('/api/enhance', {
       method: 'POST',
       body: formData
     });
 
-    if (!response.ok) throw new Error('Backend returned an error');
+    if (!response.ok) {
+      throw new Error(`Server error: ${response.status}`);
+    }
 
-    const result = await response.json();
-    console.log("✅ Variation Response:", result);
+    const data = await response.json();
+    console.log("✅ Variation Response:", data);
 
-    // TODO: Replace this with your DOM update logic
-    alert(`Enhanced URL: ${result.enhancedImageUrl}\nBudget: ${result.budget}\nTier: ${result.tier}`);
+    // Show ARV Chart
+    const arv = propertyValue + investmentAmount;
+    const profit = arv - propertyValue - investmentAmount;
+
+    if (arvChart) {
+      arvChart.destroy();
+    }
+
+    arvChart = new Chart(arvChartCanvas, {
+      type: 'pie',
+      data: {
+        labels: ['Property', 'Investment', 'Profit'],
+        datasets: [{
+          data: [propertyValue, investmentAmount, profit],
+          backgroundColor: ['#3b82f6', '#facc15', '#22d3ee'],
+        }],
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { position: 'bottom' } },
+      },
+    });
+
+    arvTitle.textContent = `Expected ARV: $${arv.toLocaleString()}`;
+    glassBox.classList.add('show');
+
+    // Show Enhanced Image
+    enhancedImage.src = data.enhancedImageUrl;
+    enhancedImage.style.display = 'block';
 
   } catch (err) {
-    console.error("❌ Enhance Error:", err);
-    alert('Something went wrong. Check console for details.');
+    console.error("❌ Enhance Image Error:", err);
+    alert(`Enhance failed: ${err.message}`);
   }
 });
