@@ -149,7 +149,7 @@ A photo of a light blue house with boarded-up windows. Replace only the boarded-
 // ============================================================
 // ✅ Start Server
 // ============================================================
-const PORT = process.env.PORT || 10000;
+const PORT = process.env.PORT || 8080;
 
 app.listen(PORT, () => {
   console.log(`🚀 Flip backend running on port ${PORT}`);
