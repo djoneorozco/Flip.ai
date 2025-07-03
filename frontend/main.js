@@ -1,28 +1,28 @@
 // ============================================================
-// #1 ELEMENT SELECTORS
+// ✅ Flip.AI main.js – Structured & Bulletproof
 // ============================================================
+
+//#1 ELEMENT SELECTORS
 const btnTest = document.getElementById('btn-test');
 const btnAsk = document.getElementById('btn-ask');
+const btnEnhance = document.getElementById('btn-enhance');
+
 const zipInput = document.getElementById('zip');
 const priceInput = document.getElementById('price');
 const investInput = document.getElementById('investment') || document.getElementById('prompt');
-const btnEnhance = document.getElementById('btn-enhance');
+
 const imageInput = document.getElementById('propertyImage');
 const enhancedImage = document.getElementById('enhancedImage');
 
 const glassBox = document.getElementById('glassBox');
 const arvCtx = document.getElementById('arvChart')?.getContext?.('2d');
 
-let arvChartInstance = null;
+let arvChartInstance = null; // ✅ For destroying old charts
 
-// ============================================================
-// #2 BACKEND URL
-// ============================================================
 const backendURL = 'https://flip-ai.onrender.com';
 
 // ============================================================
-// #3 TEST BACKEND BUTTON
-// ============================================================
+//#2 TEST BACKEND BUTTON
 btnTest?.addEventListener('click', async () => {
   console.log("🧪 Testing backend...");
   try {
@@ -37,15 +37,16 @@ btnTest?.addEventListener('click', async () => {
 });
 
 // ============================================================
-// #4 ASK AI BUTTON
-// ============================================================
+//#3 ASK AI BUTTON
 btnAsk?.addEventListener('click', async () => {
   console.log("🤖 Ask AI clicked");
+
+  const zip = zipInput?.value.trim();
   const value = priceInput?.value.trim();
   const investment = investInput?.value.trim();
 
   if (!value) {
-    alert("Please enter Property Price!");
+    alert("Please enter Property Purchase Cost!");
     return;
   }
 
@@ -57,6 +58,7 @@ btnAsk?.addEventListener('click', async () => {
     });
 
     if (!response.ok) throw new Error(`Server error: ${response.status}`);
+
     const data = await response.json();
     console.log("✅ AI Response:", data);
 
@@ -70,9 +72,10 @@ btnAsk?.addEventListener('click', async () => {
 });
 
 // ============================================================
-// #5 ENHANCE IMAGE BUTTON
-// ============================================================
+//#4 ENHANCE IMAGE BUTTON w/ ARV PIE
 btnEnhance?.addEventListener('click', async () => {
+  console.log("✨ Enhance Image clicked");
+
   const file = imageInput?.files[0];
   const price = parseFloat(priceInput?.value);
   const invest = parseFloat(investInput?.value);
@@ -81,6 +84,14 @@ btnEnhance?.addEventListener('click', async () => {
     alert("Please choose an image first!");
     return;
   }
+
+  if (isNaN(invest)) {
+    alert("Please enter a valid Planned Investment Cost!");
+    return;
+  }
+
+  console.log("✅ Sending file:", file.name);
+  console.log("✅ Investment amount:", invest);
 
   const formData = new FormData();
   formData.append('image', file);
@@ -93,12 +104,15 @@ btnEnhance?.addEventListener('click', async () => {
     });
 
     if (!response.ok) throw new Error(`Server error: ${response.status}`);
+
     const data = await response.json();
     console.log("✅ AI Enhanced Image:", data);
 
+    // Show enhanced image
     enhancedImage.src = data.enhancedImageUrl;
     enhancedImage.style.display = 'block';
 
+    // Draw ARV pie chart
     if (!isNaN(price) && !isNaN(invest)) {
       const expectedARV = Math.round((price + invest) / 0.7);
       const profit = expectedARV - price - invest;
