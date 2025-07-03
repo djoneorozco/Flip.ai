@@ -78,14 +78,13 @@ btnAsk.addEventListener('click', async () => {
     alert("Ask FlipAI failed — see console for details!");
   }
 });
-
 // ============================================================
-// #5 ENHANCE IMAGE BUTTON w/ ARV PIE
+// #5 ENHANCE IMAGE BUTTON w/ ARV PIE + $ amounts
 // ============================================================
 btnEnhance.addEventListener('click', async () => {
   const file = imageInput.files[0];
   const price = parseFloat(priceInput.value);
-  const invest = parseFloat(investInput.value);
+  const invest = parseFloat(document.getElementById('investment').value);
 
   if (!file) {
     alert("Please choose an image first!");
@@ -107,31 +106,38 @@ btnEnhance.addEventListener('click', async () => {
     const data = await response.json();
     console.log("✅ AI Enhanced Image:", data);
 
+    // Show enhanced image
     enhancedImage.src = data.enhancedImageUrl;
     enhancedImage.style.display = 'block';
 
-    // Calculate ARV and show glass box with Pie Chart
+    // Calculate ARV and show glass box with Pie Chart + $ amounts
     if (!isNaN(price) && !isNaN(invest)) {
       const expectedARV = Math.round((price + invest) / 0.7);
       const profit = expectedARV - price - invest;
 
       glassBox.classList.add('show');
 
-      new Chart(arvCtx, {
+      // Update header to show ARV $
+      glassBox.querySelector('h2').innerText = `Expected ARV: $${expectedARV.toLocaleString()}`;
+
+      // Draw Pie Chart with $ labels
+      new Chart(document.getElementById('arvChart').getContext('2d'), {
         type: 'pie',
         data: {
-          labels: ['Property Cost', 'Planned Investment', 'Expected Profit'],
+          labels: [
+            `Property: $${price.toLocaleString()}`,
+            `Investment: $${invest.toLocaleString()}`,
+            `Profit: $${profit.toLocaleString()}`
+          ],
           datasets: [{
             data: [price, invest, profit],
             backgroundColor: ['#36A2EB', '#FFCE56', '#4BC0C0']
           }]
         },
         options: {
-          responsive: true,
           plugins: {
-            legend: {
-              position: 'bottom'
-            }
+            legend: { position: 'bottom' },
+            tooltip: { enabled: true }
           }
         }
       });
@@ -142,3 +148,4 @@ btnEnhance.addEventListener('click', async () => {
     alert("Image enhancement failed — see console for details!");
   }
 });
+
