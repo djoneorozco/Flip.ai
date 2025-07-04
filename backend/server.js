@@ -1,100 +1,96 @@
-// ============================================================
-// ✅ Flip.ai Backend – Smart Budget Enhancer w/ DALL·E flow
-// ============================================================
+// ================================================
+// ✅ Flip.ai – Full Server.js (CORS, Upload, OpenAI)
+// ================================================
 
-const express = require('express');
-const fs = require('fs');
-const cors = require('cors');
-require('dotenv').config();
-const OpenAI = require("openai");
-const multer = require('multer');
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+import express from 'express';
+import cors from 'cors';
+import multer from 'multer';
+import fs from 'fs';
+import OpenAI from 'openai';
 
 const app = express();
+const PORT = process.env.PORT || 10000;
 
-// ✅ Uploads Dir for Render
+// ✅ OpenAI client
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+});
+
+// ✅ Middleware
+app.use(cors({
+  origin: ['http://localhost:3000', 'https://flip-ai.netlify.app']
+}));
+app.use(express.json());
+
+// ✅ Ensure temp uploads dir exists
 const uploadDir = '/tmp/uploads';
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
-  console.log("✅ Created upload directory:", uploadDir);
+  console.log(`✅ Created temp upload dir: ${uploadDir}`);
 }
 
-// ✅ Multer Storage
+// ✅ Multer config
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
-    cb(null, Date.now() + '-' + file.originalname);
+    cb(null, `${Date.now()}-${file.originalname}`);
   }
 });
-const upload = multer({ storage: storage });
+const upload = multer({ storage });
 
-// ✅ Correct CORS: localhost + Netlify
-app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    'https://flip-ai.netlify.app',
-    'https://www.flip-ai.netlify.app'
-  ]
-}));
-app.use(express.json());
-
-// ============================================================
-// #1 Health
-// ============================================================
+// ✅ Health check
 app.get('/', (req, res) => {
-  res.send('✅ Flip.AI backend is alive!');
+  res.send('✅ Flip.ai backend running!');
 });
 
-// ============================================================
-// #2 Enhance
-// ============================================================
+// ✅ Enhance endpoint
 app.post('/api/enhance', upload.single('image'), async (req, res) => {
-  console.log("✨ Enhance endpoint hit!");
-
-  const imageFile = req.file;
-  const { value, investment } = req.body;
-
-  if (!imageFile) {
-    return res.status(400).json({ error: "No image uploaded." });
-  }
-
-  const arv = Number(value) + Number(investment);
-
-  console.log("💵 Property Value:", value);
-  console.log("🔨 Investment:", investment);
-  console.log("🏠 ARV:", arv);
-
   try {
-    // ✅ Basic DALL·E call – this is your real flow
-    // Replace with your custom prompt
-    const dalleResponse = await openai.images.generate({
-      model: "dall-e-3",
-      prompt: `A beautifully enhanced renovated version of the uploaded house. Keep the structure the same. Replace boarded windows with modern ones, repaint where needed, moderate upgrades only.`,
+    console.log('✅ Enhance endpoint hit');
+    const { investment, prompt } = req.body;
+    const imageFile = req.file;
+
+    if (!imageFile) {
+      return res.status(400).json({ error: 'No image uploaded' });
+    }
+
+    console.log('🖼️ Image:', imageFile.path);
+    console.log('💸 Investment:', investment);
+
+    // ✅ Middleman prompt — upgrade this as needed
+    const finalPrompt = `
+Captured on a sunny midday, this charming one-story blue house with white trim rests on a tree-lined street. 
+It features a steep gable roof with dark shingles, a red brick chimney, evenly placed windows, 
+and a welcoming front door, while the surrounding autumn-toned trees and clean sidewalk complete the picturesque suburban home.
+Budget: ${investment}
+Additional details: ${prompt || 'N/A'}
+`.trim();
+
+    // ✅ DALL·E variation
+    const dalleResponse = await openai.images.createVariation({
+      model: 'dall-e-2',
+      image: fs.createReadStream(imageFile.path),
       n: 1,
-      size: "1024x1024"
+      size: '1024x1024'
     });
+
+    console.log('✅ DALL·E URL:', dalleResponse.data[0].url);
 
     res.json({
       enhancedImageUrl: dalleResponse.data[0].url,
-      arv: arv,
-      tier: "Moderate upgrades"
+      budget: investment,
+      tier: 'Moderate upgrades'
     });
 
   } catch (err) {
-    console.error("❌ DALL·E error:", err);
-    res.status(500).json({ error: "DALL·E failed", details: err.message });
+    console.error('❌ Enhance error:', err);
+    res.status(500).json({ error: 'Server error', details: err.message });
   }
 });
 
-// ============================================================
-// #3 Start
-// ============================================================
-const PORT = process.env.PORT || 10000;
+// ✅ Start server
 app.listen(PORT, () => {
-  console.log(`🚀 Flip backend running on port ${PORT}`);
+  console.log(`🚀 Flip.ai backend running on port ${PORT}`);
 });
