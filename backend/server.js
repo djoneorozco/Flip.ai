@@ -4,6 +4,11 @@ import express from 'express';
 import multer from 'multer';
 import cors from 'cors';
 import path from 'path';
+import { fileURLToPath } from 'url';
+
+// ✅ Fix __dirname for ES Modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const port = process.env.PORT || 10000;
@@ -35,7 +40,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-// ✅ Serve uploaded files statically
+// ✅ Serve uploaded files statically — now works!
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // ✅ POST /api/enhance — MIDDLE-MAN FLOW
