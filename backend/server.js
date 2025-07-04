@@ -32,7 +32,8 @@ app.post('/api/enhance', upload.single('propertyImage'), (req, res) => {
 
   const budget = req.body.budget || 0;
 
-  const enhancedImageUrl = `https://placehold.co/600x400?text=Enhanced+Image`;
+  // ✅ NEW placeholder image that loads reliably
+  const enhancedImageUrl = `https://via.placeholder.com/600x400.png?text=Enhanced+Image`;
   const description = `Keep house shape & style. Add windows or minor updates based on budget tier.`;
 
   res.json({
