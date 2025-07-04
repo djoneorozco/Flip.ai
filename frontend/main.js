@@ -47,9 +47,11 @@ document.addEventListener('DOMContentLoaded', () => {
       alert(`Enhanced Image URL:\n${data.enhancedImageUrl}\n\nPrompt Used:\n${data.description}`);
 
       const resultImage = document.getElementById('enhancedImage');
-      if (resultImage) {
+      const resultBox = document.getElementById('enhancedGlassBox');
+
+      if (resultImage && resultBox) {
         resultImage.src = data.enhancedImageUrl;
-        resultImage.style.display = 'block';
+        resultBox.style.display = 'block';
       }
 
     } catch (err) {
