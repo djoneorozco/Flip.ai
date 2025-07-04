@@ -70,7 +70,7 @@
     }
 
     #enhancedImage {
-      display: none;
+      display: none; /* JS will set to block */
       width: 100%;
       max-width: 400px;
       margin-top: 1rem;
@@ -99,11 +99,19 @@
 
   <h3>Enhance Your Property Photo</h3>
   <input type="file" id="propertyImage" accept="image/*" />
-  <!-- ✅ THE ID MUST MATCH: -->
+
   <button id="enhanceButton">Enhance Image & See ARV</button>
 
+  <!-- ✅ WORKING IMAGE PLACEHOLDER (Optional) -->
   <img id="workingImage" src="/static/images/working.png" alt="Working..." />
-  <img id="enhancedImage" src="" alt="Enhanced Result" />
+
+  <!-- ✅ ENHANCED IMAGE ELEMENT (MUST MATCH main.js) -->
+  <img
+    id="enhancedImage"
+    src=""
+    alt="Enhanced Result"
+    style="display: none; width: 100%; max-width: 400px; margin-top: 1rem; border-radius: 8px;"
+  />
 
   <div class="glass-box" id="glassBox">
     <h2>Expected ARV</h2>
