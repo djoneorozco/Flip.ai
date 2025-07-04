@@ -1,57 +1,49 @@
-console.log('✅ Flip.ai main.js loaded');
+import express from 'express';
+import multer from 'multer';
+import cors from 'cors';
 
-document.addEventListener('DOMContentLoaded', () => {
-  const enhanceButton = document.getElementById('enhanceButton');
-  const imageInput = document.getElementById('propertyImage');
-  const budgetInput = document.getElementById('investment');
+const app = express();
+const port = process.env.PORT || 10000;
 
-  if (!enhanceButton) {
-    console.error('❌ Enhance button not found. Check your HTML ID.');
-    return;
-  }
-
-  enhanceButton.addEventListener('click', async () => {
-    console.log('✨ Enhance Button Clicked');
-
-    const file = imageInput.files[0];
-    const budget = Number(budgetInput.value);
-
-    if (!file) {
-      alert('Please upload a property image.');
-      return;
-    }
-
-    console.log('📸 Sending file:', file.name);
-    console.log('💲 Budget amount:', budget);
-
-    const formData = new FormData();
-    formData.append('propertyImage', file);
-    formData.append('budget', budget);
-
-    try {
-     const response = await fetch('https://flip-ai.onrender.com/api/enhance', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error(`Server error: ${response.status}`);
+// ✅ Allow only your Netlify app to hit the backend
+const allowedOrigins = ['https://flip-ai.netlify.app'];
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      // Allow requests with no origin like Postman or curl
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      } else {
+        return callback(new Error('CORS policy: Not allowed by CORS'));
       }
+    },
+    credentials: true,
+  })
+);
 
-      const data = await response.json();
-      console.log('✅ AI Enhanced Image:', data);
+app.use(express.json());
 
-      alert(`Enhanced Image URL:\n${data.enhancedImageUrl}\n\nPrompt Used:\n${data.description}`);
+// ✅ USE MEMORY STORAGE instead of writing to ./uploads
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
 
-      const resultImage = document.getElementById('enhancedImage');
-      if (resultImage) {
-        resultImage.src = data.enhancedImageUrl;
-        resultImage.style.display = 'block';
-      }
+app.post('/api/enhance', upload.single('propertyImage'), (req, res) => {
+  console.log('✅ Image received:', req.file?.originalname);
 
-    } catch (err) {
-      console.error('❌ Enhance Image Error:', err);
-      alert(`Enhance failed: ${err.message}`);
-    }
+  const budget = req.body.budget || 0;
+
+  // You now have req.file.buffer in memory if you need it later
+  const enhancedImageUrl = `https://placehold.co/600x400?text=Enhanced+Image`;
+  const description = `Keep house shape & style. Add windows or minor updates based on budget tier.`;
+
+  res.json({
+    enhancedImageUrl,
+    budget: Number(budget),
+    description
   });
+});
+
+app.listen(port, () => {
+  console.log(`✅ Flip.ai backend running on port ${port}`);
 });
