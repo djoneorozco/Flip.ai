@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
     formData.append('budget', budget);
 
     try {
-     const response = await fetch('https://flip-ai.onrender.com/api/enhance', {
+      const response = await fetch('https://flip-ai.onrender.com/api/enhance', {
         method: 'POST',
         body: formData,
       });
@@ -39,7 +39,10 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       const data = await response.json();
-      console.log('✅ AI Enhanced Image:', data);
+
+      console.log('✅ AI Enhanced Image URL:', data.enhancedImageUrl);
+      console.log('✅ AI Description:', data.description);
+      console.log('✅ Budget Used:', data.budget);
 
       alert(`Enhanced Image URL:\n${data.enhancedImageUrl}\n\nPrompt Used:\n${data.description}`);
 
