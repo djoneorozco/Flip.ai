@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
     formData.append('budget', budget);
 
     try {
-      const response = await fetch('https://YOUR-BACKEND-URL.onrender.com/api/enhance', {
+     const response = await fetch('https://flip-ai.onrender.com/api/enhance', {
         method: 'POST',
         body: formData,
       });
