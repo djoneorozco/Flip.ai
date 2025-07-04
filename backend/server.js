@@ -1,61 +1,63 @@
-// ✅ main.js — Flip.ai full frontend script
+// ✅ server.js — Flip.ai backend only
 
-console.log('✅ Flip.ai main.js loaded');
+import express from 'express';
+import cors from 'cors';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
 
-document.addEventListener('DOMContentLoaded', () => {
-  const enhanceButton = document.getElementById('enhanceButton');
+const app = express();
+const PORT = process.env.PORT || 10000;
 
-  if (!enhanceButton) {
-    console.error('❌ Enhance button not found. Check your HTML ID.');
-    return;
+// ✅ Middleware
+app.use(cors());
+app.use(express.json());
+app.use(express.static('frontend')); // Serve index.html & main.js
+
+// ✅ Ensure uploads dir exists
+const uploadDir = 'uploads';
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// ✅ Setup Multer for file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, uploadDir),
+  filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
+});
+const upload = multer({ storage });
+
+// ✅ Enhance endpoint
+app.post('/api/enhance', upload.single('propertyImage'), async (req, res) => {
+  try {
+    const { propertyValue, investmentAmount, details, zip } = req.body;
+    const file = req.file;
+
+    console.log('📸 Received file:', file?.path);
+    console.log('💰 Property Value:', propertyValue);
+    console.log('💸 Investment Amount:', investmentAmount);
+
+    // Basic tier logic
+    const budget = parseInt(investmentAmount) || 5000;
+    let tier = 'Basic upgrades';
+
+    if (budget > 5000 && budget <= 20000) {
+      tier = 'Low Tier: minor fixes, windows, simple landscaping';
+    } else if (budget > 20000) {
+      tier = 'Moderate upgrades';
+    }
+
+    // 🔑 Use your DALL·E call here — for now placeholder:
+    const enhancedImageUrl = `https://placehold.co/600x400?text=Enhanced+Image`;
+
+    res.json({ enhancedImageUrl, budget, tier });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server failed to enhance image.' });
   }
+});
 
-  enhanceButton.addEventListener('click', async () => {
-    console.log('✅ Enhance Button Clicked');
-
-    const zipInput = document.getElementById('zipInput').value.trim();
-    const propertyValue = document.getElementById('propertyValue').value.trim();
-    const investmentAmount = document.getElementById('investmentAmount').value.trim();
-    const details = document.getElementById('details').value.trim();
-    const fileInput = document.getElementById('propertyImage');
-
-    if (!fileInput.files[0]) {
-      alert('❌ Please select a property image to upload.');
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append('propertyImage', fileInput.files[0]);
-    formData.append('propertyValue', propertyValue);
-    formData.append('investmentAmount', investmentAmount);
-    formData.append('details', details);
-    formData.append('zip', zipInput);
-
-    try {
-      const response = await fetch('https://YOUR-BACKEND-URL.onrender.com/api/enhance', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error(`Server error: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      console.log('✅ AI Enhanced Image:', data);
-
-      // ✅ Example: Show result on the page
-      alert(`✅ AI Enhanced:\n${data.enhancedImageUrl}\nBudget: ${data.budget}\nTier: ${data.tier}`);
-
-      // If you have an <img id="enhancedImage"> element:
-      const resultImage = document.getElementById('enhancedImage');
-      if (resultImage) {
-        resultImage.src = data.enhancedImageUrl;
-      }
-    } catch (error) {
-      console.error('❌ Enhance Image Error:', error);
-      alert(`Enhance failed: ${error.message}`);
-    }
-  });
+// ✅ Start server
+app.listen(PORT, () => {
+  console.log(`✅ Flip.ai backend running on port ${PORT}`);
 });
