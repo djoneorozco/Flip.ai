@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Flip.ai – Smart AI-Driven Flip Insights</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
       margin: 0;
@@ -64,17 +63,6 @@
       width: 100%;
       border-radius: 8px;
     }
-
-    #workingImage {
-      display: none;
-      max-width: 150px;
-      margin-top: 1rem;
-    }
-
-    #arvChart {
-      max-width: 300px;
-      margin: 1rem auto 0;
-    }
   </style>
 </head>
 
@@ -90,12 +78,12 @@
 
   <button id="enhanceButton">Enhance Image & See ARV</button>
 
-  <!-- ✅ Frosted glass box for uploaded result -->
+  <!-- Frosted glass box for enhanced result -->
   <div id="enhancedGlassBox">
     <img
       id="enhancedImage"
       src=""
-      alt="Uploaded Result"
+      alt="Enhanced Result"
     />
   </div>
 
