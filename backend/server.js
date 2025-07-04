@@ -1,9 +1,17 @@
+// ✅ Flip.ai REAL SERVER.JS — OpenAI DALL·E, no placeholders
+
 import express from 'express';
 import multer from 'multer';
 import cors from 'cors';
+import OpenAI from 'openai';
 
 const app = express();
 const port = process.env.PORT || 10000;
+
+// ✅ Init OpenAI
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 // ✅ Allow only your Netlify app to hit the backend
 const allowedOrigins = ['https://flip-ai.netlify.app'];
@@ -23,29 +31,47 @@ app.use(
 
 app.use(express.json());
 
-// ✅ USE MEMORY STORAGE instead of writing to ./uploads
+// ✅ USE MEMORY STORAGE for upload
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
-app.post('/api/enhance', upload.single('propertyImage'), (req, res) => {
+app.post('/api/enhance', upload.single('propertyImage'), async (req, res) => {
   console.log('✅ Image received:', req.file?.originalname);
 
   const budget = req.body.budget || 0;
 
-  // ✅ CORRECT: This MUST match your deployed path!
-  const enhancedImageUrl = `https://flip-ai.netlify.app/public/sample-placeholder.png`;
-  const description = `Keep house shape & style. Add windows or minor updates based on budget tier.`;
+  // ✅ Real prompt for DALL·E
+  const prompt = `A realistic photo of this house with improvements matching a $${budget} budget. Keep the original style. Add windows or minor exterior upgrades if needed.`;
 
-  res.json({
-    enhancedImageUrl,
-    budget: Number(budget),
-    description
-  });
+  console.log('✨ Sending to OpenAI DALL·E:', prompt);
+
+  try {
+    const response = await openai.images.generate({
+      model: "dall-e-3",
+      prompt: prompt,
+      n: 1,
+      size: "1024x1024",
+    });
+
+    const enhancedImageUrl = response.data[0].url;
+
+    console.log('✅ AI Enhanced Image URL:', enhancedImageUrl);
+
+    res.json({
+      enhancedImageUrl,
+      budget: Number(budget),
+      description: prompt,
+    });
+
+  } catch (err) {
+    console.error('❌ OpenAI Enhance Error:', err);
+    res.status(500).json({ error: 'Enhance failed', details: err.message });
+  }
 });
 
-// ✅ Add a simple GET / route so you don't get 502
+// ✅ Health check
 app.get('/', (req, res) => {
-  res.send('✅ Flip.ai backend is live. Use POST /api/enhance instead.');
+  res.send('✅ Flip.ai backend is LIVE — OpenAI real enhancement!');
 });
 
 app.listen(port, () => {
