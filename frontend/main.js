@@ -1,46 +1,56 @@
 console.log("✅ Flip.ai main.js loaded");
 
-const enhanceBtn = document.getElementById("enhanceBtn");
-const backendUrl = 'https://YOUR-BACKEND-URL.onrender.com/api/enhance'; // 🔑 replace with your actual Render backend
+// Elements
+const enhanceBtn = document.getElementById('btn-enhance');
+const zipInput = document.getElementById('zip');
+const valueInput = document.getElementById('price');
+const investInput = document.getElementById('investment');
+const promptInput = document.getElementById('prompt');
+const fileInput = document.getElementById('propertyImage');
+const arvChart = document.getElementById('arvChart');
+const glassBox = document.getElementById('glassBox');
+const enhancedImage = document.getElementById('enhancedImage');
 
-enhanceBtn.addEventListener("click", async () => {
+// ✅ Correct backend URL
+const BACKEND_URL = 'https://flip-ai.onrender.com'; // Replace with your real Render URL!
+
+enhanceBtn.addEventListener('click', async () => {
   console.log("✨ Enhance Button Clicked");
 
-  const zip = document.getElementById("zip").value;
-  const price = document.getElementById("price").value;
-  const investment = document.getElementById("investment").value;
-  const details = document.getElementById("details").value;
-  const fileInput = document.getElementById("propertyImage");
-  const file = fileInput.files[0];
+  const value = valueInput.value;
+  const investment = investInput.value;
+  const prompt = promptInput.value;
 
+  const file = fileInput.files[0];
   if (!file) {
-    alert("Please select an image to enhance.");
+    alert("Please select an image first.");
     return;
   }
 
   const formData = new FormData();
   formData.append('image', file);
-  formData.append('zip', zip);
-  formData.append('price', price);
+  formData.append('value', value);
   formData.append('investment', investment);
-  formData.append('details', details);
+  formData.append('prompt', prompt);
 
   try {
-    const response = await fetch(backendUrl, {
+    const response = await fetch(`${BACKEND_URL}/api/enhance`, {
       method: 'POST',
       body: formData
     });
 
+    if (!response.ok) throw new Error(`Server error: ${response.status}`);
+
     const data = await response.json();
     console.log("✅ Variation Response:", data);
 
-    if (data.enhancedImageUrl) {
-      const resultImage = document.getElementById("resultImage");
-      resultImage.src = data.enhancedImageUrl;
-      resultImage.style.display = 'block';
-    } else {
-      alert("No image returned.");
-    }
+    // Show ARV chart and image
+    glassBox.classList.add('show');
+    enhancedImage.src = data.enhancedImageUrl;
+    enhancedImage.style.display = 'block';
+
+    // Update chart or other UI here if needed
+    alert(`Enhanced Image: ${data.enhancedImageUrl}\nARV: ${data.arv}\nTier: ${data.tier}`);
 
   } catch (err) {
     console.error("❌ Enhance Image Error:", err);
