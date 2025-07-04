@@ -1,153 +1,132 @@
-// ============================================================
-// ✅ Flip.ai Backend – Smart Budget Enhancer (NO MASK VERSION)
-// ============================================================
+// ========================================================================
+// ✅ Flip.ai – Smart Budget AI – Comprehensive Server.js
+// ========================================================================
 
-const fs = require('fs');
 const express = require('express');
 const cors = require('cors');
-require('dotenv').config();
-const OpenAI = require("openai");
+const fs = require('fs');
 const multer = require('multer');
+const OpenAI = require('openai');
+require('dotenv').config();
 
-// ✅ Init OpenAI with API Key
+// ✅ Init OpenAI Client
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+// ✅ Express App Setup
 const app = express();
+app.use(cors());
+app.use(express.json());
 
-// ✅ Ensure /tmp/uploads exists (Fly ephemeral FS)
+// ✅ Upload Directory for Render / Fly.io
 const uploadDir = '/tmp/uploads';
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
-  console.log("✅ Created upload directory:", uploadDir);
-} else {
-  console.log("✅ Upload directory exists:", uploadDir);
+  console.log('✅ Upload directory created:', uploadDir);
 }
 
-// ✅ Multer storage config (ONE file only)
+// ✅ Multer Storage
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + '-' + file.originalname);
-  }
+  destination: (req, file, cb) => cb(null, uploadDir),
+  filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname),
 });
 const upload = multer({ storage: storage });
 
-app.use(express.json());
-app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    'https://flip-ai.netlify.app',
-    'https://www.flip-ai.netlify.app'
-  ]
-}));
-
-// ============================================================
+// ========================================================================
 // ✅ Health Check
-// ============================================================
+// ========================================================================
 app.get('/', (req, res) => {
-  res.send('✅ Flip.AI backend is alive!');
+  res.send('✅ Flip.ai backend is alive!');
 });
 
-// ============================================================
-// ✅ Ask Route (Smart Budget)
-// ============================================================
-app.post('/api/ask', async (req, res) => {
-  const { value, investment } = req.body;
+// ========================================================================
+// ✅ Smart Flip Enhance Route
+// ========================================================================
+app.post('/api/enhance', upload.single('image'), async (req, res) => {
+  console.log('🖼️ Received request for Flip Enhance');
 
-  if (!value || !investment) {
-    return res.status(400).json({ error: "Missing value or investment amount" });
+  const { propertyValue, investment } = req.body;
+  const file = req.file;
+
+  if (!propertyValue || !investment) {
+    return res.status(400).json({ error: 'Missing property value or investment amount.' });
   }
 
-  const arv = Number(value) + Number(investment);
+  if (!file) {
+    return res.status(400).json({ error: 'Image file is required.' });
+  }
+
+  const propertyVal = Number(propertyValue);
+  const investVal = Number(investment);
+
+  const arv = propertyVal + investVal;
   const maxOffer = arv * 0.7;
 
-  try {
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        {
-          role: "system",
-          content: `
-You are a professional real estate flip advisor.
-Always provide:
-- After Repair Value (ARV)
-- 70% Rule estimate for max offer
-- Short explanation
-- Quick investor tip
-End with: "Happy Flipping! 🚀"
-Use bullet points and format numbers.
-          `.trim()
-        },
-        {
-          role: "user",
-          content: `
-Property Value: $${Number(value).toLocaleString()}
-Planned Investment: $${Number(investment).toLocaleString()}
-Please calculate ARV, 70% Rule, and advice.
-          `.trim()
-        }
-      ],
-    });
-
-    res.json({
-      answer: completion.choices[0].message.content,
-      arv: `$${arv.toLocaleString()}`,
-      maxOffer: `$${maxOffer.toLocaleString()}`
-    });
-
-  } catch (err) {
-    console.error("❌ /api/ask error:", err);
-    res.status(500).json({ error: "OpenAI request failed" });
-  }
-});
-
-// ============================================================
-// ✅ Enhance Image Route — DALL·E (No Mask)
-// ============================================================
-app.post('/api/enhance', upload.single('image'), async (req, res) => {
-  console.log("🖼️ Received image for enhancement!");
-
-  if (!req.file) {
-    console.error("❌ No image uploaded");
-    return res.status(400).json({ error: "Image is required" });
+  // ✅ Determine tier
+  let tier = 'Basic upgrades';
+  if (investVal < 10000) {
+    tier = 'Basic upgrades';
+  } else if (investVal >= 10000 && investVal < 50000) {
+    tier = 'Moderate upgrades';
+  } else {
+    tier = 'Premium upscale renovation';
   }
 
-  const imagePath = req.file.path;
-  console.log("✅ Uploaded image path:", imagePath);
+  console.log(`💰 ARV: ${arv} | Max Offer: ${maxOffer} | Tier: ${tier}`);
 
-  const stylePrompt = `
-Photo of a light blue house with boarded-up windows. Replace only the boarded-up sections with clear glass windows matching the house’s original style. Do not change anything else — keep the grass, yard, sidewalk, siding, roof, paint, colors, trees, and lighting exactly the same. Preserve the slightly weathered, realistic look. No beautifying, no landscape improvements, no extra edits.
+  // ✅ Build DALL·E Prompt
+  const prompt = `
+Captured on a sunny midday, this charming one-story blue house with white trim rests on a tree-lined street.
+It features a steep gable roof with dark shingles, a red brick chimney, evenly placed windows, and a welcoming front door,
+while the surrounding autumn-toned trees and clean sidewalk complete the picturesque suburban home.
+
+Upgrade level: ${tier}.
+
+Focus on:
+- Keeping the same house structure and siding.
+- Replacing boarded windows and doors with realistic upgrades.
+- Add clean trim, realistic window styles, and curb appeal appropriate for the budget.
+No landscaping changes.
+No new structures.
   `.trim();
 
+  console.log('✨ Final Prompt:', prompt);
+
   try {
-    const dalleResponse = await openai.images.generate({
-      model: "dall-e-3",
-      prompt: stylePrompt,
+    // ✅ Generate Enhanced Image with DALL·E
+    const imageStream = fs.createReadStream(file.path);
+
+    const dalleResponse = await openai.images.createVariation({
+      model: 'dall-e-2',
+      image: imageStream,
       n: 1,
-      size: "1024x1024",
+      size: '1024x1024',
+      response_format: 'url',
+      // Note: For edits, you’d use `createEdit` with a mask, but we skip mask for now
     });
 
-    console.log("✅ DALL·E generated image:", dalleResponse.data[0].url);
+    const enhancedUrl = dalleResponse.data[0].url;
 
-    res.json({ enhancedImageUrl: dalleResponse.data[0].url });
+    console.log('✅ Enhanced Image URL:', enhancedUrl);
+
+    return res.json({
+      enhancedImageUrl: enhancedUrl,
+      arv: `$${arv.toLocaleString()}`,
+      maxOffer: `$${maxOffer.toLocaleString()}`,
+      tier: tier,
+    });
 
   } catch (err) {
-    console.error("❌ /api/enhance error:", err);
-    res.status(500).json({ error: "Failed to enhance image", details: err.message });
-  } finally {
-    fs.unlink(imagePath, () => {});
+    console.error('❌ OpenAI error:', err);
+    res.status(500).json({ error: 'Failed to generate enhancement', details: err.message });
   }
 });
 
-// ============================================================
-// ✅ Start Server — Fly expects 0.0.0.0:8080
-// ============================================================
-const PORT = process.env.PORT || 8080;
-
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Flip backend running on port ${PORT}`);
+// ========================================================================
+// ✅ Start Server
+// ========================================================================
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, () => {
+  console.log(`🚀 Flip.ai backend running on port ${PORT}`);
 });
