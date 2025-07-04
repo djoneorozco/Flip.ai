@@ -1,63 +1,77 @@
-const fs = require('fs');
-const express = require('express');
-const cors = require('cors');
-require('dotenv').config();
-const OpenAI = require("openai");
-const multer = require('multer');
+//#1 ── Imports & Config
+import express from 'express';
+import multer from 'multer';
+import cors from 'cors';
+import OpenAI from 'openai';
+import dotenv from 'dotenv';
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
+dotenv.config();
 const app = express();
-
-const uploadDir = '/tmp/uploads';
-if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadDir),
-  filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
-});
-const upload = multer({ storage: storage });
-
+app.use(cors());
 app.use(express.json());
-app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    'https://flip-ai.netlify.app',
-    'https://www.flip-ai.netlify.app'
-  ]
-}));
 
-app.get('/', (req, res) => res.send('✅ Flip.AI backend is alive!'));
+//#2 ── File Upload Config
+const upload = multer({ dest: 'uploads/' });
 
-app.post('/api/enhance', upload.single('image'), async (req, res) => {
-  const budget = parseFloat(req.body.investment || 0);
-  const filePath = req.file?.path;
+//#3 ── OpenAI Init
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
-  if (!filePath) return res.status(400).json({ error: "No file uploaded" });
+//#4 ── Prompt Logic Function
+function getPromptForTier(budget) {
+  if (budget <= 10000) {
+    return `Keep the house’s existing shape, roof, and siding color exactly the same.
+Remove boarded-up windows and doors, replacing them with simple, realistic modern windows and doors.
+Add light yard cleanup: trim bushes, fresh green grass. 
+No major landscaping. No structural changes. Keep style modest and realistic.`;
+  }
 
-  let stylePrompt = `Keep house shape & style. Add windows and doors based on budget tier.`;
-  if (budget < 10000) stylePrompt += ` Tier 1: basic standard replacements.`;
-  else if (budget < 50000) stylePrompt += ` Tier 2: modern replacements.`;
-  else stylePrompt += ` Tier 3: upscale replacements with stylish trim.`;
+  // Placeholder for future higher tiers
+  return `Keep house style & shape. Perform improvements matching budget tier.`;
+}
 
+//#5 ── API Route: Enhance
+app.post('/api/enhance', upload.single('propertyImage'), async (req, res) => {
   try {
-    const dalleResponse = await openai.images.createVariation({
-      image: fs.createReadStream(filePath),
+    const file = req.file;
+    const budget = Number(req.body.budget) || 0;
+
+    console.log('📸 Received file:', file?.originalname);
+    console.log('💲 Budget:', budget);
+
+    // 1. Pick the right prompt for the tier
+    const prompt = getPromptForTier(budget);
+    console.log('✏️ Using prompt:', prompt);
+
+    // 2. DALL·E Image Variation (this is the "middle man" step)
+    const response = await openai.images.generate({
+      model: 'dall-e-3',
+      prompt: prompt,
       n: 1,
-      size: "1024x1024",
+      size: '1024x1024',
     });
+
+    const enhancedImageUrl = response.data[0].url;
 
     res.json({
-      enhancedImageUrl: dalleResponse.data[0].url,
+      enhancedImageUrl,
       budget,
-      description: stylePrompt
+      description: prompt,
     });
-
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Enhance failed", details: err.message });
+  } catch (error) {
+    console.error('❌ Enhance Error:', error);
+    res.status(500).json({ error: 'Image enhancement failed.' });
   }
 });
 
-const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log(`🚀 Flip backend running on port ${PORT}`));
+//#6 ── Health Check (optional)
+app.get('/', (req, res) => {
+  res.send('🟢 Flip.ai backend running!');
+});
+
+//#7 ── Start Server
+const PORT = process.env.PORT || 8080;
+app.listen(PORT, () => {
+  console.log(`🚀 Flip.ai backend listening on port ${PORT}`);
+});
