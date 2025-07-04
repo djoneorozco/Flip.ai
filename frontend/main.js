@@ -1,77 +1,44 @@
-console.log("✅ Flip.ai main.js loaded");
+console.log('✅ Flip.ai main.js loaded');
 
-// === DOM Elements ===
-const imageInput = document.getElementById('propertyImage');
-const purchasePriceInput = document.getElementById('purchasePrice');
-const rehabInvestmentInput = document.getElementById('rehabInvestment');
-const generateBtn = document.getElementById('generateReport');
-const resultDiv = document.getElementById('result');
-const graphDiv = document.getElementById('graph');
+const btnEnhance = document.getElementById('btn-enhance');
+btnEnhance.addEventListener('click', async () => {
+  console.log('✨ Enhance Button Clicked');
 
-// === BACKEND BASE URL ===
-const BACKEND_URL = 'https://realtysass.fly.dev';
+  const propertyValue = document.getElementById('propertyValue').value;
+  const investment = document.getElementById('investment').value;
+  const imageFile = document.getElementById('propertyImage').files[0];
 
-// === Generate Report Handler ===
-generateBtn.addEventListener('click', async () => {
-  resultDiv.innerHTML = "⏳ Generating...";
-
-  const purchasePrice = purchasePriceInput.value.trim();
-  const rehabInvestment = rehabInvestmentInput.value.trim();
-  const imageFile = imageInput.files[0];
-
-  if (!purchasePrice || !rehabInvestment) {
-    resultDiv.innerHTML = "❌ Please enter both purchase price and rehab investment.";
+  if (!propertyValue || !investment || !imageFile) {
+    alert('Please fill in all fields and upload an image!');
     return;
   }
 
-  if (!imageFile) {
-    resultDiv.innerHTML = "❌ Please select an image.";
-    return;
-  }
+  const formData = new FormData();
+  formData.append('propertyValue', propertyValue);
+  formData.append('investment', investment);
+  formData.append('image', imageFile);
 
   try {
-    // === 1️⃣ Get Smart Budget Numbers ===
-    const askResponse = await fetch(`${BACKEND_URL}/api/ask`, {
+    const response = await fetch('https://YOUR-BACKEND-URL.com/api/enhance', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        value: purchasePrice,
-        investment: rehabInvestment
-      })
+      body: formData,
     });
 
-    const askData = await askResponse.json();
+    if (!response.ok) {
+      throw new Error('Server error: ' + response.status);
+    }
 
-    // === 2️⃣ Enhance Property Image ===
-    const formData = new FormData();
-    formData.append('image', imageFile);
-    formData.append('investment', rehabInvestment);
+    const data = await response.json();
+    console.log('✅ Variation Response:', data);
 
-    const enhanceResponse = await fetch(`${BACKEND_URL}/api/enhance`, {
-      method: 'POST',
-      body: formData
-    });
-
-    const enhanceData = await enhanceResponse.json();
-
-    // === 3️⃣ Show Results ===
-    resultDiv.innerHTML = `
-      <h4>✅ Smart Budget Report</h4>
-      <pre>${askData.answer}</pre>
-      <h4>✅ Enhanced Image</h4>
-      <img src="${enhanceData.enhancedImageUrl}" alt="Enhanced Property" width="500"/>
-    `;
-
-    // === 4️⃣ Example: Simple Graph ===
-    graphDiv.innerHTML = `
-      <p>ARV: ${askData.arv}</p>
-      <p>Max Offer (70% Rule): ${askData.maxOffer}</p>
-    `;
+    document.getElementById('result').style.display = 'block';
+    document.getElementById('arv').innerText = `ARV: ${data.arv}`;
+    document.getElementById('maxOffer').innerText = `Max Offer: ${data.maxOffer}`;
+    document.getElementById('tier').innerText = `Recommended Tier: ${data.tier}`;
+    document.getElementById('enhancedImage').src = data.enhancedImageUrl;
 
   } catch (err) {
-    console.error("❌ Flip.ai Error:", err);
-    resultDiv.innerHTML = "❌ Something went wrong. Please try again.";
+    console.error(err);
+    alert('Enhance failed: ' + err.message);
   }
 });
