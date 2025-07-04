@@ -1,19 +1,14 @@
-// ✅ Flip.ai REAL SERVER.JS — OpenAI DALL·E, no placeholders
+// ✅ Flip.ai MIDDLE-MAN SERVER.JS — Real file upload + return stored URL
 
 import express from 'express';
 import multer from 'multer';
 import cors from 'cors';
-import OpenAI from 'openai';
+import path from 'path';
 
 const app = express();
 const port = process.env.PORT || 10000;
 
-// ✅ Init OpenAI
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
-// ✅ Allow only your Netlify app to hit the backend
+// ✅ CORS — only allow your frontend
 const allowedOrigins = ['https://flip-ai.netlify.app'];
 app.use(
   cors({
@@ -31,47 +26,45 @@ app.use(
 
 app.use(express.json());
 
-// ✅ USE MEMORY STORAGE for upload
-const storage = multer.memoryStorage();
+// ✅ Store uploads locally (or switch to S3 later)
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, './uploads'),
+  filename: (req, file, cb) =>
+    cb(null, `${Date.now()}-${file.originalname}`),
+});
+
 const upload = multer({ storage });
 
-app.post('/api/enhance', upload.single('propertyImage'), async (req, res) => {
+// ✅ Serve uploaded files statically
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// ✅ POST /api/enhance — MIDDLE-MAN FLOW
+app.post('/api/enhance', upload.single('propertyImage'), (req, res) => {
   console.log('✅ Image received:', req.file?.originalname);
+
+  if (!req.file) {
+    return res.status(400).json({ error: 'No image uploaded.' });
+  }
 
   const budget = req.body.budget || 0;
 
-  // ✅ Real prompt for DALL·E
-  const prompt = `A realistic photo of this house with improvements matching a $${budget} budget. Keep the original style. Add windows or minor exterior upgrades if needed.`;
+  // ✅ Real URL to your saved file
+  const uploadedImageUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
 
-  console.log('✨ Sending to OpenAI DALL·E:', prompt);
+  // ✅ Log — here’s where your manual team or next pipeline would pick it up
+  console.log('✅ Stored image at:', uploadedImageUrl);
 
-  try {
-    const response = await openai.images.generate({
-      model: "dall-e-3",
-      prompt: prompt,
-      n: 1,
-      size: "1024x1024",
-    });
-
-    const enhancedImageUrl = response.data[0].url;
-
-    console.log('✅ AI Enhanced Image URL:', enhancedImageUrl);
-
-    res.json({
-      enhancedImageUrl,
-      budget: Number(budget),
-      description: prompt,
-    });
-
-  } catch (err) {
-    console.error('❌ OpenAI Enhance Error:', err);
-    res.status(500).json({ error: 'Enhance failed', details: err.message });
-  }
+  // ✅ Response
+  res.json({
+    uploadedImageUrl,
+    budget: Number(budget),
+    description: `Real uploaded photo stored. Ready for manual or advanced pipeline enhancement.`,
+  });
 });
 
 // ✅ Health check
 app.get('/', (req, res) => {
-  res.send('✅ Flip.ai backend is LIVE — OpenAI real enhancement!');
+  res.send('✅ Flip.ai middle-man backend is LIVE — real upload, real file URL, no fake AI.');
 });
 
 app.listen(port, () => {
