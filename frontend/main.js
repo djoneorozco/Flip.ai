@@ -41,16 +41,21 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = await response.json();
 
       console.log('✅ Uploaded Image URL:', data.uploadedImageUrl);
+      console.log('✅ Enhanced Image URL:', data.enhancedImageUrl);
       console.log('✅ Description:', data.description);
       console.log('✅ Budget Used:', data.budget);
 
-      alert(`Uploaded Image URL:\n${data.uploadedImageUrl}\n\nDetails:\n${data.description}`);
+      alert(
+        `Uploaded Image URL:\n${data.uploadedImageUrl}\n\n` +
+        `Enhanced Image URL:\n${data.enhancedImageUrl}\n\n` +
+        `Details:\n${data.description}`
+      );
 
       const resultImage = document.getElementById('enhancedImage');
       const resultBox = document.getElementById('enhancedGlassBox');
 
       if (resultImage && resultBox) {
-        resultImage.src = data.uploadedImageUrl;
+        resultImage.src = data.enhancedImageUrl; // Show the real AI version
         resultBox.style.display = 'block';
       }
 
