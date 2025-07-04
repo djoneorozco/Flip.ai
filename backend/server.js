@@ -5,9 +5,26 @@ import cors from 'cors';
 const app = express();
 const port = process.env.PORT || 10000;
 
-app.use(cors());
+// ✅ Allow only your Netlify app to hit the backend
+const allowedOrigins = ['https://flip-ai.netlify.app'];
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      // Allow requests with no origin like Postman or curl
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      } else {
+        return callback(new Error('CORS policy: Not allowed by CORS'));
+      }
+    },
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 
+// ✅ Your file upload logic stays the same...
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, './uploads'),
   filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`)
