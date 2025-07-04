@@ -40,17 +40,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const data = await response.json();
 
-      console.log('✅ AI Enhanced Image URL:', data.enhancedImageUrl);
-      console.log('✅ AI Description:', data.description);
+      console.log('✅ Uploaded Image URL:', data.uploadedImageUrl);
+      console.log('✅ Description:', data.description);
       console.log('✅ Budget Used:', data.budget);
 
-      alert(`Enhanced Image URL:\n${data.enhancedImageUrl}\n\nPrompt Used:\n${data.description}`);
+      alert(`Uploaded Image URL:\n${data.uploadedImageUrl}\n\nDetails:\n${data.description}`);
 
       const resultImage = document.getElementById('enhancedImage');
       const resultBox = document.getElementById('enhancedGlassBox');
 
       if (resultImage && resultBox) {
-        resultImage.src = data.enhancedImageUrl;
+        resultImage.src = data.uploadedImageUrl;
         resultBox.style.display = 'block';
       }
 
