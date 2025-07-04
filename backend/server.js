@@ -24,12 +24,8 @@ app.use(
 
 app.use(express.json());
 
-// ✅ Your file upload logic stays the same...
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, './uploads'),
-  filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`)
-});
-
+// ✅ USE MEMORY STORAGE instead of writing to ./uploads
+const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
 app.post('/api/enhance', upload.single('propertyImage'), (req, res) => {
@@ -37,6 +33,7 @@ app.post('/api/enhance', upload.single('propertyImage'), (req, res) => {
 
   const budget = req.body.budget || 0;
 
+  // You now have req.file.buffer in memory if you need it later
   const enhancedImageUrl = `https://placehold.co/600x400?text=Enhanced+Image`;
   const description = `Keep house shape & style. Add windows or minor updates based on budget tier.`;
 
