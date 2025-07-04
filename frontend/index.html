@@ -1,92 +1,158 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Flip.ai – Smart AI-Driven Flip Insights</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #0a192f;
-      color: #fff;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      padding: 2rem;
-    }
+// ============================================================
+// ✅ Flip.ai Backend — Fly.io Middleman — Smart Budget + DALL·E
+// ============================================================
 
-    h1 {
-      font-size: 2.5rem;
-      margin-bottom: 0.5rem;
-    }
+const fs = require('fs');
+const express = require('express');
+const cors = require('cors');
+require('dotenv').config();
+const OpenAI = require('openai');
+const multer = require('multer');
 
-    p {
-      margin-bottom: 2rem;
-    }
+// ✅ Init OpenAI with your secret key
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
-    input, textarea {
-      width: 100%;
-      max-width: 300px;
-      margin-bottom: 1rem;
-      padding: 0.75rem;
-      border: none;
-      border-radius: 6px;
-      font-size: 1rem;
-    }
+// ✅ Init Express
+const app = express();
 
-    button {
-      margin: 0.5rem;
-      padding: 0.75rem 1.5rem;
-      border: none;
-      border-radius: 6px;
-      font-size: 1rem;
-      cursor: pointer;
-      background: #0ea5e9;
-      color: #fff;
-    }
+// ✅ CORS — allow Netlify & local dev
+app.use(cors({
+  origin: [
+    'http://localhost:3000',
+    'https://flip-ai.netlify.app',
+    'https://www.flip-ai.netlify.app'
+  ]
+}));
 
-    #enhancedGlassBox {
-      display: none;
-      margin-top: 2rem;
-      padding: 1rem;
-      background: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(12px);
-      border-radius: 12px;
-      text-align: center;
-      max-width: 400px;
-    }
+// ✅ JSON parsing
+app.use(express.json());
 
-    #enhancedImage {
-      width: 100%;
-      border-radius: 8px;
-    }
-  </style>
-</head>
+// ✅ Multer for file upload
+const uploadDir = '/tmp/uploads';
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
 
-<body>
-  <h1>Welcome to Flip.ai</h1>
-  <p># Smart AI-driven Flip Insights</p>
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + '-' + file.originalname);
+  }
+});
+const upload = multer({ storage: storage });
 
-  <input id="price" type="number" placeholder="Property Purchase Cost" />
-  <input id="investment" type="number" placeholder="Planned Investment Cost" />
+// ============================================================
+// ✅ Health Check
+// ============================================================
+app.get('/', (req, res) => {
+  res.send('✅ RealtySass backend is alive!');
+});
 
-  <h3>Enhance Your Property Photo</h3>
-  <input type="file" id="propertyImage" accept="image/*" />
+// ============================================================
+// ✅ /api/ask — Smart Budget Calculator
+// ============================================================
+app.post('/api/ask', async (req, res) => {
+  const { value, investment } = req.body;
 
-  <button id="enhanceButton">Enhance Image & See ARV</button>
+  if (!value || !investment) {
+    return res.status(400).json({ error: "Missing value or investment amount" });
+  }
 
-  <!-- Frosted glass box for enhanced result -->
-  <div id="enhancedGlassBox">
-    <img
-      id="enhancedImage"
-      src=""
-      alt="Enhanced Result"
-    />
-  </div>
+  const arv = Number(value) + Number(investment);
+  const maxOffer = arv * 0.7;
 
-  <script src="main.js"></script>
-</body>
-</html>
+  try {
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: `
+You are a professional real estate flip advisor.
+Always provide:
+- After Repair Value (ARV)
+- 70% Rule estimate for max offer
+- Short explanation
+- Quick investor tip
+End with: "Happy Flipping! 🚀"
+Use bullet points and format numbers.
+          `.trim()
+        },
+        {
+          role: "user",
+          content: `
+Property Value: $${Number(value).toLocaleString()}
+Planned Investment: $${Number(investment).toLocaleString()}
+Please calculate ARV, 70% Rule, and advice.
+          `.trim()
+        }
+      ],
+    });
+
+    res.json({
+      answer: completion.choices[0].message.content,
+      arv: `$${arv.toLocaleString()}`,
+      maxOffer: `$${maxOffer.toLocaleString()}`
+    });
+
+  } catch (err) {
+    console.error("❌ /api/ask error:", err);
+    res.status(500).json({ error: "OpenAI request failed" });
+  }
+});
+
+// ============================================================
+// ✅ /api/enhance — DALL·E Image Edit
+// ============================================================
+app.post('/api/enhance', upload.single('image'), async (req, res) => {
+  console.log("🖼️ /api/enhance hit");
+
+  const imageFile = req.file;
+  const budget = parseFloat(req.body.investment || 0);
+
+  if (!imageFile) {
+    return res.status(400).json({ error: "Image is required" });
+  }
+
+  console.log("✅ Image uploaded:", imageFile.path);
+
+  // ✅ Example prompt — adjust for your real style
+  const stylePrompt = `
+Photo of a light blue house with boarded-up windows. Replace only the boarded-up sections with clear glass windows that match the house’s existing style. Do not change anything else — keep the grass, yard, sidewalk, house siding, roof, paint, colors, trees, and lighting exactly the same. Preserve the slightly weathered, realistic look. No beautifying, no landscape improvements, no extra edits.
+  `.trim();
+
+  console.log("✨ Final DALL·E prompt:", stylePrompt);
+
+  try {
+    const dalleResponse = await openai.images.createEdit({
+      model: "dall-e-2",
+      image: fs.createReadStream(imageFile.path),
+      prompt: stylePrompt,
+      n: 1,
+      size: "1024x1024"
+    });
+
+    const enhancedImageUrl = dalleResponse.data[0].url;
+
+    res.json({
+      enhancedImageUrl,
+      budget
+    });
+
+  } catch (err) {
+    console.error("❌ /api/enhance error:", err);
+    res.status(500).json({ error: "Enhancement failed", details: err.message });
+  }
+});
+
+// ============================================================
+// ✅ Start Server — Fly.io expects PORT from env
+// ============================================================
+const PORT = process.env.PORT || 8080;
+app.listen(PORT, () => {
+  console.log(`🚀 RealtySass backend running on port ${PORT}`);
+});
