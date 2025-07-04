@@ -1,67 +1,77 @@
-console.log('✅ Flip.ai main.js loaded');
+console.log("✅ Flip.ai main.js loaded");
 
-document.addEventListener('DOMContentLoaded', () => {
-  const enhanceButton = document.getElementById('enhanceButton');
-  const imageInput = document.getElementById('propertyImage');
-  const budgetInput = document.getElementById('investment');
+// === DOM Elements ===
+const imageInput = document.getElementById('propertyImage');
+const purchasePriceInput = document.getElementById('purchasePrice');
+const rehabInvestmentInput = document.getElementById('rehabInvestment');
+const generateBtn = document.getElementById('generateReport');
+const resultDiv = document.getElementById('result');
+const graphDiv = document.getElementById('graph');
 
-  if (!enhanceButton) {
-    console.error('❌ Enhance button not found. Check your HTML ID.');
+// === BACKEND BASE URL ===
+const BACKEND_URL = 'https://realtysass.fly.dev';
+
+// === Generate Report Handler ===
+generateBtn.addEventListener('click', async () => {
+  resultDiv.innerHTML = "⏳ Generating...";
+
+  const purchasePrice = purchasePriceInput.value.trim();
+  const rehabInvestment = rehabInvestmentInput.value.trim();
+  const imageFile = imageInput.files[0];
+
+  if (!purchasePrice || !rehabInvestment) {
+    resultDiv.innerHTML = "❌ Please enter both purchase price and rehab investment.";
     return;
   }
 
-  enhanceButton.addEventListener('click', async () => {
-    console.log('✨ Enhance Button Clicked');
+  if (!imageFile) {
+    resultDiv.innerHTML = "❌ Please select an image.";
+    return;
+  }
 
-    const file = imageInput.files[0];
-    const budget = Number(budgetInput.value);
+  try {
+    // === 1️⃣ Get Smart Budget Numbers ===
+    const askResponse = await fetch(`${BACKEND_URL}/api/ask`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        value: purchasePrice,
+        investment: rehabInvestment
+      })
+    });
 
-    if (!file) {
-      alert('Please upload a property image.');
-      return;
-    }
+    const askData = await askResponse.json();
 
-    console.log('📸 Sending file:', file.name);
-    console.log('💲 Budget amount:', budget);
-
+    // === 2️⃣ Enhance Property Image ===
     const formData = new FormData();
-    formData.append('propertyImage', file);
-    formData.append('budget', budget);
+    formData.append('image', imageFile);
+    formData.append('investment', rehabInvestment);
 
-    try {
-      const response = await fetch('https://flip-ai.onrender.com/api/enhance', {
-        method: 'POST',
-        body: formData,
-      });
+    const enhanceResponse = await fetch(`${BACKEND_URL}/api/enhance`, {
+      method: 'POST',
+      body: formData
+    });
 
-      if (!response.ok) {
-        throw new Error(`Server error: ${response.status}`);
-      }
+    const enhanceData = await enhanceResponse.json();
 
-      const data = await response.json();
+    // === 3️⃣ Show Results ===
+    resultDiv.innerHTML = `
+      <h4>✅ Smart Budget Report</h4>
+      <pre>${askData.answer}</pre>
+      <h4>✅ Enhanced Image</h4>
+      <img src="${enhanceData.enhancedImageUrl}" alt="Enhanced Property" width="500"/>
+    `;
 
-      console.log('✅ Uploaded Image URL:', data.uploadedImageUrl);
-      console.log('✅ Enhanced Image URL:', data.enhancedImageUrl);
-      console.log('✅ Description:', data.description);
-      console.log('✅ Budget Used:', data.budget);
+    // === 4️⃣ Example: Simple Graph ===
+    graphDiv.innerHTML = `
+      <p>ARV: ${askData.arv}</p>
+      <p>Max Offer (70% Rule): ${askData.maxOffer}</p>
+    `;
 
-      alert(
-        `Uploaded Image URL:\n${data.uploadedImageUrl}\n\n` +
-        `Enhanced Image URL:\n${data.enhancedImageUrl}\n\n` +
-        `Details:\n${data.description}`
-      );
-
-      const resultImage = document.getElementById('enhancedImage');
-      const resultBox = document.getElementById('enhancedGlassBox');
-
-      if (resultImage && resultBox) {
-        resultImage.src = data.enhancedImageUrl; // Show the real AI version
-        resultBox.style.display = 'block';
-      }
-
-    } catch (err) {
-      console.error('❌ Enhance Image Error:', err);
-      alert(`Enhance failed: ${err.message}`);
-    }
-  });
+  } catch (err) {
+    console.error("❌ Flip.ai Error:", err);
+    resultDiv.innerHTML = "❌ Something went wrong. Please try again.";
+  }
 });
