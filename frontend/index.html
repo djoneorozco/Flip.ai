@@ -4,61 +4,25 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Flip.ai – Smart AI-Driven Flip Insights</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #0a192f;
-      color: #fff;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      padding: 2rem;
-    }
-    h1 {
-      font-size: 2rem;
-      margin-bottom: 0.5rem;
-    }
-    p {
-      margin-bottom: 1.5rem;
-    }
-    input, textarea {
-      width: 100%;
-      max-width: 300px;
-      margin-bottom: 1rem;
-      padding: 0.75rem;
-      border: none;
-      border-radius: 6px;
-      font-size: 1rem;
-    }
-    button {
-      margin: 0.5rem;
-      padding: 0.75rem 1.5rem;
-      border: none;
-      border-radius: 6px;
-      font-size: 1rem;
-      cursor: pointer;
-      background: #0ea5e9;
-      color: #fff;
-    }
-  </style>
+  <link rel="stylesheet" href="styles.css" />
 </head>
-
 <body>
   <h1>Welcome to Flip.ai</h1>
   <p>#1 Smart AI-Driven Flip Insights</p>
 
+  <!-- ✅ INPUT FIELDS -->
   <input id="zip" type="text" placeholder="ZIP Code (optional)" />
-  <input id="price" type="number" placeholder="Property Purchase Cost" />
-  <input id="investment" type="number" placeholder="Planned Investment Cost" />
-  <textarea id="prompt" placeholder="Details (optional)"></textarea>
+  <input id="propertyValue" type="number" placeholder="Property Purchase Cost" />
+  <input id="investmentAmount" type="number" placeholder="Planned Investment Cost" />
+  <textarea id="details" placeholder="Details (optional)"></textarea>
 
+  <!-- ✅ FILE UPLOAD -->
   <input type="file" id="propertyImage" accept="image/*" />
-  <button id="btn-enhance">Enhance Image & See ARV</button>
 
-  <!-- ✅ Always place this LAST so DOM is loaded first -->
+  <!-- ✅ BUTTON (has correct ID!) -->
+  <button id="enhanceBtn">Enhance Image & See ARV</button>
+
+  <!-- ✅ SCRIPTS -->
   <script src="main.js"></script>
 </body>
 </html>
