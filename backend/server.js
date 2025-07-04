@@ -1,78 +1,61 @@
-// ✅ server.js — FULL FILE
+// ✅ main.js — Flip.ai full frontend script
 
-import express from 'express';
-import cors from 'cors';
-import multer from 'multer';
-import fs from 'fs';
-import path from 'path';
+console.log('✅ Flip.ai main.js loaded');
 
-const app = express();
-const PORT = process.env.PORT || 5000;
+document.addEventListener('DOMContentLoaded', () => {
+  const enhanceButton = document.getElementById('enhanceButton');
 
-// ✅ CORS setup (adjust origin as needed for Netlify frontend)
-app.use(
-  cors({
-    origin: 'https://flip-ai.netlify.app', // Replace with your real Netlify domain
-    methods: ['GET', 'POST'],
-  })
-);
-
-app.use(express.json());
-
-// ✅ Safe uploads folder creation
-const uploadsDir = path.join(process.cwd(), 'uploads');
-
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-  console.log(`✅ Created uploads folder: ${uploadsDir}`);
-} else {
-  console.log(`✅ Uploads folder already exists: ${uploadsDir}`);
-}
-
-// ✅ Multer config
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadsDir);
-  },
-  filename: (req, file, cb) => {
-    cb(null, `${Date.now()}-${file.originalname}`);
-  },
-});
-const upload = multer({ storage });
-
-// ✅ Health check
-app.get('/', (req, res) => {
-  res.send('✅ Flip.ai backend is running!');
-});
-
-// ✅ Enhance endpoint
-app.post('/api/enhance', upload.single('propertyImage'), (req, res) => {
-  try {
-    const file = req.file;
-    const { propertyValue, investmentAmount, details } = req.body;
-
-    console.log('✅ Received file:', file?.path);
-    console.log('✅ Property Value:', propertyValue);
-    console.log('✅ Investment Amount:', investmentAmount);
-    console.log('✅ Details:', details);
-
-    // 🔥 Placeholder: generate variation data
-    const placeholderEnhancedImageUrl = `https://placehold.co/600x400?text=Enhanced+Image`;
-    const tier = investmentAmount < 10000 ? 'Minor Fixes' : 'Moderate upgrades';
-
-    res.json({
-      enhancedImageUrl: placeholderEnhancedImageUrl,
-      budget: investmentAmount,
-      tier: tier,
-      description: `Keep house shape & style. Add windows and slight landscape based on budget tier: ${tier}.`,
-    });
-  } catch (error) {
-    console.error('❌ Enhance Error:', error);
-    res.status(500).json({ error: 'Enhance failed.' });
+  if (!enhanceButton) {
+    console.error('❌ Enhance button not found. Check your HTML ID.');
+    return;
   }
-});
 
-// ✅ Start server
-app.listen(PORT, () => {
-  console.log(`✅ Flip.ai backend server running on port ${PORT}`);
+  enhanceButton.addEventListener('click', async () => {
+    console.log('✅ Enhance Button Clicked');
+
+    const zipInput = document.getElementById('zipInput').value.trim();
+    const propertyValue = document.getElementById('propertyValue').value.trim();
+    const investmentAmount = document.getElementById('investmentAmount').value.trim();
+    const details = document.getElementById('details').value.trim();
+    const fileInput = document.getElementById('propertyImage');
+
+    if (!fileInput.files[0]) {
+      alert('❌ Please select a property image to upload.');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('propertyImage', fileInput.files[0]);
+    formData.append('propertyValue', propertyValue);
+    formData.append('investmentAmount', investmentAmount);
+    formData.append('details', details);
+    formData.append('zip', zipInput);
+
+    try {
+      const response = await fetch('https://YOUR-BACKEND-URL.onrender.com/api/enhance', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      console.log('✅ AI Enhanced Image:', data);
+
+      // ✅ Example: Show result on the page
+      alert(`✅ AI Enhanced:\n${data.enhancedImageUrl}\nBudget: ${data.budget}\nTier: ${data.tier}`);
+
+      // If you have an <img id="enhancedImage"> element:
+      const resultImage = document.getElementById('enhancedImage');
+      if (resultImage) {
+        resultImage.src = data.enhancedImageUrl;
+      }
+    } catch (error) {
+      console.error('❌ Enhance Image Error:', error);
+      alert(`Enhance failed: ${error.message}`);
+    }
+  });
 });
