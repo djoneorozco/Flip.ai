@@ -32,8 +32,8 @@ app.post('/api/enhance', upload.single('propertyImage'), (req, res) => {
 
   const budget = req.body.budget || 0;
 
-  // ✅ CORRECTED: Use the root path — DO NOT include /public/
-  const enhancedImageUrl = `https://flip-ai.netlify.app/sample-placeholder.png`;
+  // ✅ CORRECT: This MUST match your deployed path!
+  const enhancedImageUrl = `https://flip-ai.netlify.app/public/sample-placeholder.png`;
   const description = `Keep house shape & style. Add windows or minor updates based on budget tier.`;
 
   res.json({
