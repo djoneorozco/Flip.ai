@@ -32,8 +32,8 @@ app.post('/api/enhance', upload.single('propertyImage'), (req, res) => {
 
   const budget = req.body.budget || 0;
 
-  // ✅ Your OWN hosted image (guaranteed to resolve)
-  const enhancedImageUrl = `https://flip-ai.netlify.app/sample-placeholder.png`;
+  // ✅ CORRECTED: Your OWN hosted image URL with /public/ path
+  const enhancedImageUrl = `https://flip-ai.netlify.app/public/sample-placeholder.png`;
   const description = `Keep house shape & style. Add windows or minor updates based on budget tier.`;
 
   res.json({
