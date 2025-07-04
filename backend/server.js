@@ -4,6 +4,7 @@ import express from 'express';
 import multer from 'multer';
 import cors from 'cors';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 
 // ✅ Fix __dirname for ES Modules
@@ -31,6 +32,12 @@ app.use(
 
 app.use(express.json());
 
+// ✅ Make sure uploads/ exists
+if (!fs.existsSync('./uploads')) {
+  fs.mkdirSync('./uploads');
+  console.log('✅ Created uploads/ folder.');
+}
+
 // ✅ Store uploads locally (or switch to S3 later)
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, './uploads'),
@@ -53,13 +60,10 @@ app.post('/api/enhance', upload.single('propertyImage'), (req, res) => {
 
   const budget = req.body.budget || 0;
 
-  // ✅ Real URL to your saved file
   const uploadedImageUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
 
-  // ✅ Log — here’s where your manual team or next pipeline would pick it up
   console.log('✅ Stored image at:', uploadedImageUrl);
 
-  // ✅ Response
   res.json({
     uploadedImageUrl,
     budget: Number(budget),
