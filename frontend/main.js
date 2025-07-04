@@ -1,18 +1,16 @@
-//#1 ── Startup
 console.log('✅ Flip.ai main.js loaded');
 
-//#2 ── Wait for DOM & Attach Listener
 document.addEventListener('DOMContentLoaded', () => {
-  const enhanceBtn = document.getElementById('enhanceBtn');
+  const enhanceButton = document.getElementById('enhanceButton');
   const imageInput = document.getElementById('propertyImage');
-  const budgetInput = document.getElementById('investmentAmount');
+  const budgetInput = document.getElementById('investment');
 
-  if (!enhanceBtn) {
+  if (!enhanceButton) {
     console.error('❌ Enhance button not found. Check your HTML ID.');
     return;
   }
 
-  enhanceBtn.addEventListener('click', async () => {
+  enhanceButton.addEventListener('click', async () => {
     console.log('✨ Enhance Button Clicked');
 
     const file = imageInput.files[0];
@@ -31,7 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
     formData.append('budget', budget);
 
     try {
-      const response = await fetch('https://your-backend-url.onrender.com/api/enhance', {
+      const response = await fetch('https://YOUR-BACKEND-URL.onrender.com/api/enhance', {
         method: 'POST',
         body: formData,
       });
@@ -43,8 +41,13 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = await response.json();
       console.log('✅ AI Enhanced Image:', data);
 
-      // Show the result
       alert(`Enhanced Image URL:\n${data.enhancedImageUrl}\n\nPrompt Used:\n${data.description}`);
+
+      const resultImage = document.getElementById('enhancedImage');
+      if (resultImage) {
+        resultImage.src = data.enhancedImageUrl;
+        resultImage.style.display = 'block';
+      }
 
     } catch (err) {
       console.error('❌ Enhance Image Error:', err);
