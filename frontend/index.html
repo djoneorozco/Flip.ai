@@ -4,25 +4,111 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Flip.ai – Smart AI-Driven Flip Insights</title>
-  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #0a192f;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    p {
+      margin-bottom: 2rem;
+    }
+
+    input, textarea {
+      width: 100%;
+      max-width: 300px;
+      margin-bottom: 1rem;
+      padding: 0.75rem;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+    }
+
+    button {
+      margin: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      cursor: pointer;
+      background: #0ea5e9;
+      color: #fff;
+    }
+
+    .glass-box {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(15px);
+      padding: 2rem;
+      border-radius: 16px;
+      text-align: center;
+      z-index: 999;
+      max-width: 600px;
+      color: #000;
+    }
+
+    .glass-box.show {
+      display: block;
+    }
+
+    #enhancedImage {
+      display: none;
+      width: 100%;
+      max-width: 400px;
+      margin-top: 1rem;
+      border-radius: 8px;
+    }
+
+    #workingImage {
+      display: none;
+      max-width: 150px;
+      margin-top: 1rem;
+    }
+
+    #arvChart {
+      max-width: 300px;
+      margin: 1rem auto 0;
+    }
+  </style>
 </head>
+
 <body>
   <h1>Welcome to Flip.ai</h1>
-  <p>#1 Smart AI-Driven Flip Insights</p>
+  <p># Smart AI-driven Flip Insights</p>
 
-  <!-- ✅ INPUT FIELDS -->
-  <input id="zip" type="text" placeholder="ZIP Code (optional)" />
-  <input id="propertyValue" type="number" placeholder="Property Purchase Cost" />
-  <input id="investmentAmount" type="number" placeholder="Planned Investment Cost" />
-  <textarea id="details" placeholder="Details (optional)"></textarea>
+  <input id="price" type="number" placeholder="Property Purchase Cost" />
+  <input id="investment" type="number" placeholder="Planned Investment Cost" />
 
-  <!-- ✅ FILE UPLOAD -->
+  <h3>Enhance Your Property Photo</h3>
   <input type="file" id="propertyImage" accept="image/*" />
+  <button id="btn-enhance">Enhance Image & See ARV</button>
 
-  <!-- ✅ BUTTON (has correct ID!) -->
-  <button id="enhanceBtn">Enhance Image & See ARV</button>
+  <img id="workingImage" src="/static/images/working.png" alt="Working..." />
+  <img id="enhancedImage" src="" alt="Enhanced Result" />
 
-  <!-- ✅ SCRIPTS -->
+  <div class="glass-box" id="glassBox">
+    <h2>Expected ARV</h2>
+    <canvas id="arvChart"></canvas>
+  </div>
+
   <script src="main.js"></script>
 </body>
 </html>
