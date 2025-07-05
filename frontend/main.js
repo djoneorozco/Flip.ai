@@ -1,42 +1,42 @@
 console.log("✅ Flip.ai main.js loaded");
 
-// === DOM Elements ===
 const imageInput = document.getElementById('propertyImage');
-const generateBtn = document.getElementById('generateReport');
+const enhanceBtn = document.getElementById('enhanceBtn');
 const resultDiv = document.getElementById('result');
 
-// === Backend URL ===
-const BACKEND_URL = 'https://flip-ai.onrender.com';
+const BACKEND_URL = 'http://localhost:10000'; // Or your Render URL if testing live
 
-generateBtn.addEventListener('click', async () => {
-  resultDiv.innerHTML = "⏳ Enhancing image...";
+enhanceBtn.addEventListener('click', async () => {
+  resultDiv.innerHTML = "⏳ Uploading & Enhancing...";
 
   const imageFile = imageInput.files[0];
-
   if (!imageFile) {
-    resultDiv.innerHTML = "❌ Please select an image.";
+    resultDiv.innerHTML = "❌ Please select an image file.";
     return;
   }
 
   const formData = new FormData();
   formData.append('image', imageFile);
-  formData.append('investment', 10000); // Force Tier 1 for now
 
   try {
-    const enhanceResponse = await fetch(`${BACKEND_URL}/api/enhance`, {
+    const res = await fetch(`${BACKEND_URL}/api/enhance`, {
       method: 'POST',
       body: formData
     });
 
-    const enhanceData = await enhanceResponse.json();
+    const data = await res.json();
 
-    resultDiv.innerHTML = `
-      <h4>✅ Enhanced Image</h4>
-      <p><strong>Enhancement Tier Used:</strong> ${enhanceData.tierUsed}</p>
-      <img src="${enhanceData.enhancedImageUrl}" alt="Enhanced Property" width="500"/>
-    `;
+    if (data.enhancedImageUrl) {
+      resultDiv.innerHTML = `
+        <p>✅ Enhancement Done! Tier Used: ${data.tierUsed}</p>
+        <img src="${data.enhancedImageUrl}" alt="Enhanced Property" />
+      `;
+    } else {
+      resultDiv.innerHTML = `❌ ${data.error || "Something went wrong."}`;
+    }
+
   } catch (err) {
-    console.error("❌ Flip.ai Error:", err);
-    resultDiv.innerHTML = "❌ Something went wrong. Please try again.";
+    console.error(err);
+    resultDiv.innerHTML = "❌ Flip.ai Error. Check console.";
   }
 });
