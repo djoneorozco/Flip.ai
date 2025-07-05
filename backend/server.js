@@ -1,59 +1,58 @@
 // ============================================================
-// ✅ Flip.ai Backend – Smart Budget Enhancer (NO MASK VERSION)
+// ✅ Flip.ai Backend — Smart Budget + Real DALL·E Enhancement
 // ============================================================
 
-const fs = require('fs');
-const express = require('express');
-const cors = require('cors');
-require('dotenv').config();
-const OpenAI = require("openai");
-const multer = require('multer');
+import fs from 'fs';
+import express from 'express';
+import cors from 'cors';
+import multer from 'multer';
+import OpenAI from 'openai';
+import dotenv from 'dotenv';
+dotenv.config();
 
-// ✅ Init OpenAI with API Key
+// ✅ Init OpenAI
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+// ✅ Express app
 const app = express();
-
-// ✅ Ensure /tmp/uploads exists (Render ephemeral FS)
-const uploadDir = '/tmp/uploads';
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-  console.log("✅ Created upload directory:", uploadDir);
-} else {
-  console.log("✅ Upload directory exists:", uploadDir);
-}
-
-// ✅ Multer storage config (only ONE file now)
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + '-' + file.originalname);
-  }
-});
-const upload = multer({ storage: storage });
-
 app.use(express.json());
+
+// ✅ CORS for Netlify + local dev
 app.use(cors({
   origin: [
     'http://localhost:3000',
     'https://flip-ai.netlify.app',
     'https://www.flip-ai.netlify.app'
-  ]
+  ],
 }));
 
+// ✅ Ensure /tmp/uploads exists
+const uploadDir = '/tmp/uploads';
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+  console.log('✅ Created upload directory:', uploadDir);
+} else {
+  console.log('✅ Upload directory exists:', uploadDir);
+}
+
+// ✅ Multer setup
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, uploadDir),
+  filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname),
+});
+const upload = multer({ storage });
+
 // ============================================================
-// ✅ Health Check
+// ✅ Health check
 // ============================================================
 app.get('/', (req, res) => {
-  res.send('✅ Flip.AI backend is alive!');
+  res.send('✅ Flip.ai backend is alive & ready!');
 });
 
 // ============================================================
-// ✅ Ask Route (unchanged)
+// ✅ /api/ask — Smart Flip Budget
 // ============================================================
 app.post('/api/ask', async (req, res) => {
   const { value, investment } = req.body;
@@ -100,16 +99,16 @@ Please calculate ARV, 70% Rule, and advice.
     });
 
   } catch (err) {
-    console.error("❌ Ask error:", err);
+    console.error("❌ /api/ask error:", err);
     res.status(500).json({ error: "OpenAI request failed" });
   }
 });
 
 // ============================================================
-// ✅ ENHANCE IMAGE ROUTE — GENERATE VERSION (NO MASK)
+// ✅ /api/enhance — Real DALL·E Flow
 // ============================================================
 app.post('/api/enhance', upload.single('image'), async (req, res) => {
-  console.log("🖼️ Received image for enhancement!");
+  console.log("🖼️ Received image for enhancement");
 
   if (!req.file) {
     console.error("❌ No image uploaded");
@@ -117,31 +116,33 @@ app.post('/api/enhance', upload.single('image'), async (req, res) => {
   }
 
   const imagePath = req.file.path;
-
   console.log("✅ Uploaded image path:", imagePath);
 
-  // ⚡ Use your strict prompt style!
   const stylePrompt = `
-A photo of a light blue house with boarded-up windows. Replace only the boarded-up sections with clear glass windows matching the house’s original style. Do not change anything else — keep the grass, yard, sidewalk, siding, roof, paint, colors, trees, and lighting exactly the same. Preserve the slightly weathered, realistic look. No beautifying, no landscape improvements, no extra edits.
+Photo of a light blue house with boarded-up windows. Replace only the boarded-up sections with clear glass windows matching the house’s existing style. Keep the yard, grass, sidewalk, paint, trees, and lighting exactly the same. Preserve realistic look — no beautifying or landscape changes.
   `.trim();
 
   try {
-    const dalleResponse = await openai.images.generate({
-      model: "dall-e-3",
+    const dalleResponse = await openai.images.createEdit({
+      model: "dall-e-2",
+      image: fs.createReadStream(imagePath),
       prompt: stylePrompt,
       n: 1,
-      size: "1024x1024",
+      size: "1024x1024"
     });
 
-    console.log("✅ DALL·E generated image:", dalleResponse.data[0].url);
+    const enhancedImageUrl = dalleResponse.data[0].url;
+    console.log("✅ DALL·E returned:", enhancedImageUrl);
 
-    res.json({ enhancedImageUrl: dalleResponse.data[0].url });
+    res.json({
+      enhancedImageUrl,
+      description: "Generated by Flip.ai with real DALL·E edit.",
+    });
 
   } catch (err) {
-    console.error("❌ Enhance error:", err);
-    res.status(500).json({ error: "Failed to enhance image", details: err.message });
+    console.error("❌ /api/enhance error:", err);
+    res.status(500).json({ error: "Image enhancement failed", details: err.message });
   } finally {
-    // ✅ Clean up uploaded file
     fs.unlink(imagePath, () => {});
   }
 });
@@ -150,7 +151,6 @@ A photo of a light blue house with boarded-up windows. Replace only the boarded-
 // ✅ Start Server
 // ============================================================
 const PORT = process.env.PORT || 8080;
-
 app.listen(PORT, () => {
-  console.log(`🚀 Flip backend running on port ${PORT}`);
+  console.log(`🚀 Flip.ai backend running on port ${PORT}`);
 });
