@@ -1,16 +1,16 @@
 // ============================================================
-// ✅ Flip.ai Backend — Final Locked Baseline
+// ✅ Flip.ai Backend — Image Enhance Only, Tier 1, Fresh Start
 // ============================================================
 
-import fs from 'fs';
 import express from 'express';
-import cors from 'cors';
 import multer from 'multer';
-import OpenAI from 'openai';
+import fs from 'fs';
+import cors from 'cors';
 import dotenv from 'dotenv';
+import OpenAI from 'openai';
+
 dotenv.config();
 
-// ✅ Init OpenAI
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
@@ -18,7 +18,6 @@ const openai = new OpenAI({
 const app = express();
 app.use(express.json());
 
-// ✅ CORS
 app.use(cors({
   origin: [
     'http://localhost:3000',
@@ -27,118 +26,46 @@ app.use(cors({
   ],
 }));
 
-// ✅ Upload dir
+// ✅ Upload setup
 const uploadDir = '/tmp/uploads';
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
   console.log('✅ Created upload directory:', uploadDir);
 }
 
-// ✅ Multer setup
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadDir),
-  filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname),
+  filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
 });
 const upload = multer({ storage });
 
-// ============================================================
-// ✅ Health Check
-// ============================================================
+// ✅ Health check
 app.get('/', (req, res) => {
-  res.send('✅ Flip.ai backend is alive & locked!');
+  res.send('✅ Flip.ai backend is alive.');
 });
 
 // ============================================================
-// ✅ /api/ask — Smart Budget
-// ============================================================
-app.post('/api/ask', async (req, res) => {
-  const { value, investment } = req.body;
-  if (!value || !investment) {
-    return res.status(400).json({ error: "Missing value or investment amount" });
-  }
-  const arv = Number(value) + Number(investment);
-  const maxOffer = arv * 0.7;
-
-  try {
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        {
-          role: "system",
-          content: `
-You are a professional real estate flip advisor.
-Always provide:
-- After Repair Value (ARV)
-- 70% Rule estimate for max offer
-- Short explanation
-- Quick investor tip
-End with: "Happy Flipping! 🚀"
-Use bullet points and format numbers.
-          `.trim()
-        },
-        {
-          role: "user",
-          content: `
-Property Value: $${Number(value).toLocaleString()}
-Planned Investment: $${Number(investment).toLocaleString()}
-Please calculate ARV, 70% Rule, and advice.
-          `.trim()
-        }
-      ],
-    });
-
-    res.json({
-      answer: completion.choices[0].message.content,
-      arv: `$${arv.toLocaleString()}`,
-      maxOffer: `$${maxOffer.toLocaleString()}`
-    });
-
-  } catch (err) {
-    console.error("❌ /api/ask error:", err);
-    res.status(500).json({ error: "OpenAI request failed" });
-  }
-});
-
-// ============================================================
-// ✅ /api/enhance — Final: Generate Only, No Mask
+// ✅ /api/enhance — Tier 1 Basic Enhancement
 // ============================================================
 app.post('/api/enhance', upload.single('image'), async (req, res) => {
   console.log("🖼️ Received image for enhancement");
 
   if (!req.file) {
-    console.error("❌ No image uploaded");
     return res.status(400).json({ error: "Image is required" });
   }
 
   const investment = parseFloat(req.body.investment || 0);
-  console.log(`💰 Investment amount: $${investment}`);
+  console.log("✅ Investment:", investment);
 
-  let tier = "";
-  let stylePrompt = "";
-
-  if (investment < 20000) {
-    tier = "Tier 1 — Basic";
-    stylePrompt = `
+  let tier = "Tier 1 — Basic";
+  let stylePrompt = `
 Photo of a light blue house with boarded-up windows.
 Replace only the boarded-up windows with clear glass windows matching the house’s style.
-Do not change paint, yard, door, or anything else. Keep realistic look.
-    `.trim();
-  } else if (investment < 50000) {
-    tier = "Tier 2 — Moderate";
-    stylePrompt = `
-Photo of a light blue house with boarded-up windows and old paint.
-Replace windows with clear modern windows, repaint the exterior with fresh coat matching original color, add simple landscaping (fresh grass, trimmed bushes). Keep realistic, no major redesign.
-    `.trim();
-  } else {
-    tier = "Tier 3 — Premium";
-    stylePrompt = `
-Photo of a light blue house ready for high-end flip.
-Replace old windows with luxury style windows, repaint exterior with modern designer color, upgrade front door with modern look, add upscale landscaping (plants, pathway stones, trimmed lawn).
-Keep realistic look for a premium flip.
-    `.trim();
-  }
+Keep everything else the same: paint, yard, door, trees.
+Preserve a realistic, before-and-after look.
+  `.trim();
 
-  console.log(`✨ Using tier: ${tier}`);
+  console.log(`✨ Using Tier: ${tier}`);
 
   try {
     const dalleResponse = await openai.images.generate({
@@ -149,32 +76,26 @@ Keep realistic look for a premium flip.
     });
 
     const enhancedImageUrl = dalleResponse.data[0].url;
-    console.log("✅ DALL·E generated:", enhancedImageUrl);
+    console.log("✅ DALL·E returned:", enhancedImageUrl);
 
     res.json({
       enhancedImageUrl,
       tierUsed: tier,
-      description: "Generated by Flip.ai as AI-enhanced preview (no mask)."
+      description: "Generated by Flip.ai — Tier 1 Enhancement."
     });
 
   } catch (err) {
     console.error("❌ /api/enhance error:", err);
-    if (err.response) {
-      console.error("OpenAI:", err.response.status, err.response.data);
-    }
     res.status(500).json({
       error: "Image enhancement failed",
-      details: err.message,
-      response: err.response ? err.response.data : undefined
+      details: err.message
     });
   } finally {
     fs.unlink(req.file.path, () => {});
   }
 });
 
-// ============================================================
-// ✅ Start Server
-// ============================================================
+// ✅ Start server
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
   console.log(`🚀 Flip.ai backend running on port ${PORT}`);
