@@ -105,7 +105,7 @@ Please calculate ARV, 70% Rule, and advice.
 });
 
 // ============================================================
-// ✅ /api/enhance — Real DALL·E Generate + Tiers + Robust Logging
+// ✅ /api/enhance — Real DALL·E Generate + Tiers + Fixed for generate()
 // ============================================================
 app.post('/api/enhance', upload.single('image'), async (req, res) => {
   console.log("🖼️ Received image for enhancement");
@@ -147,9 +147,9 @@ Keep realistic look for a premium flip.
   console.log(`✨ Using enhancement tier: ${tier}`);
 
   try {
-    const dalleResponse = await openai.images.createEdit({
-      model: "dall-e-2",
-      image: fs.createReadStream(imagePath),
+    // ✅ Use generate() instead of createEdit()
+    const dalleResponse = await openai.images.generate({
+      model: "dall-e-3",
       prompt: stylePrompt,
       n: 1,
       size: "1024x1024"
