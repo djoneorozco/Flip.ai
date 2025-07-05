@@ -8,10 +8,9 @@ const generateBtn = document.getElementById('generateReport');
 const resultDiv = document.getElementById('result');
 const graphDiv = document.getElementById('graph');
 
-// === BACKEND BASE URL ===
-const BACKEND_URL = 'https://realtysass.fly.dev';
+// === BACKEND URL ===
+const BACKEND_URL = 'https://flip-ai.onrender.com';
 
-// === Generate Report Handler ===
 generateBtn.addEventListener('click', async () => {
   resultDiv.innerHTML = "⏳ Generating...";
 
@@ -30,12 +29,10 @@ generateBtn.addEventListener('click', async () => {
   }
 
   try {
-    // === 1️⃣ Get Smart Budget Numbers ===
+    // === 1️⃣ Get Budget Numbers ===
     const askResponse = await fetch(`${BACKEND_URL}/api/ask`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         value: purchasePrice,
         investment: rehabInvestment
@@ -44,10 +41,9 @@ generateBtn.addEventListener('click', async () => {
 
     const askData = await askResponse.json();
 
-    // === 2️⃣ Enhance Property Image ===
+    // === 2️⃣ Enhance Image ===
     const formData = new FormData();
     formData.append('image', imageFile);
-    formData.append('investment', rehabInvestment);
 
     const enhanceResponse = await fetch(`${BACKEND_URL}/api/enhance`, {
       method: 'POST',
@@ -64,7 +60,6 @@ generateBtn.addEventListener('click', async () => {
       <img src="${enhanceData.enhancedImageUrl}" alt="Enhanced Property" width="500"/>
     `;
 
-    // === 4️⃣ Example: Simple Graph ===
     graphDiv.innerHTML = `
       <p>ARV: ${askData.arv}</p>
       <p>Max Offer (70% Rule): ${askData.maxOffer}</p>
