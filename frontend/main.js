@@ -8,7 +8,6 @@ const generateBtn = document.getElementById('generateReport');
 const resultDiv = document.getElementById('result');
 const graphDiv = document.getElementById('graph');
 
-// === BACKEND URL ===
 const BACKEND_URL = 'https://flip-ai.onrender.com';
 
 generateBtn.addEventListener('click', async () => {
@@ -34,7 +33,6 @@ generateBtn.addEventListener('click', async () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ value: purchasePrice, investment: rehabInvestment })
     });
-
     const askData = await askResponse.json();
 
     const formData = new FormData();
@@ -45,7 +43,6 @@ generateBtn.addEventListener('click', async () => {
       method: 'POST',
       body: formData
     });
-
     const enhanceData = await enhanceResponse.json();
 
     resultDiv.innerHTML = `
