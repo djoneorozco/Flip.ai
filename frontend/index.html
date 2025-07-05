@@ -1,158 +1,37 @@
-// ============================================================
-// ✅ Flip.ai Backend — Fly.io Middleman — Smart Budget + DALL·E
-// ============================================================
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Flip.ai — Smart Flip Advisor</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <style>
+    body {
+      background: #0a192f;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      padding: 2rem;
+    }
+    h1 { font-size: 2rem; }
+    input, button {
+      display: block;
+      margin: 0.5rem 0;
+      padding: 0.5rem;
+    }
+    #result { margin-top: 2rem; }
+  </style>
+</head>
+<body>
+  <h1>Welcome to Flip.ai</h1>
 
-const fs = require('fs');
-const express = require('express');
-const cors = require('cors');
-require('dotenv').config();
-const OpenAI = require('openai');
-const multer = require('multer');
+  <input type="number" id="purchasePrice" placeholder="Property Purchase Cost" />
+  <input type="number" id="rehabInvestment" placeholder="Planned Rehab Investment" />
+  <input type="file" id="propertyImage" accept="image/*" />
 
-// ✅ Init OpenAI with your secret key
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+  <button id="generateReport">Generate Smart Report & Enhance Image</button>
 
-// ✅ Init Express
-const app = express();
+  <div id="result"></div>
+  <div id="graph"></div>
 
-// ✅ CORS — allow Netlify & local dev
-app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    'https://flip-ai.netlify.app',
-    'https://www.flip-ai.netlify.app'
-  ]
-}));
-
-// ✅ JSON parsing
-app.use(express.json());
-
-// ✅ Multer for file upload
-const uploadDir = '/tmp/uploads';
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + '-' + file.originalname);
-  }
-});
-const upload = multer({ storage: storage });
-
-// ============================================================
-// ✅ Health Check
-// ============================================================
-app.get('/', (req, res) => {
-  res.send('✅ RealtySass backend is alive!');
-});
-
-// ============================================================
-// ✅ /api/ask — Smart Budget Calculator
-// ============================================================
-app.post('/api/ask', async (req, res) => {
-  const { value, investment } = req.body;
-
-  if (!value || !investment) {
-    return res.status(400).json({ error: "Missing value or investment amount" });
-  }
-
-  const arv = Number(value) + Number(investment);
-  const maxOffer = arv * 0.7;
-
-  try {
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        {
-          role: "system",
-          content: `
-You are a professional real estate flip advisor.
-Always provide:
-- After Repair Value (ARV)
-- 70% Rule estimate for max offer
-- Short explanation
-- Quick investor tip
-End with: "Happy Flipping! 🚀"
-Use bullet points and format numbers.
-          `.trim()
-        },
-        {
-          role: "user",
-          content: `
-Property Value: $${Number(value).toLocaleString()}
-Planned Investment: $${Number(investment).toLocaleString()}
-Please calculate ARV, 70% Rule, and advice.
-          `.trim()
-        }
-      ],
-    });
-
-    res.json({
-      answer: completion.choices[0].message.content,
-      arv: `$${arv.toLocaleString()}`,
-      maxOffer: `$${maxOffer.toLocaleString()}`
-    });
-
-  } catch (err) {
-    console.error("❌ /api/ask error:", err);
-    res.status(500).json({ error: "OpenAI request failed" });
-  }
-});
-
-// ============================================================
-// ✅ /api/enhance — DALL·E Image Edit
-// ============================================================
-app.post('/api/enhance', upload.single('image'), async (req, res) => {
-  console.log("🖼️ /api/enhance hit");
-
-  const imageFile = req.file;
-  const budget = parseFloat(req.body.investment || 0);
-
-  if (!imageFile) {
-    return res.status(400).json({ error: "Image is required" });
-  }
-
-  console.log("✅ Image uploaded:", imageFile.path);
-
-  // ✅ Example prompt — adjust for your real style
-  const stylePrompt = `
-Photo of a light blue house with boarded-up windows. Replace only the boarded-up sections with clear glass windows that match the house’s existing style. Do not change anything else — keep the grass, yard, sidewalk, house siding, roof, paint, colors, trees, and lighting exactly the same. Preserve the slightly weathered, realistic look. No beautifying, no landscape improvements, no extra edits.
-  `.trim();
-
-  console.log("✨ Final DALL·E prompt:", stylePrompt);
-
-  try {
-    const dalleResponse = await openai.images.createEdit({
-      model: "dall-e-2",
-      image: fs.createReadStream(imageFile.path),
-      prompt: stylePrompt,
-      n: 1,
-      size: "1024x1024"
-    });
-
-    const enhancedImageUrl = dalleResponse.data[0].url;
-
-    res.json({
-      enhancedImageUrl,
-      budget
-    });
-
-  } catch (err) {
-    console.error("❌ /api/enhance error:", err);
-    res.status(500).json({ error: "Enhancement failed", details: err.message });
-  }
-});
-
-// ============================================================
-// ✅ Start Server — Fly.io expects PORT from env
-// ============================================================
-const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => {
-  console.log(`🚀 RealtySass backend running on port ${PORT}`);
-});
+  <script src="main.js"></script>
+</body>
+</html>
