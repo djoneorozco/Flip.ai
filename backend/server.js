@@ -105,7 +105,7 @@ Please calculate ARV, 70% Rule, and advice.
 });
 
 // ============================================================
-// ✅ /api/enhance — Real DALL·E Generate + Tiers
+// ✅ /api/enhance — Real DALL·E Generate + Tiers + Robust Logging
 // ============================================================
 app.post('/api/enhance', upload.single('image'), async (req, res) => {
   console.log("🖼️ Received image for enhancement");
@@ -166,7 +166,14 @@ Keep realistic look for a premium flip.
 
   } catch (err) {
     console.error("❌ /api/enhance error:", err);
-    res.status(500).json({ error: "Image enhancement failed", details: err.message });
+    if (err.response) {
+      console.error("OpenAI Response:", err.response.status, err.response.data);
+    }
+    res.status(500).json({
+      error: "Image enhancement failed",
+      details: err.message,
+      response: err.response ? err.response.data : undefined
+    });
   } finally {
     fs.unlink(imagePath, () => {});
   }
