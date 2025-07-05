@@ -28,25 +28,15 @@ generateBtn.addEventListener('click', async () => {
     return;
   }
 
-  if (!imageFile.name.endsWith('.png')) {
-    resultDiv.innerHTML = "❌ Please upload a PNG image only.";
-    return;
-  }
-
   try {
-    // === 1️⃣ Get Budget Numbers ===
     const askResponse = await fetch(`${BACKEND_URL}/api/ask`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        value: purchasePrice,
-        investment: rehabInvestment
-      })
+      body: JSON.stringify({ value: purchasePrice, investment: rehabInvestment })
     });
 
     const askData = await askResponse.json();
 
-    // === 2️⃣ Enhance Image ===
     const formData = new FormData();
     formData.append('image', imageFile);
     formData.append('investment', rehabInvestment);
@@ -58,7 +48,6 @@ generateBtn.addEventListener('click', async () => {
 
     const enhanceData = await enhanceResponse.json();
 
-    // === 3️⃣ Show Results ===
     resultDiv.innerHTML = `
       <h4>✅ Smart Budget Report</h4>
       <pre>${askData.answer}</pre>
