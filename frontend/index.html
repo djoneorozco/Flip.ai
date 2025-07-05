@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+\<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -16,12 +16,7 @@
       min-height: 100vh;
       padding: 2rem;
     }
-
-    h1 {
-      font-size: 2.5rem;
-      margin-bottom: 1rem;
-    }
-
+    h1 { font-size: 2.5rem; margin-bottom: 1rem; }
     input, button {
       width: 100%;
       max-width: 400px;
@@ -33,12 +28,7 @@
       font-size: 1rem;
       font-family: inherit;
     }
-
-    input {
-      background: #fff;
-      color: #333;
-    }
-
+    input { background: #fff; color: #333; }
     button {
       background: #0ea5e9;
       color: #fff;
@@ -46,11 +36,7 @@
       cursor: pointer;
       transition: background 0.3s ease;
     }
-
-    button:hover {
-      background: #0284c7;
-    }
-
+    button:hover { background: #0284c7; }
     #result, #graph {
       width: 100%;
       max-width: 700px;
@@ -61,25 +47,17 @@
       border-radius: 8px;
       font-family: 'Courier New', Courier, monospace;
     }
-
-    #result pre {
-      white-space: pre-wrap;
-      word-wrap: break-word;
-    }
+    #result pre { white-space: pre-wrap; word-wrap: break-word; }
   </style>
 </head>
 <body>
   <h1>Welcome to Flip.ai</h1>
-
   <input type="number" id="purchasePrice" placeholder="Property Purchase Cost" />
   <input type="number" id="rehabInvestment" placeholder="Planned Rehab Investment" />
   <input type="file" id="propertyImage" accept="image/*" />
-
   <button id="generateReport">Generate Smart Report & Enhance Image</button>
-
   <div id="result"></div>
   <div id="graph"></div>
-
   <script src="main.js"></script>
 </body>
 </html>
