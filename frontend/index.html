@@ -1,63 +1,36 @@
-\<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Flip.ai — Smart Flip Advisor</title>
+  <title>Flip.ai — Image Enhance</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <style>
     body {
       background: #0a192f;
       color: #f0f4f8;
-      font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
-      min-height: 100vh;
+      font-family: Arial, sans-serif;
+      text-align: center;
       padding: 2rem;
     }
-    h1 { font-size: 2.5rem; margin-bottom: 1rem; }
+
     input, button {
-      width: 100%;
-      max-width: 400px;
-      display: block;
-      margin: 0.75rem 0;
+      margin: 1rem 0;
       padding: 0.75rem 1rem;
-      border: none;
-      border-radius: 6px;
-      font-size: 1rem;
-      font-family: inherit;
     }
-    input { background: #fff; color: #333; }
-    button {
-      background: #0ea5e9;
-      color: #fff;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.3s ease;
-    }
-    button:hover { background: #0284c7; }
-    #result, #graph {
-      width: 100%;
-      max-width: 700px;
-      background: rgba(255, 255, 255, 0.05);
-      backdrop-filter: blur(8px);
+
+    #result {
       margin-top: 2rem;
-      padding: 1.5rem;
-      border-radius: 8px;
-      font-family: 'Courier New', Courier, monospace;
     }
-    #result pre { white-space: pre-wrap; word-wrap: break-word; }
   </style>
 </head>
 <body>
-  <h1>Welcome to Flip.ai</h1>
-  <input type="number" id="purchasePrice" placeholder="Property Purchase Cost" />
-  <input type="number" id="rehabInvestment" placeholder="Planned Rehab Investment" />
+  <h1>Flip.ai — Tier 1 Enhance</h1>
+
   <input type="file" id="propertyImage" accept="image/*" />
-  <button id="generateReport">Generate Smart Report & Enhance Image</button>
+  <button id="generateReport">Enhance Image</button>
+
   <div id="result"></div>
-  <div id="graph"></div>
+
   <script src="main.js"></script>
 </body>
 </html>
