@@ -2,32 +2,67 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Flip.ai — Image Enhance</title>
+  <title>Flip.ai — Smart Tier 1 Enhancer</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <style>
     body {
       background: #0a192f;
       color: #f0f4f8;
-      font-family: Arial, sans-serif;
-      text-align: center;
+      font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
       padding: 2rem;
     }
 
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+
     input, button {
-      margin: 1rem 0;
+      width: 100%;
+      max-width: 400px;
+      display: block;
+      margin: 0.75rem 0;
       padding: 0.75rem 1rem;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+    }
+
+    input {
+      background: #fff;
+      color: #333;
+    }
+
+    button {
+      background: #0ea5e9;
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
     }
 
     #result {
       margin-top: 2rem;
+      max-width: 600px;
+      text-align: center;
+    }
+
+    #result img {
+      margin-top: 1rem;
+      border-radius: 8px;
+      max-width: 100%;
     }
   </style>
 </head>
 <body>
-  <h1>Flip.ai — Tier 1 Enhance</h1>
+  <h1>Flip.ai — Smart Image Enhancer</h1>
 
   <input type="file" id="propertyImage" accept="image/*" />
-  <button id="generateReport">Enhance Image</button>
+  <button id="enhanceBtn">Enhance Image (Tier 1)</button>
 
   <div id="result"></div>
 
