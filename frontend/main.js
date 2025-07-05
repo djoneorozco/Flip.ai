@@ -4,7 +4,7 @@ const imageInput = document.getElementById('propertyImage');
 const enhanceBtn = document.getElementById('enhanceBtn');
 const resultDiv = document.getElementById('result');
 
-const BACKEND_URL = 'http://flip-ai.onrender.com'; // Or your Render URL if testing live
+const BACKEND_URL = 'https://flip-ai.onrender.com'; // Or your Render URL if testing live
 
 enhanceBtn.addEventListener('click', async () => {
   resultDiv.innerHTML = "⏳ Uploading & Enhancing...";
