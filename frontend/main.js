@@ -44,6 +44,7 @@ generateBtn.addEventListener('click', async () => {
     // === 2️⃣ Enhance Image ===
     const formData = new FormData();
     formData.append('image', imageFile);
+    formData.append('investment', rehabInvestment); // ✅ IMPORTANT: pass investment for tier logic
 
     const enhanceResponse = await fetch(`${BACKEND_URL}/api/enhance`, {
       method: 'POST',
@@ -57,6 +58,7 @@ generateBtn.addEventListener('click', async () => {
       <h4>✅ Smart Budget Report</h4>
       <pre>${askData.answer}</pre>
       <h4>✅ Enhanced Image</h4>
+      <p><strong>Enhancement Tier Used:</strong> ${enhanceData.tierUsed}</p>
       <img src="${enhanceData.enhancedImageUrl}" alt="Enhanced Property" width="500"/>
     `;
 
