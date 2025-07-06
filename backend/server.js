@@ -2,18 +2,18 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
-const Jimp = require('jimp'); // ✅ Fix: no `.default` needed
+const Jimp = require('jimp'); // ✅ correct: do not use `.default`
 const Replicate = require('replicate');
 
 const app = express();
 app.use(cors());
 
-// Simple root GET handler for sanity check
+// ✅ Root test route to confirm server works
 app.get('/', (req, res) => {
   res.send("✅ Flip.ai backend is live!");
 });
 
-// Multer config
+// Multer for file upload
 const upload = multer({ storage: multer.memoryStorage() });
 
 // Replicate client
@@ -28,7 +28,7 @@ app.post('/api/enhance', upload.single('image'), async (req, res) => {
       return res.status(400).json({ error: "No image file uploaded." });
     }
 
-    const image = await Jimp.read(req.file.buffer);
+    const image = await Jimp.read(req.file.buffer); // ✅ Fix: Jimp.read works directly
     let w = image.bitmap.width;
     let h = image.bitmap.height;
 
@@ -81,7 +81,7 @@ app.post('/api/enhance', upload.single('image'), async (req, res) => {
     const imageUrl = Array.isArray(output) ? output[0] : output;
 
     return res.json({
-      image: imageUrl, // ✅ match what frontend expects
+      image: imageUrl, // ✅ matches main.js
       tier: "Tier 1"
     });
 
@@ -91,8 +91,8 @@ app.post('/api/enhance', upload.single('image'), async (req, res) => {
   }
 });
 
-// Listen
+// Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`✅ Server is running and listening on port ${PORT}`);
+  console.log(`✅ Flip.ai backend running on port ${PORT}`);
 });
