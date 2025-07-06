@@ -26,7 +26,7 @@ const replicate = new Replicate({
 });
 
 // Define the Tier 1 enhancement route (expects a file field named "image" and optional "tier")
-app.post('/enhance', upload.single('image'), async (req, res) => {
+app.post('/api/enhance', upload.single('image'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: "No image file uploaded." });
