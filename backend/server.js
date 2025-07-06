@@ -5,14 +5,14 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
-const Jimp = require('jimp').default; // ✅ Use `.default` for ESM import!
+const Jimp = require('jimp').default; // ✅ Use `.default` for ESM builds
 const Replicate = require('replicate');
 
 // ✅ Initialize Express app
 const app = express();
 app.use(cors());
 
-// ✅ Simple root route for sanity check
+// ✅ Root route for sanity check — logs to terminal when hit
 app.get('/', (req, res) => {
   console.log("✅ Received GET request at /"); // Debug log
   res.send("✅ Flip.ai backend is live!");
@@ -21,19 +21,19 @@ app.get('/', (req, res) => {
 // ✅ Multer config: store uploaded image in memory
 const upload = multer({ storage: multer.memoryStorage() });
 
-// ✅ Initialize Replicate with your token
+// ✅ Initialize Replicate with your API token
 const replicate = new Replicate({
   auth: process.env.REPLICATE_API_TOKEN
 });
 
-// ✅ Main enhancement route
+// ✅ Main enhancement route — POST
 app.post('/api/enhance', upload.single('image'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: "No image file uploaded." });
     }
 
-    // ✅ Read image with Jimp
+    // ✅ Load image with Jimp
     const image = await Jimp.read(req.file.buffer);
 
     let w = image.bitmap.width;
@@ -41,7 +41,7 @@ app.post('/api/enhance', upload.single('image'), async (req, res) => {
 
     const MAX_WIDTH = 1024, MAX_HEIGHT = 768;
 
-    // ✅ Resize while preserving aspect ratio
+    // ✅ Resize to fit model limits, keep aspect ratio
     if (w > MAX_WIDTH || h > MAX_HEIGHT) {
       const aspect = w / h;
       if (w > h) {
@@ -51,12 +51,13 @@ app.post('/api/enhance', upload.single('image'), async (req, res) => {
         h = Math.min(h, MAX_HEIGHT);
         w = Math.round(h * aspect);
       }
+      // ✅ Ensure dimensions are divisible by 8
       w -= w % 8;
       h -= h % 8;
       await image.resize(w, h);
     }
 
-    // ✅ Convert image to Base64 Data URI
+    // ✅ Convert to Base64 Data URI
     const base64Image = (await image.getBufferAsync(Jimp.MIME_PNG)).toString('base64');
     const dataURI = `data:image/png;base64,${base64Image}`;
 
@@ -64,7 +65,7 @@ app.post('/api/enhance', upload.single('image'), async (req, res) => {
     const prompt = "A high-resolution photograph taken around midday of the same house, now with brand new clear glass windows (no boards) and a bright red front door. The house’s exterior and color remain the same apart from these improvements. The front yard now has a small landscaped lawn with green grass and a few plants, but everything else about the house is unchanged.";
     const negativePrompt = "boarded windows, broken glass, old door, people, text";
 
-    // ✅ Replicate input
+    // ✅ Replicate input config
     const inputs = {
       image: dataURI,
       prompt,
@@ -76,7 +77,7 @@ app.post('/api/enhance', upload.single('image'), async (req, res) => {
       height: h
     };
 
-    // ✅ Call Replicate
+    // ✅ Call Replicate API
     const output = await replicate.run(
       "stability-ai/stable-diffusion-img2img",
       { input: inputs }
