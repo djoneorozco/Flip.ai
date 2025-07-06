@@ -1,83 +1,51 @@
-// ✅ Load environment variables
+// ==========================================
+// ✅ Flip.ai Minimal Server — TEST ONLY
+// ==========================================
 require('dotenv').config();
 
-// ✅ Import required modules
 const express = require('express');
 const cors = require('cors');
-const multer = require('multer');
-const Jimp = require('jimp').default; // ✅ Use `.default` for ESM builds
 const Replicate = require('replicate');
 
-// ✅ Initialize Express app
 const app = express();
 app.use(cors());
 
-// ✅ Root route for sanity check — logs to terminal when hit
+// ✅ Simple GET root to check
 app.get('/', (req, res) => {
-  console.log("✅ Received GET request at /"); // Debug log
-  res.send("✅ Flip.ai backend is live!");
+  console.log("✅ GET / hit");
+  res.send("✅ Flip.ai TEST server is live!");
 });
 
-// ✅ Multer config: store uploaded image in memory
-const upload = multer({ storage: multer.memoryStorage() });
-
-// ✅ Initialize Replicate with your API token
+// ✅ Replicate client
 const replicate = new Replicate({
   auth: process.env.REPLICATE_API_TOKEN
 });
 
-// ✅ Main enhancement route — POST
-app.post('/api/enhance', upload.single('image'), async (req, res) => {
+// ✅ Test enhancement route — no file upload
+app.get('/api/enhance-test', async (req, res) => {
+  console.log("✅ /api/enhance-test called");
+
   try {
-    if (!req.file) {
-      return res.status(400).json({ error: "No image file uploaded." });
-    }
+    // 🏡 Use a fixed test image
+    const testImageUrl = "https://upload.wikimedia.org/wikipedia/commons/6/6e/Golde33443.jpg"; // Replace with any public image
 
-    // ✅ Load image with Jimp
-    const image = await Jimp.read(req.file.buffer);
-
-    let w = image.bitmap.width;
-    let h = image.bitmap.height;
-
-    const MAX_WIDTH = 1024, MAX_HEIGHT = 768;
-
-    // ✅ Resize to fit model limits, keep aspect ratio
-    if (w > MAX_WIDTH || h > MAX_HEIGHT) {
-      const aspect = w / h;
-      if (w > h) {
-        w = Math.min(w, MAX_WIDTH);
-        h = Math.round(w / aspect);
-      } else {
-        h = Math.min(h, MAX_HEIGHT);
-        w = Math.round(h * aspect);
-      }
-      // ✅ Ensure dimensions are divisible by 8
-      w -= w % 8;
-      h -= h % 8;
-      await image.resize(w, h);
-    }
-
-    // ✅ Convert to Base64 Data URI
-    const base64Image = (await image.getBufferAsync(Jimp.MIME_PNG)).toString('base64');
-    const dataURI = `data:image/png;base64,${base64Image}`;
-
-    // ✅ Tier 1 prompt
-    const prompt = "A high-resolution photograph taken around midday of the same house, now with brand new clear glass windows (no boards) and a bright red front door. The house’s exterior and color remain the same apart from these improvements. The front yard now has a small landscaped lawn with green grass and a few plants, but everything else about the house is unchanged.";
+    // ✅ Prompt: Tier 1
+    const prompt = "A high-resolution photo of the same house with brand new clear glass windows and a bright red front door. The yard has green grass and some bushes. Everything else stays the same.";
     const negativePrompt = "boarded windows, broken glass, old door, people, text";
 
-    // ✅ Replicate input config
+    // ✅ Replicate input
     const inputs = {
-      image: dataURI,
+      image: testImageUrl, // Direct URL!
       prompt,
       negative_prompt: negativePrompt,
       prompt_strength: 0.7,
       num_inference_steps: 30,
       guidance_scale: 7.5,
-      width: w,
-      height: h
+      width: 768,
+      height: 512
     };
 
-    // ✅ Call Replicate API
+    // ✅ Run Stable Diffusion
     const output = await replicate.run(
       "stability-ai/stable-diffusion-img2img",
       { input: inputs }
@@ -85,21 +53,22 @@ app.post('/api/enhance', upload.single('image'), async (req, res) => {
 
     const imageUrl = Array.isArray(output) ? output[0] : output;
 
-    // ✅ Return JSON response
-    return res.json({
-      image: imageUrl,
+    console.log("✅ Enhanced image:", imageUrl);
+
+    res.json({
+      enhancedImageUrl: imageUrl,
       tier: "Tier 1",
       promptUsed: prompt
     });
 
   } catch (err) {
-    console.error("Enhancement error:", err);
-    return res.status(500).json({ error: err.message || "Image enhancement failed." });
+    console.error("❌ Enhancement error:", err);
+    res.status(500).json({ error: err.message || "Image enhancement failed" });
   }
 });
 
 // ✅ Start server
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
-  console.log(`✅ Flip.ai backend running on port ${PORT}`);
+  console.log(`✅ Flip.ai TEST server running on port ${PORT}`);
 });
