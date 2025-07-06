@@ -5,7 +5,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
-const Jimp = require('jimp').default; // ✅ THIS IS THE FIX — use `.default`!
+const Jimp = require('jimp').default; // ✅ Use `.default` for ESM import!
 const Replicate = require('replicate');
 
 // ✅ Initialize Express app
@@ -14,7 +14,7 @@ app.use(cors());
 
 // ✅ Simple root route for sanity check
 app.get('/', (req, res) => {
-  console.log("✅ Received GET request at /"); // <-- NEW console.log for debug
+  console.log("✅ Received GET request at /"); // Debug log
   res.send("✅ Flip.ai backend is live!");
 });
 
@@ -41,7 +41,7 @@ app.post('/api/enhance', upload.single('image'), async (req, res) => {
 
     const MAX_WIDTH = 1024, MAX_HEIGHT = 768;
 
-    // ✅ Resize while preserving aspect ratio & model limits
+    // ✅ Resize while preserving aspect ratio
     if (w > MAX_WIDTH || h > MAX_HEIGHT) {
       const aspect = w / h;
       if (w > h) {
@@ -88,7 +88,7 @@ app.post('/api/enhance', upload.single('image'), async (req, res) => {
     return res.json({
       image: imageUrl,
       tier: "Tier 1",
-      promptUsed: prompt // optional for debug
+      promptUsed: prompt
     });
 
   } catch (err) {
