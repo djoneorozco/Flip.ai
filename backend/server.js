@@ -1,8 +1,10 @@
+// Tier 1 Image Enhancement Server
+
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
-const Jimp = require('jimp'); // ✅ correct: do not use `.default`
+const Jimp = require('jimp'); // ✅ correct: do NOT use .default
 const Replicate = require('replicate');
 
 const app = express();
@@ -28,7 +30,7 @@ app.post('/api/enhance', upload.single('image'), async (req, res) => {
       return res.status(400).json({ error: "No image file uploaded." });
     }
 
-    const image = await Jimp.read(req.file.buffer); // ✅ Fix: Jimp.read works directly
+    const image = await Jimp.read(req.file.buffer); // ✅ Jimp.read works directly
     let w = image.bitmap.width;
     let h = image.bitmap.height;
 
@@ -81,7 +83,7 @@ app.post('/api/enhance', upload.single('image'), async (req, res) => {
     const imageUrl = Array.isArray(output) ? output[0] : output;
 
     return res.json({
-      image: imageUrl, // ✅ matches main.js
+      image: imageUrl, // ✅ match main.js key
       tier: "Tier 1"
     });
 
@@ -95,4 +97,4 @@ app.post('/api/enhance', upload.single('image'), async (req, res) => {
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`✅ Flip.ai backend running on port ${PORT}`);
-});
+});v
