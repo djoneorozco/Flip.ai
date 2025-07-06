@@ -1,5 +1,5 @@
 // ============================================================
-// ✅ Flip.ai Backend — Modular: Upload ➜ Smart Edit ➜ createEdit()
+// ✅ Flip.ai Backend — Modular: Upload ➜ Smart Prompt ➜ generate()
 // ============================================================
 
 import fs from 'fs';
@@ -23,7 +23,7 @@ app.use(cors({
   ],
 }));
 
-// ✅ Multer upload dir
+// ✅ Multer upload dir (still here for future createEdit or mask work)
 const uploadDir = '/tmp/uploads';
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
@@ -41,7 +41,7 @@ app.get('/', (req, res) => {
 });
 
 // ============================================================
-// ✅ /api/enhance — Tier 1: Modular smart window-only edit
+// ✅ /api/enhance — Tier 1: Modular prompt, fallback to generate()
 // ============================================================
 
 app.post('/api/enhance', upload.single('image'), async (req, res) => {
@@ -52,13 +52,12 @@ app.post('/api/enhance', upload.single('image'), async (req, res) => {
     return res.status(400).json({ error: "Image is required" });
   }
 
-  const imagePath = req.file.path;
   const tier = "Tier 1 — Basic";
 
   // ✅ Modular prompt — works with ANY uploaded house
   const stylePrompt = `
-You are editing the uploaded photo of a house.
-Replace only any old, boarded-up, or broken windows with modestly priced clear glass windows that match the house style.
+A realistic photo of a house that needs light improvement.
+Replace any boarded-up, broken, or old windows with modestly priced clear glass windows that match the house style.
 Keep the house's paint, siding, roof, yard, doors, and overall structure exactly the same.
 Do not add or remove anything else.
 Keep the perspective and angle identical.
@@ -68,9 +67,8 @@ The final result should look realistic and naturally match the original house.
   console.log(`✨ Using: ${tier} with modular smart prompt`);
 
   try {
-    const dalleResponse = await openai.images.createEdit({
-      model: "dall-e-2", // Use "dall-e-3" when it's supported for edits!
-      image: fs.createReadStream(imagePath),
+    const dalleResponse = await openai.images.generate({
+      model: "dall-e-3",
       prompt: stylePrompt,
       n: 1,
       size: "1024x1024"
@@ -82,14 +80,15 @@ The final result should look realistic and naturally match the original house.
     res.json({
       enhancedImageUrl,
       tierUsed: tier,
-      description: "Enhanced with modular window-only edit."
+      description: "Generated with modular prompt only."
     });
 
   } catch (err) {
     console.error("❌ /api/enhance error:", err);
     res.status(500).json({ error: "Image enhancement failed", details: err.message });
   } finally {
-    fs.unlink(imagePath, () => {});
+    // Good habit: clean up the uploaded file
+    fs.unlink(req.file.path, () => {});
   }
 });
 
