@@ -14,6 +14,7 @@ app.use(cors());
 
 // ✅ Simple root route for sanity check
 app.get('/', (req, res) => {
+  console.log("✅ Received GET request at /"); // <-- NEW console.log for debug
   res.send("✅ Flip.ai backend is live!");
 });
 
