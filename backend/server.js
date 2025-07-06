@@ -11,7 +11,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
-const Jimp = require('jimp');
+const Jimp = require('jimp').default;
 const Replicate = require('replicate');
 
 const app = express();
