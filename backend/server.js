@@ -1,21 +1,19 @@
-// Tier 1 Image Enhancement Server
-
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
-const Jimp = require('jimp'); // ✅ correct: do NOT use .default
+const Jimp = require('jimp'); // ✅ Correct: no `.default` needed on Render
 const Replicate = require('replicate');
 
 const app = express();
 app.use(cors());
 
-// ✅ Root test route to confirm server works
+// ✅ Root GET route for sanity check
 app.get('/', (req, res) => {
   res.send("✅ Flip.ai backend is live!");
 });
 
-// Multer for file upload
+// Multer for file uploads in memory
 const upload = multer({ storage: multer.memoryStorage() });
 
 // Replicate client
@@ -23,18 +21,22 @@ const replicate = new Replicate({
   auth: process.env.REPLICATE_API_TOKEN
 });
 
-// Enhancement route
+// ✅ Tier 1 enhancement route
 app.post('/api/enhance', upload.single('image'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: "No image file uploaded." });
     }
 
-    const image = await Jimp.read(req.file.buffer); // ✅ Jimp.read works directly
+    // ✅ Load image with Jimp
+    const image = await Jimp.read(req.file.buffer);
+
     let w = image.bitmap.width;
     let h = image.bitmap.height;
 
     const MAX_WIDTH = 1024, MAX_HEIGHT = 768;
+
+    // ✅ Resize if needed
     if (w > MAX_WIDTH || h > MAX_HEIGHT) {
       const aspect = w / h;
       if (w > h) {
@@ -57,10 +59,12 @@ app.post('/api/enhance', upload.single('image'), async (req, res) => {
       await image.resize(w, h);
     }
 
+    // ✅ Convert to Base64 data URI
     const mimeType = req.file.mimetype || 'image/png';
     const base64Image = (await image.getBufferAsync(mimeType)).toString('base64');
     const dataURI = `data:${mimeType};base64,${base64Image}`;
 
+    // ✅ Replicate prompt
     const prompt = "A high-resolution photograph taken around midday of the same house, now with brand new clear glass windows (no boards) and a bright red front door. The house’s exterior and color remain the same apart from these improvements. The front yard now has a small landscaped lawn with green grass and a few plants, but everything else about the house is unchanged.";
     const negativePrompt = "boarded windows, broken glass, old door, people, text";
 
@@ -75,6 +79,7 @@ app.post('/api/enhance', upload.single('image'), async (req, res) => {
       height: h
     };
 
+    // ✅ Call Replicate
     const output = await replicate.run(
       "stability-ai/stable-diffusion-img2img",
       { input: inputs }
@@ -82,8 +87,9 @@ app.post('/api/enhance', upload.single('image'), async (req, res) => {
 
     const imageUrl = Array.isArray(output) ? output[0] : output;
 
+    // ✅ Respond with expected format
     return res.json({
-      image: imageUrl, // ✅ match main.js key
+      image: imageUrl,
       tier: "Tier 1"
     });
 
@@ -93,8 +99,8 @@ app.post('/api/enhance', upload.single('image'), async (req, res) => {
   }
 });
 
-// Start server
+// ✅ Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`✅ Flip.ai backend running on port ${PORT}`);
-});v
+});
