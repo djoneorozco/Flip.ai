@@ -1,5 +1,5 @@
 // ============================================================
-// ✅ Flip.ai Backend — Fresh Draft: Upload ➜ Prompt ➜ generate()
+// ✅ Flip.ai Backend — Modular: Upload ➜ Smart Edit ➜ createEdit()
 // ============================================================
 
 import fs from 'fs';
@@ -41,10 +41,11 @@ app.get('/', (req, res) => {
 });
 
 // ============================================================
-// ✅ /api/enhance — Tier 1 only: smart prompt ➜ generate()
+// ✅ /api/enhance — Tier 1: Modular smart window-only edit
 // ============================================================
+
 app.post('/api/enhance', upload.single('image'), async (req, res) => {
-  console.log("🖼️ Received image");
+  console.log("🖼️ Received image for Tier 1 enhancement");
 
   if (!req.file) {
     console.error("❌ No image uploaded");
@@ -53,17 +54,23 @@ app.post('/api/enhance', upload.single('image'), async (req, res) => {
 
   const imagePath = req.file.path;
   const tier = "Tier 1 — Basic";
+
+  // ✅ Modular prompt — works with ANY uploaded house
   const stylePrompt = `
-A realistic photo of a light blue house with boarded-up windows.
-Replace only the boarded-up windows with clear glass windows that match the house’s style.
-Keep yard, paint, door, and everything else exactly the same.
+You are editing the uploaded photo of a house.
+Replace only any old, boarded-up, or broken windows with modestly priced clear glass windows that match the house style.
+Keep the house's paint, siding, roof, yard, doors, and overall structure exactly the same.
+Do not add or remove anything else.
+Keep the perspective and angle identical.
+The final result should look realistic and naturally match the original house.
 `.trim();
 
-  console.log(`✨ Using: ${tier} with smart prompt`);
+  console.log(`✨ Using: ${tier} with modular smart prompt`);
 
   try {
-    const dalleResponse = await openai.images.generate({
-      model: "dall-e-3",
+    const dalleResponse = await openai.images.createEdit({
+      model: "dall-e-2", // Use "dall-e-3" when it's supported for edits!
+      image: fs.createReadStream(imagePath),
       prompt: stylePrompt,
       n: 1,
       size: "1024x1024"
@@ -75,7 +82,7 @@ Keep yard, paint, door, and everything else exactly the same.
     res.json({
       enhancedImageUrl,
       tierUsed: tier,
-      description: "Generated with smart prompt only."
+      description: "Enhanced with modular window-only edit."
     });
 
   } catch (err) {
