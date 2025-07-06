@@ -4,7 +4,7 @@ const imageInput = document.getElementById('propertyImage');
 const enhanceBtn = document.getElementById('enhanceBtn');
 const resultDiv = document.getElementById('result');
 
-const BACKEND_URL = 'https://flip-ai.onrender.com'; // Or your Render URL if testing live
+const BACKEND_URL = 'https://flip-ai.onrender.com'; // Or your Render URL
 
 enhanceBtn.addEventListener('click', async () => {
   resultDiv.innerHTML = "⏳ Uploading & Enhancing...";
@@ -26,10 +26,10 @@ enhanceBtn.addEventListener('click', async () => {
 
     const data = await res.json();
 
-    if (data.enhancedImageUrl) {
+    if (data.image) {
       resultDiv.innerHTML = `
-        <p>✅ Enhancement Done! Tier Used: ${data.tierUsed}</p>
-        <img src="${data.enhancedImageUrl}" alt="Enhanced Property" />
+        <p>✅ Enhancement Done! Tier Used: ${data.tier}</p>
+        <img src="${data.image}" alt="Enhanced Property" />
       `;
     } else {
       resultDiv.innerHTML = `❌ ${data.error || "Something went wrong."}`;
