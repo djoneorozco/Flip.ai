@@ -14,7 +14,8 @@
     "express-fileupload": "^1.4.0",
     "jimp": "^1.6.0",
     "multer": "^2.0.1",
-    "openai": "^4.104.0"
+    "openai": "^4.104.0",
+    "replicate": "^1.0.1"
   },
   "devDependencies": {
     "@flydotio/dockerfile": "^0.7.10",
