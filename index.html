@@ -2,41 +2,43 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Flip.ai</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flip.ai — Investment Insight</title>
   <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
-  <div class="container">
-    <div class="card">
-      <h1 class="logo">Flip.ai</h1>
-      <p class="tagline">AI-Powered Visual Enhancer & ROI Generator for Flippers</p>
+  <div class="page-wrapper">
+    <div class="frosted-glass glow-container">
+      <div class="white-swirl"></div>
+      <h1 class="title">Flip.ai ROI Analyzer</h1>
+      <p class="tagline">Unlock your property's true investment potential</p>
 
-      <h2>Upload Your Property Photo</h2>
+      <form id="flipForm">
+        <label for="purchasePrice">Purchase Price</label>
+        <input type="number" id="purchasePrice" name="purchasePrice" required />
 
-      <form id="flipForm" enctype="multipart/form-data">
-        <label for="image">Original Property Image:</label>
-        <input type="file" id="image" name="image" accept="image/*" />
+        <label for="rehabBudget">Rehab Budget</label>
+        <input type="number" id="rehabBudget" name="rehabBudget" required />
 
-        <label for="strategy">Flip Strategy:</label>
-        <input type="text" id="strategy" name="strategy" placeholder="e.g. Modern kitchen, add bathroom" />
+        <label for="afterRepairValue">After Repair Value (ARV)</label>
+        <input type="number" id="afterRepairValue" name="afterRepairValue" required />
 
-        <label for="purchasePrice">Purchase Price ($):</label>
-        <input type="number" id="purchasePrice" name="purchasePrice" placeholder="e.g. 180000" />
+        <label for="zip">Property ZIP Code</label>
+        <input type="text" id="zip" name="zip" required />
 
-        <label for="arv">Estimated ARV ($):</label>
-        <input type="number" id="arv" name="arv" placeholder="e.g. 290000" />
-
-        <label for="renovationCost">Estimated Renovation Cost ($):</label>
-        <input type="number" id="renovationCost" name="renovationCost" placeholder="e.g. 35000" />
-
-        <button type="submit">Enhance & Analyze</button>
+        <button type="submit">Analyze Deal</button>
       </form>
 
-      <footer>
-        Powered by <strong>RealtySaSS</strong> | Flip Smarter with AI
-      </footer>
+      <div id="results" class="results-output" style="display: none;">
+        <h2>Analysis Results</h2>
+        <div id="insightText"></div>
+      </div>
     </div>
   </div>
+
+  <script src="main.js"></script>
 </body>
 </html>
