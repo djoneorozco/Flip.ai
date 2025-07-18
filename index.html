@@ -3,42 +3,28 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Flip.ai — Investment Insight</title>
+  <title>Flip.ai ROI Analyzer</title>
   <link rel="stylesheet" href="style.css" />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
-  <div class="page-wrapper">
-    <div class="frosted-glass glow-container">
-      <div class="white-swirl"></div>
-      <h1 class="title">Flip.ai ROI Analyzer</h1>
-      <p class="tagline">Unlock your property's true investment potential</p>
+  <div class="form-container">
+    <h1>Flip.ai ROI Analyzer</h1>
+    <p>Unlock your property’s true investment potential</p>
+    <form>
+      <label>Purchase Price</label>
+      <input type="number" placeholder="e.g. 180000" />
 
-      <form id="flipForm">
-        <label for="purchasePrice">Purchase Price</label>
-        <input type="number" id="purchasePrice" name="purchasePrice" required />
+      <label>Rehab Budget</label>
+      <input type="number" placeholder="e.g. 35000" />
 
-        <label for="rehabBudget">Rehab Budget</label>
-        <input type="number" id="rehabBudget" name="rehabBudget" required />
+      <label>After Repair Value (ARV)</label>
+      <input type="number" placeholder="e.g. 290000" />
 
-        <label for="afterRepairValue">After Repair Value (ARV)</label>
-        <input type="number" id="afterRepairValue" name="afterRepairValue" required />
+      <label>Property ZIP Code</label>
+      <input type="text" placeholder="e.g. 78245" />
 
-        <label for="zip">Property ZIP Code</label>
-        <input type="text" id="zip" name="zip" required />
-
-        <button type="submit">Analyze Deal</button>
-      </form>
-
-      <div id="results" class="results-output" style="display: none;">
-        <h2>Analysis Results</h2>
-        <div id="insightText"></div>
-      </div>
-    </div>
+      <button type="submit">Analyze Deal</button>
+    </form>
   </div>
-
-  <script src="main.js"></script>
 </body>
 </html>
