@@ -28,12 +28,20 @@
 
       <button type="submit">Analyze Deal</button>
     </form>
+
+    <hr style="margin: 40px 0; border-color: #333;">
+
+    <h3>Optional: Upload Image to Enhance</h3>
+    <input type="file" id="imageInput" accept="image/*" />
+    <button id="enhanceBtn">Enhance Image</button>
+
+    <div id="enhancedResult" style="margin-top: 20px;"></div>
   </div>
 
   <script>
+    // ROI Form Logic
     document.getElementById('roiForm').addEventListener('submit', function (e) {
       e.preventDefault();
-
       const purchasePrice = parseFloat(document.getElementById('purchasePrice').value);
       const rehabBudget = parseFloat(document.getElementById('rehabBudget').value);
       const arv = parseFloat(document.getElementById('arv').value);
@@ -44,6 +52,34 @@
       const roi = (potentialProfit / totalInvestment) * 100;
 
       alert(`📊 ROI: ${roi.toFixed(2)}%\n💰 Potential Profit: $${potentialProfit.toLocaleString()}`);
+    });
+
+    // Image Upload + Enhance Logic
+    document.getElementById('enhanceBtn').addEventListener('click', async () => {
+      const fileInput = document.getElementById('imageInput');
+      if (!fileInput.files[0]) {
+        alert("Please upload an image first.");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("image", fileInput.files[0]);
+
+      const res = await fetch("/.netlify/functions/runwayEnhance", {
+        method: "POST",
+        body: formData
+      });
+
+      const data = await res.json();
+
+      if (data && data.outputUrl) {
+        document.getElementById("enhancedResult").innerHTML = `
+          <p><strong>Enhanced Image:</strong></p>
+          <img src="${data.outputUrl}" alt="Enhanced" style="max-width: 100%; border: 1px solid #666;" />
+        `;
+      } else {
+        document.getElementById("enhancedResult").innerText = "❌ Enhancement failed. Try again.";
+      }
     });
   </script>
 
