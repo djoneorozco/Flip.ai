@@ -43,11 +43,7 @@ body {
 form {
   position: relative;
   z-index: 1;
-  background: linear-gradient(to bottom, #1a1a1a, #0e0e11),
-              url("/images/uploads/backgroundlayer.svg");
-  background-repeat: no-repeat;
-  background-size: cover;
-  background-position: center;
+  background: linear-gradient(to bottom, #1a1a1a, #0e0e11);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 24px;
   padding: 42px 32px;
@@ -56,6 +52,31 @@ form {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
+  overflow: hidden;
+}
+
+/* === SPINNING BACKGROUND SVG INSIDE CARD === */
+form::after {
+  content: "";
+  position: absolute;
+  top: -40%;
+  left: -40%;
+  width: 180%;
+  height: 180%;
+  background-image: url("/images/uploads/backgroundlayer.svg");
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+  z-index: 0;
+  opacity: 0.04;
+  animation: swirlBG 60s linear infinite;
+  pointer-events: none;
+}
+
+/* === Ensure Form Content is ABOVE the SVG === */
+form > * {
+  position: relative;
+  z-index: 1;
 }
 
 /* === HEADER TEXT === */
@@ -138,6 +159,15 @@ button:hover {
   }
   50% {
     transform: scale(1.01);
+  }
+}
+
+@keyframes swirlBG {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
   }
 }
 
