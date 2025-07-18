@@ -2,65 +2,41 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Flip.ai — AI-Powered Flip Analyzer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flip.ai | Smart Flipping Assistant</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="glow-wrapper">
-    <div class="quiz-container">
-      <h1>Flip.ai</h1>
+  <div class="container">
+    <div class="card">
+      <h1 class="logo">Flip.ai</h1>
       <p class="tagline">AI-Powered Visual Enhancer & ROI Generator for Flippers</p>
 
-      <!-- ✅ Upload Form -->
-      <section id="uploadSection">
-        <h2>Upload Your Property Photo</h2>
-        <label>Original Property Image:
-          <input type="file" id="imageUpload" accept="image/*" />
-        </label>
+      <h2>Upload Your Property Photo</h2>
 
-        <label>Flip Strategy:
-          <input type="text" id="flipPlan" placeholder="e.g. Modern kitchen, add bath, new roof" />
-        </label>
+      <form id="flipForm" enctype="multipart/form-data">
+        <label for="image">Original Property Image:</label>
+        <input type="file" id="image" name="image" accept="image/*" required />
 
-        <label>Purchase Price ($):
-          <input type="number" id="purchasePrice" placeholder="e.g. 180000" />
-        </label>
+        <label for="strategy">Flip Strategy:</label>
+        <input type="text" id="strategy" name="strategy" placeholder="e.g. Modern kitchen, add bathroom" required />
 
-        <label>Estimated ARV ($):
-          <input type="number" id="arv" placeholder="e.g. 290000" />
-        </label>
+        <label for="purchasePrice">Purchase Price ($):</label>
+        <input type="number" id="purchasePrice" name="purchasePrice" placeholder="e.g. 180000" required />
 
-        <label>Estimated Renovation Cost ($):
-          <input type="number" id="renoCost" placeholder="e.g. 35000" />
-        </label>
+        <label for="arv">Estimated ARV ($):</label>
+        <input type="number" id="arv" name="arv" placeholder="e.g. 290000" required />
 
-        <button id="analyzeFlipBtn">Enhance & Analyze</button>
-      </section>
+        <label for="renovation">Estimated Renovation Cost ($):</label>
+        <input type="number" id="renovation" name="renovation" placeholder="e.g. 35000" required />
 
-      <!-- ✅ Results Display -->
-      <section id="resultSection" style="display:none;">
-        <h2>Before & After Preview</h2>
-        <div class="answers">
-          <img id="originalPreview" src="" alt="Original Upload" width="300"/>
-          <img id="enhancedPreview" src="" alt="Enhanced Output" width="300"/>
-        </div>
+        <button type="submit">Enhance & Analyze</button>
+      </form>
 
-        <h2>Flip Analysis</h2>
-        <div class="mbti-details">
-          <strong>Purchase Price:</strong> <span id="resPrice"></span><br>
-          <strong>ARV:</strong> <span id="resARV"></span><br>
-          <strong>Reno Cost:</strong> <span id="resReno"></span><br>
-          <strong>Estimated Profit:</strong> <span id="resProfit"></span><br>
-          <strong>70% Rule Pass:</strong> <span id="resPass"></span>
-        </div>
-      </section>
-
-      <div class="cta">
-        <p>Powered by RealtySaSS | Flip Smarter with AI</p>
-      </div>
+      <footer>
+        Powered by <strong>RealtySaSS</strong> | Flip Smarter with AI
+      </footer>
     </div>
   </div>
-  <script src="main.js"></script>
 </body>
 </html>
