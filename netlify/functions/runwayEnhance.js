@@ -4,6 +4,7 @@ const path = require('path');
 const os = require('os');
 const { Readable } = require('stream');
 const fetch = require('node-fetch');
+const FormData = require('form-data');
 require('dotenv').config();
 
 exports.handler = async (event) => {
@@ -53,10 +54,11 @@ exports.handler = async (event) => {
     const formData = new FormData();
     formData.append('image', fs.createReadStream(uploadedFilePath));
 
-    const runwayRes = await fetch('https://api.runwayml.com/v2/your-enhancement-endpoint', {
+    const runwayRes = await fetch('https://api.runwayml.com/v2/models/YOUR_MODEL_ID/outputs', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${process.env.RUNWAY_API_KEY}`,
+        ...formData.getHeaders()
       },
       body: formData,
     });
