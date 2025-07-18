@@ -49,25 +49,28 @@ exports.handler = async (event) => {
 
     await parsePromise;
 
-    // Upload image to Runway Gen-4
+    // ✅ SET YOUR MODEL ID HERE (get it from Runway Dashboard)
+    const MODEL_ID = 'gen-2'; // Change this to gen-1 or gen-4 if needed
+
     const formData = new FormData();
     formData.append('image', fs.createReadStream(uploadedFilePath));
 
-    const runwayRes = await fetch('https://api.runwayml.com/v2/models/gen-4/outputs', {
+    const runwayRes = await fetch(`https://api.runwayml.com/v2/models/${MODEL_ID}/outputs`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${process.env.RUNWAY_API_KEY}`,
-        ...formData.getHeaders()
+        ...formData.getHeaders(),
       },
       body: formData,
     });
 
     const runwayData = await runwayRes.json();
 
-    if (!runwayData || !runwayData.output || !runwayData.output.url) {
+    if (!runwayRes.ok || !runwayData.output?.url) {
+      console.error('Runway Error:', runwayData);
       return {
         statusCode: 500,
-        body: JSON.stringify({ error: 'Enhancement failed or no output returned.' }),
+        body: JSON.stringify({ error: 'Runway enhancement failed', details: runwayData }),
       };
     }
 
@@ -77,10 +80,10 @@ exports.handler = async (event) => {
     };
 
   } catch (error) {
-    console.error('Enhancement error:', error);
+    console.error('Server Error:', error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: 'Server error during enhancement.' }),
+      body: JSON.stringify({ error: 'Internal server error', details: error.message }),
     };
   }
 };
