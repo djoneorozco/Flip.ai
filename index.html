@@ -5,26 +5,47 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Flip.ai ROI Analyzer</title>
   <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
 </head>
 <body>
-  <div class="form-container">
-    <h1>Flip.ai ROI Analyzer</h1>
+
+  <div class="container">
+    <h2>Flip.ai ROI Analyzer</h2>
     <p>Unlock your property’s true investment potential</p>
-    <form>
-      <label>Purchase Price</label>
-      <input type="number" placeholder="e.g. 180000" />
 
-      <label>Rehab Budget</label>
-      <input type="number" placeholder="e.g. 35000" />
+    <form id="roiForm">
+      <label for="purchasePrice">Purchase Price</label>
+      <input type="number" id="purchasePrice" placeholder="e.g. 180000" required />
 
-      <label>After Repair Value (ARV)</label>
-      <input type="number" placeholder="e.g. 290000" />
+      <label for="rehabBudget">Rehab Budget</label>
+      <input type="number" id="rehabBudget" placeholder="e.g. 35000" required />
 
-      <label>Property ZIP Code</label>
-      <input type="text" placeholder="e.g. 78245" />
+      <label for="arv">After Repair Value (ARV)</label>
+      <input type="number" id="arv" placeholder="e.g. 290000" required />
+
+      <label for="zipCode">Property ZIP Code</label>
+      <input type="text" id="zipCode" placeholder="e.g. 78245" required />
 
       <button type="submit">Analyze Deal</button>
     </form>
   </div>
+
+  <script>
+    document.getElementById('roiForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      const purchasePrice = parseFloat(document.getElementById('purchasePrice').value);
+      const rehabBudget = parseFloat(document.getElementById('rehabBudget').value);
+      const arv = parseFloat(document.getElementById('arv').value);
+      const zipCode = document.getElementById('zipCode').value;
+
+      const totalInvestment = purchasePrice + rehabBudget;
+      const potentialProfit = arv - totalInvestment;
+      const roi = (potentialProfit / totalInvestment) * 100;
+
+      alert(`📊 ROI: ${roi.toFixed(2)}%\n💰 Potential Profit: $${potentialProfit.toLocaleString()}`);
+    });
+  </script>
+
 </body>
 </html>
