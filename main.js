@@ -40,16 +40,27 @@ analyzeBtn.addEventListener('click', async () => {
   formData.append('flipPlan', flipPlan);
 
   try {
-    // Call Runway API via Netlify Function
+    // ----------------------------
+    // 1. Enhance Image with Runway
+    // ----------------------------
     const runwayRes = await fetch('/.netlify/functions/runwayEnhance', {
       method: 'POST',
       body: formData
     });
 
-    const enhancedBlob = await runwayRes.blob();
-    enhancedPreview.src = URL.createObjectURL(enhancedBlob);
+    const runwayData = await runwayRes.json();
 
-    // Call OpenAI 70% Rule Analysis
+    if (!runwayRes.ok || !runwayData.outputUrl) {
+      console.error('Runway Error:', runwayData);
+      alert('❌ Image enhancement failed. Please try again.');
+      return;
+    }
+
+    enhancedPreview.src = runwayData.outputUrl;
+
+    // ----------------------------
+    // 2. Analyze Investment
+    // ----------------------------
     const insightRes = await fetch('/.netlify/functions/getInsight', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -58,7 +69,9 @@ analyzeBtn.addEventListener('click', async () => {
 
     const insight = await insightRes.json();
 
-    // Populate results
+    // ----------------------------
+    // 3. Populate Results
+    // ----------------------------
     resPrice.innerText = `$${purchasePrice.toLocaleString()}`;
     resARV.innerText = `$${arv.toLocaleString()}`;
     resReno.innerText = `$${renoCost.toLocaleString()}`;
@@ -66,9 +79,9 @@ analyzeBtn.addEventListener('click', async () => {
     resPass.innerText = insight.pass ? "✅ Yes" : "❌ No";
 
     resultSection.style.display = 'block';
+
   } catch (err) {
-    console.error('Error running Flip.ai analysis:', err);
-    alert('Something went wrong. Please try again.');
+    console.error('🔥 Flip.ai crashed:', err);
+    alert('Something went wrong during analysis. Please check your connection or try again later.');
   }
 });
-
