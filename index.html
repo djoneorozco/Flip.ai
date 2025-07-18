@@ -2,50 +2,44 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Flip.ai ROI Analyzer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Flip.ai Dashboard</title>
   <link rel="stylesheet" href="style.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
 </head>
 <body>
-
-  <div class="container">
-    <h2>Flip.ai ROI Analyzer</h2>
-    <p>Unlock your property’s true investment potential</p>
-
-    <form id="roiForm">
-      <label for="purchasePrice">Purchase Price</label>
-      <input type="number" id="purchasePrice" placeholder="e.g. 180000" required />
-
-      <label for="rehabBudget">Rehab Budget</label>
-      <input type="number" id="rehabBudget" placeholder="e.g. 35000" required />
-
-      <label for="arv">After Repair Value (ARV)</label>
-      <input type="number" id="arv" placeholder="e.g. 290000" required />
-
-      <label for="zipCode">Property ZIP Code</label>
-      <input type="text" id="zipCode" placeholder="e.g. 78245" required />
-
-      <button type="submit">Analyze Deal</button>
-    </form>
+  <div class="sidebar">
+    <h1>Flip.ai</h1>
+    <ul>
+      <li>Dashboard</li>
+      <li>Properties</li>
+      <li>Analysis</li>
+      <li>Reports</li>
+    </ul>
+    <button class="button">New Analysis</button>
   </div>
 
-  <script>
-    document.getElementById('roiForm').addEventListener('submit', function (e) {
-      e.preventDefault();
+  <div class="main">
+    <div class="card">
+      <h2>Analyze a Property</h2>
+      <input type="text" placeholder="1234 Elm Street" />
+      <button class="button">Analyze</button>
+      <div class="analysis-result">
+        <p><strong>Purchase Price:</strong> $250,000</p>
+        <p><strong>Repair Costs:</strong> $50,000</p>
+        <p><strong>Holding Costs:</strong> $12,000</p>
+        <p><strong>Profit:</strong> $58,000</p>
+        <p><strong>Profit Margin:</strong> 15.7%</p>
+      </div>
+    </div>
 
-      const purchasePrice = parseFloat(document.getElementById('purchasePrice').value);
-      const rehabBudget = parseFloat(document.getElementById('rehabBudget').value);
-      const arv = parseFloat(document.getElementById('arv').value);
-      const zipCode = document.getElementById('zipCode').value;
-
-      const totalInvestment = purchasePrice + rehabBudget;
-      const potentialProfit = arv - totalInvestment;
-      const roi = (potentialProfit / totalInvestment) * 100;
-
-      alert(`📊 ROI: ${roi.toFixed(2)}%\n💰 Potential Profit: $${potentialProfit.toLocaleString()}`);
-    });
-  </script>
-
+    <div class="card">
+      <h2>Recently Analyzed</h2>
+      <ul>
+        <li>567 Oak Avenue — $42,500 (11.9%)</li>
+        <li>789 Pine Road — $33,000 (9.4%)</li>
+        <li>890 Maple Drive — $37,500 (12.1%)</li>
+      </ul>
+    </div>
+  </div>
 </body>
 </html>
