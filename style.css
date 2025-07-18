@@ -1,47 +1,125 @@
-/*#1. Frosted glass card styling */
+/* ============================
+   Flip.ai – Full CSS (Luxury Frosted + Swirl Border)
+   ============================ */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Poppins', sans-serif;
+}
+
+body {
+  background: #0d0d0d;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+/* ===== Glass Card Container ===== */
 .form-container {
   position: relative;
   background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
   padding: 40px;
-  box-shadow: 0 0 30px rgba(255, 255, 255, 0.08);
+  max-width: 500px;
+  width: 100%;
+  box-shadow: 0 0 40px rgba(255, 255, 255, 0.1);
+  z-index: 1;
   overflow: hidden;
 }
 
-/*#2. Remove rotating light inside box */
+/* ===== Animated Border Light Swirl ===== */
 .form-container::before {
   content: "";
-  display: none; /* <--- This disables the unwanted inside swirl */
-}
-
-/*#3. Add outer swirl glow effect */
-.form-container::after {
-  content: "";
   position: absolute;
-  top: -30%;
-  left: -30%;
-  width: 160%;
-  height: 160%;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
   background: conic-gradient(
     from 0deg,
     rgba(255, 255, 255, 0.1),
-    rgba(255, 255, 255, 0.3),
+    rgba(255, 255, 255, 0.4),
     rgba(255, 255, 255, 0.1)
   );
-  border-radius: 50%;
-  filter: blur(60px);
-  animation: rotateGlow 8s linear infinite;
+  animation: swirl 8s linear infinite;
   z-index: 0;
 }
 
-/*#4. Keyframes for elegant rotation */
-@keyframes rotateGlow {
+@keyframes swirl {
   0% {
     transform: rotate(0deg);
   }
   100% {
     transform: rotate(360deg);
   }
+}
+
+/* ===== Inside Content (Top Layer) ===== */
+.form-container * {
+  position: relative;
+  z-index: 2;
+}
+
+h1 {
+  font-size: 26px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: #ffffff;
+  text-align: center;
+}
+
+p {
+  font-size: 14px;
+  color: #cccccc;
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+/* ===== Input Styling ===== */
+input[type="text"],
+input[type="number"],
+input[type="file"] {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background-color: rgba(255, 255, 255, 0.03);
+  color: #ffffff;
+  border-radius: 10px;
+  outline: none;
+  font-size: 14px;
+}
+
+input::placeholder {
+  color: #aaaaaa;
+}
+
+/* ===== Button Styling ===== */
+button {
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(to right, #7f00ff, #e100ff);
+  border: none;
+  border-radius: 30px;
+  color: #ffffff;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  margin-top: 10px;
+}
+
+button:hover {
+  background: linear-gradient(to right, #e100ff, #7f00ff);
+}
+
+/* ===== Remove inner rotating light ===== */
+.form-container::after {
+  display: none !important;
 }
