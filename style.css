@@ -1,104 +1,91 @@
-/* ============================
-   Flip.ai – Final Frosted Glass UI (No Swirl Artifact)
-   ============================ */
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  font-family: 'Poppins', sans-serif;
-}
+/* =======================================
+   Flip.ai ROI Analyzer – Dark Mode Style
+   ======================================= */
 
 body {
-  background: #0d0d0d;
-  height: 100vh;
+  background-color: #0d0d0d;
+  font-family: 'Inter', sans-serif;
+  margin: 0;
+  padding: 0;
   display: flex;
-  align-items: center;
   justify-content: center;
-  padding: 20px;
-}
-
-/* ===== Frosted Glass Container ===== */
-.form-container {
-  position: relative;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-radius: 20px;
-  padding: 40px;
-  max-width: 500px;
-  width: 100%;
-  box-shadow: 0 0 40px rgba(255, 255, 255, 0.08);
-  z-index: 1;
-  overflow: hidden;
-}
-
-/* ===== Remove swirling gradient ===== */
-.form-container::before {
-  content: "";
-  position: absolute;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.03);
-  box-shadow: 0 0 40px rgba(255, 255, 255, 0.05);
-  z-index: 0;
-}
-
-/* ===== Inside Content (Text & Fields) ===== */
-.form-container * {
-  position: relative;
-  z-index: 2;
-}
-
-h1 {
-  font-size: 26px;
-  font-weight: 700;
-  margin-bottom: 8px;
+  align-items: center;
+  min-height: 100vh;
   color: #ffffff;
-  text-align: center;
 }
 
-p {
+#roi-form {
+  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.02), rgba(0,0,0,0.85));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  box-shadow:
+    0 0 30px rgba(255, 255, 255, 0.05),
+    0 0 80px rgba(255, 0, 255, 0.03),
+    0 0 0 1px rgba(255, 255, 255, 0.03) inset;
+  padding: 40px 30px;
+  width: 100%;
+  max-width: 460px;
+  text-align: center;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 1;
+}
+
+#roi-form h2 {
+  font-size: 24px;
+  margin-bottom: 8px;
+  font-weight: 700;
+}
+
+#roi-form p {
+  font-size: 13px;
+  color: #ccc;
+  margin-bottom: 32px;
+}
+
+label {
+  display: block;
   font-size: 14px;
-  color: #cccccc;
-  margin-bottom: 24px;
-  text-align: center;
+  margin: 14px 0 6px;
+  text-align: left;
 }
 
-/* ===== Input Fields ===== */
 input[type="text"],
 input[type="number"] {
   width: 100%;
   padding: 12px;
-  margin-bottom: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  background-color: rgba(255, 255, 255, 0.03);
-  color: #ffffff;
-  border-radius: 10px;
+  border: 1px solid #333;
+  background-color: #111;
+  color: #eee;
+  border-radius: 8px;
+  font-size: 14px;
+  box-sizing: border-box;
   outline: none;
-  font-size: 14px;
+  transition: border 0.3s;
 }
 
-input::placeholder {
-  color: #aaaaaa;
+input[type="text"]:focus,
+input[type="number"]:focus {
+  border-color: #7f00ff;
 }
 
-/* ===== Button ===== */
 button {
+  margin-top: 24px;
   width: 100%;
-  padding: 12px;
-  background: linear-gradient(to right, #7f00ff, #e100ff);
+  padding: 12px 0;
+  background: linear-gradient(90deg, #7f00ff 0%, #e100ff 100%);
+  color: #fff;
   border: none;
-  border-radius: 30px;
-  color: #ffffff;
+  border-radius: 999px;
   font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
-  transition: background 0.3s ease;
-  margin-top: 10px;
+  box-shadow: 0 4px 14px rgba(255, 0, 255, 0.2);
+  transition: all 0.3s ease-in-out;
 }
 
 button:hover {
-  background: linear-gradient(to right, #e100ff, #7f00ff);
+  transform: scale(1.02);
+  box-shadow: 0 6px 20px rgba(255, 0, 255, 0.3);
 }
