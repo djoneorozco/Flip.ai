@@ -1,5 +1,5 @@
 /* ============================
-   Flip.ai – Full CSS (Luxury Frosted + Swirl Border)
+   Flip.ai – Final Frosted Glass UI (No Swirl Artifact)
    ============================ */
 
 * {
@@ -18,7 +18,7 @@ body {
   padding: 20px;
 }
 
-/* ===== Glass Card Container ===== */
+/* ===== Frosted Glass Container ===== */
 .form-container {
   position: relative;
   background: rgba(255, 255, 255, 0.05);
@@ -29,39 +29,24 @@ body {
   padding: 40px;
   max-width: 500px;
   width: 100%;
-  box-shadow: 0 0 40px rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 40px rgba(255, 255, 255, 0.08);
   z-index: 1;
   overflow: hidden;
 }
 
-/* ===== Animated Border Light Swirl ===== */
+/* ===== Remove swirling gradient ===== */
 .form-container::before {
   content: "";
   position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: conic-gradient(
-    from 0deg,
-    rgba(255, 255, 255, 0.1),
-    rgba(255, 255, 255, 0.4),
-    rgba(255, 255, 255, 0.1)
-  );
-  animation: swirl 8s linear infinite;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.03);
+  box-shadow: 0 0 40px rgba(255, 255, 255, 0.05);
   z-index: 0;
 }
 
-@keyframes swirl {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-/* ===== Inside Content (Top Layer) ===== */
+/* ===== Inside Content (Text & Fields) ===== */
 .form-container * {
   position: relative;
   z-index: 2;
@@ -82,10 +67,9 @@ p {
   text-align: center;
 }
 
-/* ===== Input Styling ===== */
+/* ===== Input Fields ===== */
 input[type="text"],
-input[type="number"],
-input[type="file"] {
+input[type="number"] {
   width: 100%;
   padding: 12px;
   margin-bottom: 18px;
@@ -101,7 +85,7 @@ input::placeholder {
   color: #aaaaaa;
 }
 
-/* ===== Button Styling ===== */
+/* ===== Button ===== */
 button {
   width: 100%;
   padding: 12px;
@@ -117,9 +101,4 @@ button {
 
 button:hover {
   background: linear-gradient(to right, #e100ff, #7f00ff);
-}
-
-/* ===== Remove inner rotating light ===== */
-.form-container::after {
-  display: none !important;
 }
