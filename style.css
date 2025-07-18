@@ -1,91 +1,94 @@
-
-/* =======================================
-   Flip.ai ROI Analyzer – Dark Mode Style
-   ======================================= */
-
-body {
-  background-color: #0d0d0d;
-  font-family: 'Inter', sans-serif;
+/* === GLOBAL RESET === */
+* {
+  box-sizing: border-box;
   margin: 0;
   padding: 0;
+}
+
+/* === DARK MODE BODY === */
+body {
+  font-family: 'Inter', sans-serif;
+  background: #0f0f10;
+  color: #ffffff;
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 100vh;
-  color: #ffffff;
+  height: 100vh;
 }
 
-#roi-form {
-  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.02), rgba(0,0,0,0.85));
+/* === CARD BOX CONTAINER === */
+form {
+  background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 20px;
-  box-shadow:
-    0 0 30px rgba(255, 255, 255, 0.05),
-    0 0 80px rgba(255, 0, 255, 0.03),
-    0 0 0 1px rgba(255, 255, 255, 0.03) inset;
   padding: 40px 30px;
-  width: 100%;
   max-width: 460px;
-  text-align: center;
+  width: 100%;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  z-index: 1;
 }
 
-#roi-form h2 {
-  font-size: 24px;
-  margin-bottom: 8px;
+/* === HEADER TEXT === */
+form h2 {
+  text-align: center;
+  font-size: 26px;
   font-weight: 700;
+  margin-bottom: 8px;
 }
 
-#roi-form p {
-  font-size: 13px;
-  color: #ccc;
-  margin-bottom: 32px;
+form p {
+  text-align: center;
+  font-size: 14px;
+  color: #cccccc;
+  margin-bottom: 28px;
 }
 
+/* === LABELS === */
 label {
   display: block;
   font-size: 14px;
-  margin: 14px 0 6px;
-  text-align: left;
+  font-weight: 500;
+  margin-bottom: 6px;
 }
 
+/* === INPUT FIELDS === */
 input[type="text"],
 input[type="number"] {
   width: 100%;
-  padding: 12px;
-  border: 1px solid #333;
-  background-color: #111;
-  color: #eee;
-  border-radius: 8px;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
   font-size: 14px;
-  box-sizing: border-box;
-  outline: none;
-  transition: border 0.3s;
+  color: #fff;
+  margin-bottom: 20px;
+  transition: all 0.25s ease;
 }
 
 input[type="text"]:focus,
 input[type="number"]:focus {
-  border-color: #7f00ff;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: #8e2de2;
+  outline: none;
 }
 
+/* === SUBMIT BUTTON === */
 button {
-  margin-top: 24px;
   width: 100%;
-  padding: 12px 0;
-  background: linear-gradient(90deg, #7f00ff 0%, #e100ff 100%);
-  color: #fff;
+  padding: 14px;
+  background: linear-gradient(to right, #8e2de2, #4a00e0);
   border: none;
-  border-radius: 999px;
-  font-size: 14px;
+  border-radius: 30px;
+  color: #fff;
   font-weight: 600;
+  font-size: 14px;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(255, 0, 255, 0.2);
-  transition: all 0.3s ease-in-out;
+  transition: all 0.3s ease;
+  margin-top: 10px;
 }
 
 button:hover {
-  transform: scale(1.02);
-  box-shadow: 0 6px 20px rgba(255, 0, 255, 0.3);
+  background: linear-gradient(to right, #4a00e0, #8e2de2);
+  box-shadow: 0 0 20px rgba(142, 45, 226, 0.4);
 }
