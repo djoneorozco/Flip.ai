@@ -16,7 +16,6 @@ exports.handler = async (event) => {
   }
 
   try {
-    // Parse multipart form with Busboy
     const busboy = Busboy({ headers: event.headers });
     const tmpdir = os.tmpdir();
     const fileWrites = [];
@@ -50,11 +49,11 @@ exports.handler = async (event) => {
 
     await parsePromise;
 
-    // Upload image to Runway
+    // Upload image to Runway Gen-4
     const formData = new FormData();
     formData.append('image', fs.createReadStream(uploadedFilePath));
 
-    const runwayRes = await fetch('https://api.runwayml.com/v2/models/YOUR_MODEL_ID/outputs', {
+    const runwayRes = await fetch('https://api.runwayml.com/v2/models/gen-4/outputs', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${process.env.RUNWAY_API_KEY}`,
@@ -68,7 +67,7 @@ exports.handler = async (event) => {
     if (!runwayData || !runwayData.output || !runwayData.output.url) {
       return {
         statusCode: 500,
-        body: JSON.stringify({ error: 'Enhancement failed.' }),
+        body: JSON.stringify({ error: 'Enhancement failed or no output returned.' }),
       };
     }
 
