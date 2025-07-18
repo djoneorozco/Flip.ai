@@ -1,11 +1,12 @@
-/* ===== FLIP.AI — Luxury Glass Swirl Edition ===== */
-
+/* ===============================
+  Flip.ai Premium Frosted Glass UI
+=============================== */
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, sans-serif;
-  background: linear-gradient(145deg, #0c0c0c, #1a1a1a);
-  color: #f0f0f0;
   margin: 0;
   padding: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: radial-gradient(circle at center, #000 0%, #111 100%);
+  color: #eee;
   min-height: 100vh;
   display: flex;
   align-items: center;
@@ -13,127 +14,119 @@ body {
   overflow: hidden;
 }
 
+/* Container positions swirling light */
 .container {
-  padding: 40px 20px;
-  width: 100%;
-  max-width: 550px;
   position: relative;
   z-index: 1;
 }
 
-/* Swirling light animation */
 .container::before {
   content: "";
   position: absolute;
-  top: -30%;
-  left: -30%;
-  width: 160%;
-  height: 160%;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.06), transparent 70%);
-  border-radius: 50%;
-  animation: swirl 12s linear infinite;
-  pointer-events: none;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.08) 10%, transparent 70%);
+  animation: swirl 18s linear infinite;
   z-index: 0;
-  filter: blur(60px);
-  opacity: 0.9;
+  top: -50%;
+  left: -50%;
 }
 
 @keyframes swirl {
   0% {
-    transform: rotate(0deg) scale(1);
+    transform: rotate(0deg);
   }
   100% {
-    transform: rotate(360deg) scale(1.05);
+    transform: rotate(360deg);
   }
 }
 
+/* Frosted Glass Card */
 .card {
-  background: rgba(25, 25, 25, 0.45);
-  backdrop-filter: blur(18px) brightness(1.05);
-  border-radius: 22px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 0 60px rgba(255, 255, 255, 0.06), 0 0 12px rgba(255, 255, 255, 0.03);
-  padding: 40px;
-  z-index: 2;
   position: relative;
-  overflow: hidden;
+  z-index: 2;
+  max-width: 480px;
+  width: 100%;
+  padding: 40px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 0 60px rgba(255, 255, 255, 0.05),
+    0 0 30px rgba(128, 0, 255, 0.1),
+    0 0 8px rgba(255, 255, 255, 0.2);
 }
 
-h1.logo {
-  font-size: 2.5rem;
-  font-weight: 700;
-  margin-bottom: 10px;
-  color: #ffffff;
+/* Typography */
+.logo {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #fff;
+  margin-bottom: 0;
 }
 
 .tagline {
-  color: #bbbbbb;
   font-size: 0.95rem;
   margin-bottom: 30px;
+  color: #ccc;
 }
 
 h2 {
   font-size: 1.2rem;
-  color: #dddddd;
   margin-bottom: 20px;
 }
 
-form {
-  display: flex;
-  flex-direction: column;
-  z-index: 2;
-  position: relative;
-}
-
-label {
-  margin-top: 20px;
-  margin-bottom: 6px;
+/* Form Styling */
+form label {
+  display: block;
+  margin: 16px 0 6px;
   font-weight: 500;
-  color: #cccccc;
+  color: #ddd;
 }
 
 input[type="text"],
 input[type="number"],
 input[type="file"] {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid #444;
-  border-radius: 8px;
-  color: #f2f2f2;
+  width: 100%;
   padding: 12px;
-  font-size: 1rem;
-  transition: background 0.3s ease;
-}
-
-input[type="text"]:focus,
-input[type="number"]:focus {
+  border-radius: 10px;
   background: rgba(255, 255, 255, 0.07);
-  outline: none;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
 }
 
+input:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+/* Button */
 button {
   margin-top: 30px;
+  width: 100%;
   padding: 14px;
-  background: linear-gradient(to right, #8f00ff, #b025ff);
-  color: white;
-  font-size: 1rem;
   border: none;
   border-radius: 50px;
+  font-size: 1rem;
+  background: linear-gradient(to right, #a100ff, #8f00ff);
+  color: white;
   cursor: pointer;
-  font-weight: 600;
   transition: all 0.3s ease;
-  box-shadow: 0 0 18px rgba(176, 37, 255, 0.3);
 }
 
 button:hover {
-  filter: brightness(1.1);
-  transform: translateY(-2px);
+  filter: brightness(1.2);
 }
 
+/* Footer */
 footer {
-  margin-top: 40px;
+  margin-top: 30px;
+  font-size: 0.8rem;
+  color: #bbb;
   text-align: center;
-  font-size: 0.85rem;
-  color: #aaa;
-  z-index: 2;
-  position: relative;
 }
