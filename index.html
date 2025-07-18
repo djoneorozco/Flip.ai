@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Flip.ai | Smart Flipping Assistant</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Flip.ai</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -16,19 +16,19 @@
 
       <form id="flipForm" enctype="multipart/form-data">
         <label for="image">Original Property Image:</label>
-        <input type="file" id="image" name="image" accept="image/*" required />
+        <input type="file" id="image" name="image" accept="image/*" />
 
         <label for="strategy">Flip Strategy:</label>
-        <input type="text" id="strategy" name="strategy" placeholder="e.g. Modern kitchen, add bathroom" required />
+        <input type="text" id="strategy" name="strategy" placeholder="e.g. Modern kitchen, add bathroom" />
 
         <label for="purchasePrice">Purchase Price ($):</label>
-        <input type="number" id="purchasePrice" name="purchasePrice" placeholder="e.g. 180000" required />
+        <input type="number" id="purchasePrice" name="purchasePrice" placeholder="e.g. 180000" />
 
         <label for="arv">Estimated ARV ($):</label>
-        <input type="number" id="arv" name="arv" placeholder="e.g. 290000" required />
+        <input type="number" id="arv" name="arv" placeholder="e.g. 290000" />
 
-        <label for="renovation">Estimated Renovation Cost ($):</label>
-        <input type="number" id="renovation" name="renovation" placeholder="e.g. 35000" required />
+        <label for="renovationCost">Estimated Renovation Cost ($):</label>
+        <input type="number" id="renovationCost" name="renovationCost" placeholder="e.g. 35000" />
 
         <button type="submit">Enhance & Analyze</button>
       </form>
