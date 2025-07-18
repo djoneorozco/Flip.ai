@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <!-- Sidebar -->
   <div class="sidebar">
     <h1>Flip.ai</h1>
     <ul>
@@ -18,27 +19,34 @@
     <button class="button">New Analysis</button>
   </div>
 
+  <!-- Main Content Area -->
   <div class="main">
-    <div class="card">
-      <h2>Analyze a Property</h2>
-      <input type="text" placeholder="1234 Elm Street" />
-      <button class="button">Analyze</button>
-      <div class="analysis-result">
-        <p><strong>Purchase Price:</strong> $250,000</p>
-        <p><strong>Repair Costs:</strong> $50,000</p>
-        <p><strong>Holding Costs:</strong> $12,000</p>
-        <p><strong>Profit:</strong> $58,000</p>
-        <p><strong>Profit Margin:</strong> 15.7%</p>
+    <!-- Card 1: Analyze Property -->
+    <div class="card-glow-wrapper">
+      <div class="card">
+        <h2>Analyze a Property</h2>
+        <input type="text" placeholder="1234 Elm Street" />
+        <button class="button">Analyze</button>
+        <div class="analysis-result">
+          <p><strong>Purchase Price:</strong> $250,000</p>
+          <p><strong>Repair Costs:</strong> $50,000</p>
+          <p><strong>Holding Costs:</strong> $12,000</p>
+          <p><strong>Profit:</strong> $58,000</p>
+          <p><strong>Profit Margin:</strong> 15.7%</p>
+        </div>
       </div>
     </div>
 
-    <div class="card">
-      <h2>Recently Analyzed</h2>
-      <ul>
-        <li>567 Oak Avenue — $42,500 (11.9%)</li>
-        <li>789 Pine Road — $33,000 (9.4%)</li>
-        <li>890 Maple Drive — $37,500 (12.1%)</li>
-      </ul>
+    <!-- Card 2: Recent Analysis -->
+    <div class="card-glow-wrapper">
+      <div class="card">
+        <h2>Recently Analyzed</h2>
+        <ul>
+          <li>567 Oak Avenue — $42,500 (11.9%)</li>
+          <li>789 Pine Road — $33,000 (9.4%)</li>
+          <li>890 Maple Drive — $37,500 (12.1%)</li>
+        </ul>
+      </div>
     </div>
   </div>
 </body>
