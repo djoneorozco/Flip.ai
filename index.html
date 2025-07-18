@@ -1,1 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Flip.ai — AI-Powered Flip Analyzer</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="glow-wrapper">
+    <div class="quiz-container">
+      <h1>Flip.ai</h1>
+      <p class="tagline">AI-Powered Visual Enhancer & ROI Generator for Flippers</p>
 
+      <!-- ✅ Upload Form -->
+      <section id="uploadSection">
+        <h2>Upload Your Property Photo</h2>
+        <label>Original Property Image:
+          <input type="file" id="imageUpload" accept="image/*" />
+        </label>
+
+        <label>Flip Strategy:
+          <input type="text" id="flipPlan" placeholder="e.g. Modern kitchen, add bath, new roof" />
+        </label>
+
+        <label>Purchase Price ($):
+          <input type="number" id="purchasePrice" placeholder="e.g. 180000" />
+        </label>
+
+        <label>Estimated ARV ($):
+          <input type="number" id="arv" placeholder="e.g. 290000" />
+        </label>
+
+        <label>Estimated Renovation Cost ($):
+          <input type="number" id="renoCost" placeholder="e.g. 35000" />
+        </label>
+
+        <button id="analyzeFlipBtn">Enhance & Analyze</button>
+      </section>
+
+      <!-- ✅ Results Display -->
+      <section id="resultSection" style="display:none;">
+        <h2>Before & After Preview</h2>
+        <div class="answers">
+          <img id="originalPreview" src="" alt="Original Upload" width="300"/>
+          <img id="enhancedPreview" src="" alt="Enhanced Output" width="300"/>
+        </div>
+
+        <h2>Flip Analysis</h2>
+        <div class="mbti-details">
+          <strong>Purchase Price:</strong> <span id="resPrice"></span><br>
+          <strong>ARV:</strong> <span id="resARV"></span><br>
+          <strong>Reno Cost:</strong> <span id="resReno"></span><br>
+          <strong>Estimated Profit:</strong> <span id="resProfit"></span><br>
+          <strong>70% Rule Pass:</strong> <span id="resPass"></span>
+        </div>
+      </section>
+
+      <div class="cta">
+        <p>Powered by RealtySaSS | Flip Smarter with AI</p>
+      </div>
+    </div>
+  </div>
+  <script src="main.js"></script>
+</body>
+</html>
