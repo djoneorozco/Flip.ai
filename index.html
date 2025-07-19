@@ -80,7 +80,6 @@
     const imageFile = document.getElementById("imageUpload").files[0];
     const flipPlan = document.getElementById("flipPlan").value;
 
-    // Convert to base64 (without the data URL prefix)
     const base64 = await toBase64(imageFile);
     const base64Clean = base64.replace(/^data:image\/\w+;base64,/, "");
 
@@ -96,7 +95,6 @@
     const result = await response.json();
 
     if (response.ok) {
-      // Display the image result
       outputImage.src = `data:image/jpeg;base64,${result.body}`;
       outputImage.style.display = "block";
     } else {
