@@ -1,85 +1,56 @@
-const Busboy = require('busboy');
-const fs = require('fs');
-const path = require('path');
-const os = require('os');
-const { Readable } = require('stream');
 const fetch = require('node-fetch');
-require('dotenv').config();
 
-exports.handler = async (event) => {
+exports.handler = async function (event) {
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
-      body: JSON.stringify({ error: 'Method not allowed' }),
+      body: JSON.stringify({ error: 'Method Not Allowed' }),
     };
   }
 
   try {
-    // Parse multipart form with Busboy
-    const busboy = Busboy({ headers: event.headers });
-    const tmpdir = os.tmpdir();
-    const fileWrites = [];
+    const { flipPlan } = event.queryStringParameters;
+    const { imageBase64 } = JSON.parse(event.body);
 
-    let uploadedFilePath = '';
-    let fileName = '';
-
-    const parsePromise = new Promise((resolve, reject) => {
-      busboy.on('file', (fieldname, file, filename) => {
-        fileName = `${Date.now()}-${filename}`;
-        uploadedFilePath = path.join(tmpdir, fileName);
-        const writeStream = fs.createWriteStream(uploadedFilePath);
-        file.pipe(writeStream);
-
-        const fileWrite = new Promise((res, rej) => {
-          file.on('end', () => writeStream.end());
-          writeStream.on('finish', res);
-          writeStream.on('error', rej);
-        });
-
-        fileWrites.push(fileWrite);
-      });
-
-      busboy.on('finish', () => {
-        Promise.all(fileWrites).then(resolve).catch(reject);
-      });
-
-      const readable = Readable.from(Buffer.from(event.body, 'base64'));
-      readable.pipe(busboy);
-    });
-
-    await parsePromise;
-
-    // Upload image to Runway
-    const formData = new FormData();
-    formData.append('image', fs.createReadStream(uploadedFilePath));
-
-    const runwayRes = await fetch('https://api.runwayml.com/v2/your-enhancement-endpoint', {
+    const response = await fetch('https://api.runwayml.com/v1/inference', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${process.env.RUNWAY_API_KEY}`,
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.RUNWAY_API_KEY}`,
+        'X-Runway-Version': '2024-11-06',
       },
-      body: formData,
+      body: JSON.stringify({
+        model: 'gen4_image',
+        input: {
+          promptText: flipPlan,
+          image: imageBase64,
+          ratio: '1920:1080',
+          seed: Math.floor(Math.random() * 4294967295),
+        },
+      }),
     });
 
-    const runwayData = await runwayRes.json();
+    const result = await response.json();
 
-    if (!runwayData || !runwayData.output || !runwayData.output.url) {
-      return {
-        statusCode: 500,
-        body: JSON.stringify({ error: 'Enhancement failed.' }),
-      };
+    if (!response.ok || !result?.output?.image) {
+      console.error('Runway error:', result);
+      throw new Error(result?.error || 'Runway API failed.');
     }
+
+    const imgFetch = await fetch(result.output.image);
+    const imgBuffer = await imgFetch.arrayBuffer();
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ outputUrl: runwayData.output.url }),
+      headers: { 'Content-Type': 'image/jpeg' },
+      body: Buffer.from(imgBuffer).toString('base64'),
+      isBase64Encoded: true,
     };
-
   } catch (error) {
-    console.error('Enhancement error:', error);
+    console.error('Runway Handler Error:', error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: 'Server error during enhancement.' }),
+      body: JSON.stringify({ error: error.message }),
     };
   }
 };

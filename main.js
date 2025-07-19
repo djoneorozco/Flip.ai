@@ -1,74 +1,50 @@
-// ================================
-// Flip.ai Main.js — Full Flow
-// ================================
+const fetch = require('node-fetch');
 
-// DOM Elements
-const imageUpload = document.getElementById('imageUpload');
-const flipPlanInput = document.getElementById('flipPlan');
-const purchasePriceInput = document.getElementById('purchasePrice');
-const arvInput = document.getElementById('arv');
-const renoCostInput = document.getElementById('renoCost');
-const analyzeBtn = document.getElementById('analyzeFlipBtn');
-
-const resultSection = document.getElementById('resultSection');
-const originalPreview = document.getElementById('originalPreview');
-const enhancedPreview = document.getElementById('enhancedPreview');
-
-const resPrice = document.getElementById('resPrice');
-const resARV = document.getElementById('resARV');
-const resReno = document.getElementById('resReno');
-const resProfit = document.getElementById('resProfit');
-const resPass = document.getElementById('resPass');
-
-// ================================
-// Upload & Trigger Analysis
-// ================================
-analyzeBtn.addEventListener('click', async () => {
-  const file = imageUpload.files[0];
-  if (!file) return alert('Upload an image first.');
-
-  const flipPlan = flipPlanInput.value;
-  const purchasePrice = Number(purchasePriceInput.value);
-  const arv = Number(arvInput.value);
-  const renoCost = Number(renoCostInput.value);
-
-  // Preview original image
-  originalPreview.src = URL.createObjectURL(file);
-
-  const formData = new FormData();
-  formData.append('image', file);
-  formData.append('flipPlan', flipPlan);
-
+exports.handler = async function(event) {
   try {
-    // Call Runway API via Netlify Function
-    const runwayRes = await fetch('/.netlify/functions/runwayEnhance', {
-      method: 'POST',
-      body: formData
+    const { flipPlan } = event.queryStringParameters;
+    const imageBase64 = event.body;
+
+    const res = await fetch("https://api.runwayml.com/v1/inferences", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${process.env.RUNWAY_API_KEY}`,
+      },
+      body: JSON.stringify({
+        input: {
+          prompt: flipPlan,
+          image: imageBase64
+        },
+        model: "gen-2.5-image-to-image"
+      })
     });
 
-    const enhancedBlob = await runwayRes.blob();
-    enhancedPreview.src = URL.createObjectURL(enhancedBlob);
+    const data = await res.json();
 
-    // Call OpenAI 70% Rule Analysis
-    const insightRes = await fetch('/.netlify/functions/getInsight', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ purchasePrice, arv, renoCost })
-    });
+    if (!res.ok) {
+      throw new Error(data?.error?.message || "Runway API call failed.");
+    }
 
-    const insight = await insightRes.json();
+    if (!data || !data.output || !data.output.image) {
+      console.error("Unexpected response from Runway:", data);
+      throw new Error("Runway did not return a valid image.");
+    }
 
-    // Populate results
-    resPrice.innerText = `$${purchasePrice.toLocaleString()}`;
-    resARV.innerText = `$${arv.toLocaleString()}`;
-    resReno.innerText = `$${renoCost.toLocaleString()}`;
-    resProfit.innerText = `$${insight.profit.toLocaleString()}`;
-    resPass.innerText = insight.pass ? "✅ Yes" : "❌ No";
+    const imageRes = await fetch(data.output.image);
+    const imageBuffer = await imageRes.arrayBuffer();
 
-    resultSection.style.display = 'block';
-  } catch (err) {
-    console.error('Error running Flip.ai analysis:', err);
-    alert('Something went wrong. Please try again.');
+    return {
+      statusCode: 200,
+      headers: { "Content-Type": "image/jpeg" },
+      body: Buffer.from(imageBuffer).toString('base64'),
+      isBase64Encoded: true
+    };
+  } catch (error) {
+    console.error("Runway Error:", error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: error.message })
+    };
   }
-});
-
+};
