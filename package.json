@@ -2,15 +2,14 @@
   "name": "flip-ai",
   "version": "1.0.0",
   "description": "AI-powered visual and ROI analyzer for real estate flippers",
-  "main": "server.js",
+  "main": "main.js",
   "scripts": {
-    "start": "node server.js",
     "test": "echo \"No test command defined\" && exit 0"
   },
   "author": "Josue @ RealtySaSS",
   "license": "MIT",
   "dependencies": {
-    "@runwayml/sdk": "^0.1.7",
+    "@runwayml/sdk": "github:runwayml/sdk",
     "body-parser": "^1.20.2",
     "busboy": "^1.6.0",
     "cors": "^2.8.5",
