@@ -1,47 +1,47 @@
 const fetch = require('node-fetch');
 
-exports.handler = async function (event) {
-  if (event.httpMethod !== 'POST') {
-    return {
-      statusCode: 405,
-      body: JSON.stringify({ error: 'Method Not Allowed' }),
-    };
-  }
-
-  const { prompt } = JSON.parse(event.body);
-
+exports.handler = async function(event) {
   try {
-    const response = await fetch('https://api.runwayml.com/v1/text-to-image', {
-      method: 'POST',
+    const { flipPlan } = event.queryStringParameters;
+    const { imageBase64 } = JSON.parse(event.body);
+
+    const response = await fetch("https://api.runwayml.com/v1/text-to-image", {
+      method: "POST",
       headers: {
-        'Authorization': `Bearer ${process.env.RUNWAY_API_KEY}`,
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${process.env.RUNWAY_API_KEY}`
       },
       body: JSON.stringify({
-        model: 'gen4_image',
-        prompt_text: prompt,
-        ratio: '1920:1080'
-      }),
+        model: "gen4_image",
+        prompt_text: flipPlan,
+        image: imageBase64,
+        ratio: "1920:1080",
+        seed: Math.floor(Math.random() * 4294967295)
+      })
     });
 
-    if (!response.ok) {
-      const error = await response.text();
-      return {
-        statusCode: response.status,
-        body: JSON.stringify({ error }),
-      };
+    const result = await response.json();
+
+    if (!response.ok || !result?.output?.image) {
+      console.error("Runway error:", result);
+      throw new Error(result?.error || "Runway API failed.");
     }
 
-    const data = await response.json();
+    const imgFetch = await fetch(result.output.image);
+    const imgBuffer = await imgFetch.arrayBuffer();
+
     return {
       statusCode: 200,
-      body: JSON.stringify(data),
+      headers: { "Content-Type": "image/jpeg" },
+      body: Buffer.from(imgBuffer).toString('base64'),
+      isBase64Encoded: true
     };
 
-  } catch (err) {
+  } catch (error) {
+    console.error("Runway Handler Error:", error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: err.message }),
+      body: JSON.stringify({ error: error.message })
     };
   }
 };
