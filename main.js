@@ -1,49 +1,65 @@
-const fetch = require('node-fetch');
+//#1: Wait for DOM to load
+document.addEventListener("DOMContentLoaded", function () {
+  const uploadInput = document.getElementById("upload");
+  const previewImg = document.getElementById("preview");
+  const resultImg = document.getElementById("result");
+  const planInput = document.getElementById("flip-plan");
+  const generateBtn = document.getElementById("generate");
+  const loader = document.getElementById("loader");
 
-exports.handler = async function(event) {
-  try {
-    const { flipPlan } = event.queryStringParameters;
-    const { imageBase64 } = JSON.parse(event.body);
+  let base64Image = "";
 
-    const response = await fetch("https://api.dev.runwayml.com/v1/inference", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.RUNWAY_API_KEY}`,
-        "X-Runway-Version": "2024-11-06"
-      },
-      body: JSON.stringify({
-        model: "gen4_image",
-        input: {
-          promptText: flipPlan,
-          image: imageBase64,
-          ratio: "1920:1080",
-          seed: Math.floor(Math.random() * 4294967295)
-        }
-      })
-    });
+  //#2: Convert uploaded image to base64
+  uploadInput.addEventListener("change", function () {
+    const file = uploadInput.files[0];
+    if (!file) return;
 
-    const result = await response.json();
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      base64Image = e.target.result.split(",")[1]; // Remove base64 prefix
+      previewImg.src = e.target.result;
+      previewImg.style.display = "block";
+    };
+    reader.readAsDataURL(file);
+  });
 
-    if (!response.ok || !result?.output?.image) {
-      console.error("Runway error:", result);
-      throw new Error(result?.error || "Runway API failed.");
+  //#3: Send POST to runwayEnhance function
+  generateBtn.addEventListener("click", async function () {
+    const flipPlan = planInput.value.trim();
+
+    if (!base64Image || !flipPlan) {
+      alert("Please upload an image and enter a flip plan.");
+      return;
     }
 
-    const imgFetch = await fetch(result.output.image);
-    const imgBuffer = await imgFetch.arrayBuffer();
+    loader.style.display = "block";
+    resultImg.style.display = "none";
 
-    return {
-      statusCode: 200,
-      headers: { "Content-Type": "image/jpeg" },
-      body: Buffer.from(imgBuffer).toString('base64'),
-      isBase64Encoded: true
-    };
-  } catch (error) {
-    console.error("Runway Handler Error:", error);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: error.message })
-    };
-  }
-};
+    try {
+      const response = await fetch(`/.netlify/functions/runwayEnhance?flipPlan=${encodeURIComponent(flipPlan)}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          imageBase64: base64Image
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Unknown error from server");
+      }
+
+      const imageBlob = await response.blob();
+      const imageURL = URL.createObjectURL(imageBlob);
+      resultImg.src = imageURL;
+      resultImg.style.display = "block";
+    } catch (err) {
+      console.error("Runway enhancement failed:", err.message);
+      alert("Image generation failed. Check logs or try a different image.");
+    } finally {
+      loader.style.display = "none";
+    }
+  });
+});
