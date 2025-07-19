@@ -2,110 +2,117 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Flip.ai ROI Analyzer</title>
-  <link rel="stylesheet" href="style.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Flip.ai – AI Property Enhancer</title>
+  <style>
+    body {
+      background: #0e0e0e;
+      color: #f4f4f4;
+      font-family: 'Helvetica Neue', sans-serif;
+      margin: 0;
+      padding: 2rem;
+      text-align: center;
+    }
+    input, textarea, button {
+      margin: 1rem 0;
+      padding: 0.75rem;
+      font-size: 1rem;
+      border: none;
+      border-radius: 8px;
+    }
+    input[type="file"] {
+      background-color: #222;
+      color: #fff;
+    }
+    textarea {
+      width: 100%;
+      max-width: 500px;
+      height: 100px;
+    }
+    button {
+      background: #00d4ff;
+      color: #000;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    button:hover {
+      background: #00b8e6;
+    }
+    img {
+      margin-top: 2rem;
+      max-width: 100%;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    }
+    #loader {
+      display: none;
+      margin-top: 2rem;
+      font-size: 1.2rem;
+      color: #ccc;
+    }
+  </style>
 </head>
 <body>
+  <h1>🛠️ Flip.ai</h1>
+  <p>Upload your property image & describe your vision. Let AI generate the future.</p>
 
-  <!-- 🌙 Dark Mode Toggle -->
-  <div class="toggle-container">
-    <label>
-      <input type="checkbox" id="themeToggle" />
-      🌙 Dark Mode
-    </label>
-  </div>
+  <form id="enhanceForm">
+    <input type="file" id="imageUpload" accept="image/*" required /><br/>
+    <textarea id="flipPlan" placeholder="Describe your renovation vision..." required></textarea><br/>
+    <button type="submit">Generate Flip Preview</button>
+  </form>
 
-  <!-- 🌟 Ambient Corner Video Background -->
-  <video id="lightVideo" autoplay muted loop playsinline>
-    <source src="/images/uploads/lightcornervideo.mp4" type="video/mp4" />
-    Your browser does not support the video tag.
-  </video>
-
-  <video id="darkVideo" autoplay muted loop playsinline>
-    <source src="/images/uploads/darkcornervideo.mp4" type="video/mp4" />
-    Your browser does not support the video tag.
-  </video>
-
-  <div class="container">
-    <h2>Flip.ai ROI Analyzer</h2>
-    <p>Unlock your property’s true investment potential</p>
-
-    <form id="roiForm">
-      <label for="purchasePrice">Purchase Price</label>
-      <input type="number" id="purchasePrice" placeholder="e.g. 180000" required />
-
-      <label for="rehabBudget">Rehab Budget</label>
-      <input type="number" id="rehabBudget" placeholder="e.g. 35000" required />
-
-      <label for="arv">After Repair Value (ARV)</label>
-      <input type="number" id="arv" placeholder="e.g. 290000" required />
-
-      <label for="zipCode">Property ZIP Code</label>
-      <input type="text" id="zipCode" placeholder="e.g. 78245" required />
-
-      <button type="submit">Analyze Deal</button>
-    </form>
-
-    <hr style="margin: 40px 0; border-color: #333;">
-
-    <h3>Optional: Upload Image to Enhance</h3>
-    <input type="file" id="imageInput" accept="image/*" />
-    <button id="enhanceBtn">Enhance Image</button>
-
-    <div id="enhancedResult" style="margin-top: 20px;"></div>
-  </div>
-
-  <script>
-    // ROI Form Logic
-    document.getElementById('roiForm').addEventListener('submit', function (e) {
-      e.preventDefault();
-      const purchasePrice = parseFloat(document.getElementById('purchasePrice').value);
-      const rehabBudget = parseFloat(document.getElementById('rehabBudget').value);
-      const arv = parseFloat(document.getElementById('arv').value);
-      const zipCode = document.getElementById('zipCode').value;
-
-      const totalInvestment = purchasePrice + rehabBudget;
-      const potentialProfit = arv - totalInvestment;
-      const roi = (potentialProfit / totalInvestment) * 100;
-
-      alert(`📊 ROI: ${roi.toFixed(2)}%\n💰 Potential Profit: $${potentialProfit.toLocaleString()}`);
-    });
-
-    // Image Upload + Enhance Logic
-    document.getElementById('enhanceBtn').addEventListener('click', async () => {
-      const fileInput = document.getElementById('imageInput');
-      if (!fileInput.files[0]) {
-        alert("Please upload an image first.");
-        return;
-      }
-
-      const formData = new FormData();
-      formData.append("image", fileInput.files[0]);
-
-      const res = await fetch("/.netlify/functions/runwayEnhance", {
-        method: "POST",
-        body: formData
-      });
-
-      const data = await res.json();
-
-      if (data && data.outputUrl) {
-        document.getElementById("enhancedResult").innerHTML = `
-          <p><strong>Enhanced Image:</strong></p>
-          <img src="${data.outputUrl}" alt="Enhanced" style="max-width: 100%; border: 1px solid #666;" />
-        `;
-      } else {
-        document.getElementById("enhancedResult").innerText = "❌ Enhancement failed. Try again.";
-      }
-    });
-
-    // Theme Toggle Script
-    document.getElementById('themeToggle').addEventListener('change', function () {
-      document.body.classList.toggle('dark-mode');
-    });
-  </script>
-
+  <div id="loader">✨ Generating enhanced image... please wait.</div>
+  <img id="outputImage" src="" alt="" style="display:none;" />
 </body>
+
+<script>
+  const form = document.getElementById("enhanceForm");
+  const loader = document.getElementById("loader");
+  const outputImage = document.getElementById("outputImage");
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    loader.style.display = "block";
+    outputImage.style.display = "none";
+    outputImage.src = "";
+
+    const imageFile = document.getElementById("imageUpload").files[0];
+    const flipPlan = document.getElementById("flipPlan").value;
+
+    // Convert to base64 (without the data URL prefix)
+    const base64 = await toBase64(imageFile);
+    const base64Clean = base64.replace(/^data:image\/\w+;base64,/, "");
+
+    const response = await fetch("/.netlify/functions/runwayEnhance", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        flipPlan,
+        imageBase64: base64Clean
+      })
+    });
+
+    const result = await response.json();
+
+    if (response.ok) {
+      // Display the image result
+      outputImage.src = `data:image/jpeg;base64,${result.body}`;
+      outputImage.style.display = "block";
+    } else {
+      alert("❌ Failed to generate image: " + result.error);
+    }
+
+    loader.style.display = "none";
+  });
+
+  function toBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+    });
+  }
+</script>
 </html>
