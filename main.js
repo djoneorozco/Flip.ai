@@ -1,60 +1,10 @@
-<<<<<<< HEAD
-const fetch = require('node-fetch');
-
-exports.handler = async function(event) {
-  try {
-    const { flipPlan } = event.queryStringParameters;
-    const imageBase64 = event.body;
-
-    const res = await fetch("https://api.runwayml.com/v1/inferences", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.RUNWAY_API_KEY}`,
-      },
-      body: JSON.stringify({
-        input: {
-          prompt: flipPlan,
-          image: imageBase64
-        },
-        model: "gen-2.5-image-to-image"
-      })
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(data?.error?.message || "Runway API call failed.");
-    }
-
-    if (!data || !data.output || !data.output.image) {
-      console.error("Unexpected response from Runway:", data);
-      throw new Error("Runway did not return a valid image.");
-    }
-
-    const imageRes = await fetch(data.output.image);
-    const imageBuffer = await imageRes.arrayBuffer();
-
-    return {
-      statusCode: 200,
-      headers: { "Content-Type": "image/jpeg" },
-      body: Buffer.from(imageBuffer).toString('base64'),
-      isBase64Encoded: true
-    };
-  } catch (error) {
-    console.error("Runway Error:", error);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: error.message })
-    };
-  }
-};
-=======
-// #1 — Firebase config
+// ================================
+// #1 — Firebase SDK Setup
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-app.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-storage.js";
 
-// #2 — Your Firebase project info
+// ================================
+// #2 — Your Firebase Config
 const firebaseConfig = {
   apiKey: "AIzaSyDkS2K8aLmO1cn4eF2D_5w3-N0usmodPto",
   authDomain: "orozcorealty-a7ce6.firebaseapp.com",
@@ -65,11 +15,13 @@ const firebaseConfig = {
   measurementId: "G-761XKT7LBN"
 };
 
+// ================================
 // #3 — Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const storage = getStorage(app);
 
-// #4 — Upload to Firebase
+// ================================
+// #4 — Upload Function
 async function uploadImageAndGetURL(file) {
   const fileRef = ref(storage, `uploads/${file.name}`);
   await uploadBytes(fileRef, file);
@@ -77,7 +29,8 @@ async function uploadImageAndGetURL(file) {
   return url;
 }
 
-// #5 — Hook to your form
+// ================================
+// #5 — Enhance Button Listener
 document.getElementById("enhance-button").addEventListener("click", async () => {
   const fileInput = document.getElementById("image-upload");
   const file = fileInput.files[0];
@@ -88,23 +41,34 @@ document.getElementById("enhance-button").addEventListener("click", async () => 
     return;
   }
 
-  // Upload image to Firebase and get URL
-  const imageUrl = await uploadImageAndGetURL(file);
+  // Show loading state
+  document.getElementById("enhance-button").disabled = true;
+  document.getElementById("enhance-button").innerText = "✨ Enhancing...";
 
-  // Send to Netlify function (Runway integration)
-  const response = await fetch("/.netlify/functions/runwayEnhance", {
-    method: "POST",
-    body: JSON.stringify({
-      imageUrl: imageUrl,
-      prompt: prompt
-    }),
-    headers: {
-      "Content-Type": "application/json"
+  try {
+    // Upload image to Firebase
+    const imageUrl = await uploadImageAndGetURL(file);
+
+    // Send to Netlify function
+    const response = await fetch("/.netlify/functions/runwayEnhance", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ imageUrl, prompt })
+    });
+
+    const data = await response.json();
+
+    if (response.ok && data.image) {
+      document.getElementById("result-image").src = data.image;
+    } else {
+      alert("Failed to generate image: " + (data.error || "Unknown error"));
+      console.error("Error response:", data);
     }
-  });
-
-  const data = await response.json();
-  const resultImage = document.getElementById("result-image");
-  resultImage.src = data.image || "";
+  } catch (err) {
+    alert("Error: " + err.message);
+    console.error("Enhance Error:", err);
+  } finally {
+    document.getElementById("enhance-button").disabled = false;
+    document.getElementById("enhance-button").innerText = "Generate Flip Preview";
+  }
 });
->>>>>>> 5e3bb9a1fa3e663f96cf38f17c672ba04f466121
