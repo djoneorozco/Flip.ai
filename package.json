@@ -11,15 +11,10 @@
   "dependencies": {
     "busboy": "^1.6.0",
     "dotenv": "^17.2.0",
-    "firebase-admin": "^13.4.0",
+    "firebase-admin": "^11.10.1",
     "form-data": "^4.0.0",
     "node-fetch": "^2.6.7",
     "openai": "^5.10.1",
-<<<<<<< HEAD
-    "uuid": "^11.1.0"
-=======
-    "firebase-admin": "^11.10.1",
     "uuid": "^9.0.0"
->>>>>>> 5e3bb9a1fa3e663f96cf38f17c672ba04f466121
   }
 }
