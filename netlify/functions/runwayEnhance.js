@@ -1,14 +1,6 @@
-<<<<<<< HEAD
 const fetch = require('node-fetch');
-=======
-// # runwayEnhance.js
-const fetch = require('node-fetch');
-const Busboy = require('busboy');
 const { uploadImageToFirebase } = require('./utilities/firebaseUpload');
-const os = require('os');
-const path = require('path');
-const fs = require('fs');
->>>>>>> 5e3bb9a1fa3e663f96cf38f17c672ba04f466121
+const { v4: uuidv4 } = require('uuid');
 
 exports.handler = async function (event) {
   if (event.httpMethod !== 'POST') {
@@ -18,106 +10,71 @@ exports.handler = async function (event) {
     };
   }
 
-<<<<<<< HEAD
   try {
-    const { flipPlan } = event.queryStringParameters;
-    const { imageBase64 } = JSON.parse(event.body);
+    const data = JSON.parse(event.body);
+    const { imageBase64, prompt } = data;
 
-    const response = await fetch('https://api.runwayml.com/v1/inference', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.RUNWAY_API_KEY}`,
-        'X-Runway-Version': '2024-11-06',
-      },
-      body: JSON.stringify({
-        model: 'gen4_image',
-        input: {
-          promptText: flipPlan,
-          image: imageBase64,
-          ratio: '1920:1080',
-          seed: Math.floor(Math.random() * 4294967295),
-        },
-      }),
-    });
-
-    const result = await response.json();
-
-    if (!response.ok || !result?.output?.image) {
-      console.error('Runway error:', result);
-      throw new Error(result?.error || 'Runway API failed.');
+    if (!imageBase64 || !prompt) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Missing image or prompt' }),
+      };
     }
 
-    const imgFetch = await fetch(result.output.image);
-    const imgBuffer = await imgFetch.arrayBuffer();
+    // Convert base64 to buffer
+    const buffer = Buffer.from(imageBase64.replace(/^data:image\/\w+;base64,/, ''), 'base64');
+
+    // Upload to Firebase
+    const filename = `${uuidv4()}.jpg`;
+    const imageUrl = await uploadImageToFirebase(buffer, filename);
+
+    console.log("✅ Uploaded image URL:", imageUrl);
+
+    // Runway API call
+    const runwayResponse = await fetch('https://api.runwayml.com/v1/inference/gen-3-alpha', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.RUNWAY_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        input: {
+          image: imageUrl,
+          prompt: prompt,
+          guidance_scale: 7,
+          strength: 0.75
+        }
+      })
+    });
+
+    const result = await runwayResponse.json();
+
+    if (!runwayResponse.ok) {
+      console.error("❌ Runway API Error:", result);
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: 'Runway API call failed', details: result }),
+      };
+    }
+
+    const outputImage = result.output?.image_base64;
+    if (!outputImage) {
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: 'No image returned from Runway' }),
+      };
+    }
 
     return {
       statusCode: 200,
-      headers: { 'Content-Type': 'image/jpeg' },
-      body: Buffer.from(imgBuffer).toString('base64'),
-      isBase64Encoded: true,
+      body: JSON.stringify({ image: outputImage }),
     };
+
   } catch (error) {
-    console.error('Runway Handler Error:', error);
+    console.error("❌ Server Crash Error:", error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: error.message }),
+      body: JSON.stringify({ error: 'Internal Server Error', details: error.message }),
     };
   }
-=======
-  return new Promise((resolve, reject) => {
-    const busboy = new Busboy({ headers: event.headers });
-    let uploadBuffer = null;
-    let prompt = '';
-
-    busboy.on('file', (fieldname, file, filename) => {
-      const filepath = path.join(os.tmpdir(), filename);
-      const writeStream = fs.createWriteStream(filepath);
-      file.pipe(writeStream);
-      file.on('data', (data) => {
-        if (!uploadBuffer) uploadBuffer = data;
-        else uploadBuffer = Buffer.concat([uploadBuffer, data]);
-      });
-    });
-
-    busboy.on('field', (fieldname, val) => {
-      if (fieldname === 'prompt') {
-        prompt = val;
-      }
-    });
-
-    busboy.on('finish', async () => {
-      try {
-        const firebaseUrl = await uploadImageToFirebase(uploadBuffer, `input-${Date.now()}.jpg`);
-
-        const runwayResponse = await fetch('https://api.runwayml.com/v1/inference/gen4_turbo', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${process.env.RUNWAY_API_KEY}`,
-          },
-          body: JSON.stringify({
-            input_image: firebaseUrl,
-            prompt: prompt,
-          }),
-        });
-
-        const result = await runwayResponse.json();
-
-        resolve({
-          statusCode: 200,
-          body: JSON.stringify(result),
-        });
-      } catch (error) {
-        console.error('Runway Enhance Error:', error);
-        reject({
-          statusCode: 500,
-          body: JSON.stringify({ error: error.message }),
-        });
-      }
-    });
-
-    busboy.end(Buffer.from(event.body, 'base64'));
-  });
->>>>>>> 5e3bb9a1fa3e663f96cf38f17c672ba04f466121
 };
