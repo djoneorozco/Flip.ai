@@ -1,12 +1,12 @@
 // ================================
-// # server.js — Flip.ai backend
+// # server.js — Flip.ai backend (ESM Version)
 // ================================
 
-const express = require('express');
-const bodyParser = require('body-parser');
-const cors = require('cors');
-const dotenv = require('dotenv');
-const { Runway } = require('@runwayml/sdk'); // SDK v2.5.0+
+import express from 'express';
+import bodyParser from 'body-parser';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import { Runway } from '@runwayml/sdk';
 
 dotenv.config();
 
@@ -16,14 +16,12 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(bodyParser.json({ limit: '10mb' }));
 
-// ✅ Correct way to initialize Runway (SDK v2+ uses function, not constructor)
-const runway = Runway({
-  token: process.env.RUNWAY_API_KEY,
+// Initialize Runway SDK with your API key
+const runway = new Runway({
+  apiKey: process.env.RUNWAY_API_KEY,
 });
 
-// ================================
-// # POST /enhance – Runway Gen-4
-// ================================
+// Endpoint to receive POST requests for image enhancement
 app.post('/enhance', async (req, res) => {
   const { imageUrl, prompt } = req.body;
 
@@ -32,28 +30,30 @@ app.post('/enhance', async (req, res) => {
   }
 
   try {
-    const response = await runway.run('gen-4', {
-      prompt: prompt,
-      prompt_image: imageUrl,
-      strength: 0.7,
-      guidance_scale: 9,
-      num_inference_steps: 25,
+    const output = await runway.run('gen-4', {
+      input: {
+        prompt,
+        image: imageUrl,
+        guidance_scale: 9,
+        strength: 0.7,
+        num_inference_steps: 25
+      }
     });
 
-    if (!response || !response.image) {
+    if (!output || !output.output || !output.output.image) {
       throw new Error('Runway returned an unexpected response format');
     }
 
-    return res.json({ image: response.image });
+    const base64Image = output.output.image;
+
+    return res.json({ image: base64Image });
   } catch (error) {
     console.error('Runway API error:', error);
-    return res.status(500).json({ error: 'Image generation failed', details: error.message });
+    return res.status(500).json({ error: 'Image generation failed' });
   }
 });
 
-// ================================
-// # Start Server
-// ================================
+// Start the server
 app.listen(port, () => {
-  console.log(`✅ Flip.ai backend is live on port ${port}`);
+  console.log(`Flip.ai backend running on port ${port}`);
 });
