@@ -5,7 +5,7 @@
 import express from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
-import { Runway } from '@runwayml/sdk';
+import Runway from '@runwayml/sdk'; // ✅ Fixed here
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -16,17 +16,17 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(bodyParser.json({ limit: '10mb' }));
 
-// 🌐 Root route to verify server is alive
+// 🌐 Root route for status check
 app.get('/', (req, res) => {
   res.send('Flip.ai backend is running ✅');
 });
 
-// Initialize Runway SDK
+// 🔑 Initialize Runway SDK
 const runway = new Runway({
   apiKey: process.env.RUNWAY_API_KEY,
 });
 
-// 🔧 Main endpoint to enhance image using Runway Gen-4
+// 🎯 Enhance endpoint
 app.post('/enhance', async (req, res) => {
   const { imageUrl, prompt } = req.body;
 
@@ -49,15 +49,14 @@ app.post('/enhance', async (req, res) => {
       throw new Error('Runway returned an unexpected response format');
     }
 
-    const base64Image = output.output.image;
-    return res.json({ image: base64Image });
+    return res.json({ image: output.output.image });
   } catch (error) {
     console.error('Runway API error:', error);
     return res.status(500).json({ error: 'Image generation failed' });
   }
 });
 
-// 🏁 Start the server
+// 🏁 Start server
 app.listen(port, () => {
   console.log(`Flip.ai backend running on port ${port}`);
 });
