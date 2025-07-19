@@ -1,10 +1,9 @@
 // ================================
-// #1 — Imports & Environment Setup
-const fetch = require('node-fetch');
-require('dotenv').config();
-
+// # runwayEnhance.js — FINAL FIX
 // ================================
-// #2 — Netlify Function Handler
+const fetch = require('node-fetch');
+const { v4: uuidv4 } = require('uuid');
+
 exports.handler = async function (event) {
   if (event.httpMethod !== 'POST') {
     return {
@@ -14,7 +13,8 @@ exports.handler = async function (event) {
   }
 
   try {
-    const { imageUrl, prompt } = JSON.parse(event.body);
+    const data = JSON.parse(event.body);
+    const { imageUrl, prompt } = data;
 
     if (!imageUrl || !prompt) {
       return {
@@ -23,63 +23,48 @@ exports.handler = async function (event) {
       };
     }
 
-    // ================================
-    // #3 — Call Runway Gen-4 Image (Text + Image)
-    const response = await fetch("https://api.runwayml.com/v1/inferences", {
-      method: "POST",
+    console.log("🔥 Received imageUrl:", imageUrl);
+    console.log("🧠 Received prompt:", prompt);
+
+    // Runway Gen-4 Turbo API Call
+    const runwayResponse = await fetch('https://api.runwayml.com/v1/inference/gen-4-turbo', {
+      method: 'POST',
       headers: {
-        "Authorization": `Bearer ${process.env.RUNWAY_API_KEY}`,
-        "Content-Type": "application/json"
+        'Authorization': `Bearer ${process.env.RUNWAY_API_KEY}`,
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        version: "gen-4",  // This ensures it's Gen-4 Image model
         input: {
+          image: imageUrl,
           prompt: prompt,
-          image_url: imageUrl
-        }
-      })
+          strength: 0.75,
+          guidance_scale: 7,
+        },
+      }),
     });
 
-    const data = await response.json();
+    const result = await runwayResponse.json();
 
-    if (!response.ok) {
-      console.error("Runway Error:", data);
+    if (!runwayResponse.ok) {
+      console.error("❌ Runway API Error:", result);
       return {
         statusCode: 500,
-        body: JSON.stringify({ error: data.error || "Runway API error" })
+        body: JSON.stringify({ error: result.error || "Runway API failed." }),
       };
     }
 
-    // ================================
-    // #4 — Download Image from Output URL
-    const outputUrl = data.output?.image;
-    if (!outputUrl) {
-      return {
-        statusCode: 500,
-        body: JSON.stringify({ error: "No image URL returned from Runway" })
-      };
-    }
+    console.log("✅ Runway Output:", result);
 
-    const imageRes = await fetch(outputUrl);
-    const arrayBuffer = await imageRes.arrayBuffer();
-    const base64Image = Buffer.from(arrayBuffer).toString("base64");
-
-    // ================================
-    // #5 — Return Image to Frontend
     return {
       statusCode: 200,
-      headers: {
-        "Content-Type": "image/jpeg"
-      },
-      body: base64Image,
-      isBase64Encoded: true
+      body: JSON.stringify({ image: result.output }),
     };
 
-  } catch (error) {
-    console.error("Server Error:", error);
+  } catch (err) {
+    console.error("❌ Server Error:", err);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: error.message || "Unknown server error" })
+      body: JSON.stringify({ error: err.message || "Server Error" }),
     };
   }
 };
