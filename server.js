@@ -5,9 +5,10 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const { Runway } = require('@runwayml/sdk'); // Version 2.5.0+
+const dotenv = require('dotenv');
+const { Runway } = require('@runwayml/sdk'); // SDK v2.5.0+
 
-require('dotenv').config();
+dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -15,12 +16,14 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(bodyParser.json({ limit: '10mb' }));
 
-// Initialize Runway SDK with your API key
-const runway = new Runway({
-  apiKey: process.env.RUNWAY_API_KEY,
+// ✅ Correct way to initialize Runway (SDK v2+ uses function, not constructor)
+const runway = Runway({
+  token: process.env.RUNWAY_API_KEY,
 });
 
-// Endpoint to receive POST requests for image enhancement
+// ================================
+// # POST /enhance – Runway Gen-4
+// ================================
 app.post('/enhance', async (req, res) => {
   const { imageUrl, prompt } = req.body;
 
@@ -29,30 +32,28 @@ app.post('/enhance', async (req, res) => {
   }
 
   try {
-    const output = await runway.run('gen-4', {
-      input: {
-        prompt,
-        image: imageUrl,
-        guidance_scale: 9,
-        strength: 0.7,
-        num_inference_steps: 25,
-      },
+    const response = await runway.run('gen-4', {
+      prompt: prompt,
+      prompt_image: imageUrl,
+      strength: 0.7,
+      guidance_scale: 9,
+      num_inference_steps: 25,
     });
 
-    if (!output || !output.output || !output.output.image) {
+    if (!response || !response.image) {
       throw new Error('Runway returned an unexpected response format');
     }
 
-    const base64Image = output.output.image;
-
-    return res.json({ image: base64Image });
+    return res.json({ image: response.image });
   } catch (error) {
     console.error('Runway API error:', error);
-    return res.status(500).json({ error: 'Image generation failed' });
+    return res.status(500).json({ error: 'Image generation failed', details: error.message });
   }
 });
 
-// Start the server
+// ================================
+// # Start Server
+// ================================
 app.listen(port, () => {
-  console.log(`Flip.ai backend running on port ${port}`);
+  console.log(`✅ Flip.ai backend is live on port ${port}`);
 });
