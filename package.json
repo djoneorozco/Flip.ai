@@ -16,7 +16,7 @@
   "engines": {
     "node": ">=18.0.0"
   },
-  "type": "module",                // ✅ REQUIRED for ESM syntax used in @runwayml/sdk v2+
+  "type": "module",
   "keywords": [
     "runwayml",
     "image-enhancement",
