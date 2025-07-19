@@ -1,4 +1,4 @@
-//#1 Initialize Firebase
+// #1 Firebase Imports
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import {
   getStorage,
@@ -7,6 +7,7 @@ import {
   getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
+// #2 Firebase Config
 const firebaseConfig = {
   apiKey: "AIzaSyDkS2K8aLmO1cn4eF2D_5w3-N0usmodPto",
   authDomain: "orozcorealty-a7ce6.firebaseapp.com",
@@ -16,46 +17,50 @@ const firebaseConfig = {
   appId: "1:510699377586:web:de0887b54664a8edf08aab"
 };
 
+// #3 Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const storage = getStorage(app);
 
-//#2 Image Upload Handler
-document.getElementById("generateBtn").addEventListener("click", async () => {
-  const imageInput = document.getElementById("imageInput");
-  const flipPlan = document.getElementById("flipPlan").value.trim();
+// #4 Selectors
+const form = document.getElementById("enhanceForm");
+const loader = document.getElementById("loader");
+const outputImage = document.getElementById("outputImage");
 
-  if (!imageInput.files[0] || !flipPlan) {
-    alert("Upload an image and enter a flip plan first.");
-    return;
-  }
+// #5 Form Submission
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  loader.style.display = "block";
+  outputImage.style.display = "none";
+  outputImage.src = "";
 
-  const file = imageInput.files[0];
-  const storageRef = ref(storage, `uploads/${file.name}`);
+  const imageFile = document.getElementById("imageUpload").files[0];
+  const flipPlan = document.getElementById("flipPlan").value;
 
   try {
-    const snapshot = await uploadBytes(storageRef, file);
-    const imageUrl = await getDownloadURL(snapshot.ref);
+    // #6 Upload Image to Firebase
+    const imageRef = ref(storage, `uploads/${imageFile.name}`);
+    await uploadBytes(imageRef, imageFile);
+    const imageURL = await getDownloadURL(imageRef);
 
-    console.log("Image uploaded. URL:", imageUrl);
-
-    //#3 Send to Netlify Function
+    // #7 Send to Runway via Netlify Function
     const response = await fetch("/.netlify/functions/runwayEnhance", {
       method: "POST",
-      body: JSON.stringify({
-        prompt: flipPlan,
-        image_url: imageUrl
-      })
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ flipPlan, imageURL })
     });
 
-    const data = await response.json();
-    if (data.image_base64) {
-      const resultImage = document.getElementById("resultImage");
-      resultImage.src = `data:image/png;base64,${data.image_base64}`;
+    const result = await response.json();
+
+    if (response.ok && result?.base64) {
+      outputImage.src = `data:image/jpeg;base64,${result.base64}`;
+      outputImage.style.display = "block";
     } else {
-      alert("Error: " + JSON.stringify(data));
+      throw new Error(result.error || "Image generation failed");
     }
   } catch (err) {
-    console.error("Upload or API error:", err);
-    alert("Something went wrong: " + err.message);
+    alert("❌ Error: " + err.message);
+    console.error(err);
   }
+
+  loader.style.display = "none";
 });
