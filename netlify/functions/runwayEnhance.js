@@ -1,5 +1,3 @@
-// netlify/functions/runwayEnhance.js
-
 const fetch = require('node-fetch');
 
 exports.handler = async function (event) {
@@ -10,80 +8,40 @@ exports.handler = async function (event) {
     };
   }
 
-  let prompt;
+  const { prompt } = JSON.parse(event.body);
 
   try {
-    const data = JSON.parse(event.body);
-    prompt = data.prompt;
-
-    if (!prompt || typeof prompt !== 'string') {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'Missing or invalid "prompt" in request body' }),
-      };
-    }
-  } catch (err) {
-    return {
-      statusCode: 400,
-      body: JSON.stringify({ error: 'Invalid JSON in request body' }),
-    };
-  }
-
-  const RUNWAY_API_KEY = process.env.RUNWAY_API_KEY;
-
-  if (!RUNWAY_API_KEY) {
-    console.error("❌ RUNWAY_API_KEY is missing.");
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: 'Server misconfiguration: API key not found' }),
-    };
-  }
-
-  try {
-    const response = await fetch('https://api.dev.runwayml.com/v1/text_to_image', {
+    const response = await fetch('https://api.runwayml.com/v1/text-to-image', {
       method: 'POST',
       headers: {
+        'Authorization': `Bearer ${process.env.RUNWAY_API_KEY}`,
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${RUNWAY_API_KEY}`,
-        'X-Runway-Version': '2024-11-06'
       },
       body: JSON.stringify({
-        promptText: prompt,
         model: 'gen4_image',
-        ratio: '16:9',
-        seed: Math.floor(Math.random() * 4294967295),
-        contentModeration: {
-          publicFigureThreshold: 'auto',
-        },
+        prompt_text: prompt,
+        ratio: '1920:1080'
       }),
     });
 
-    const result = await response.json();
-
     if (!response.ok) {
-      console.error("❌ Runway API Error Response:", result);
+      const error = await response.text();
       return {
         statusCode: response.status,
-        body: JSON.stringify({
-          error: result.error || 'Runway API error',
-          details: result,
-        }),
+        body: JSON.stringify({ error }),
       };
     }
 
+    const data = await response.json();
     return {
       statusCode: 200,
-      body: JSON.stringify(result),
+      body: JSON.stringify(data),
     };
 
-  } catch (error) {
-    console.error("❌ Network or Server Error:", error);
+  } catch (err) {
     return {
       statusCode: 500,
-      body: JSON.stringify({
-        error: 'Runway API failed',
-        message: error.message,
-      }),
+      body: JSON.stringify({ error: err.message }),
     };
   }
 };
