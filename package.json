@@ -10,7 +10,7 @@
   "author": "Josue @ RealtySaSS",
   "license": "MIT",
   "dependencies": {
-    "@runwayml/sdk": "^0.1.9",
+    "@runwayml/sdk": "^0.1.7",
     "body-parser": "^1.20.2",
     "busboy": "^1.6.0",
     "cors": "^2.8.5",
