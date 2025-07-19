@@ -1,10 +1,12 @@
-// ================================
-// #1 — Firebase SDK Setup
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-app.js";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-storage.js";
+//#1 – DOM Elements
+const uploadInput = document.getElementById('imageUpload');
+const promptInput = document.getElementById('flipPrompt');
+const generateBtn = document.getElementById('generateBtn');
+const outputImage = document.getElementById('outputImage');
+const loader = document.getElementById('loader');
+const outputContainer = document.getElementById('outputContainer');
 
-// ================================
-// #2 — Your Firebase Config
+//#2 – Firebase Config
 const firebaseConfig = {
   apiKey: "AIzaSyDkS2K8aLmO1cn4eF2D_5w3-N0usmodPto",
   authDomain: "orozcorealty-a7ce6.firebaseapp.com",
@@ -15,60 +17,61 @@ const firebaseConfig = {
   measurementId: "G-761XKT7LBN"
 };
 
-// ================================
-// #3 — Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const storage = getStorage(app);
+firebase.initializeApp(firebaseConfig);
+const storage = firebase.storage();
 
-// ================================
-// #4 — Upload Function
-async function uploadImageAndGetURL(file) {
-  const fileRef = ref(storage, `uploads/${file.name}`);
-  await uploadBytes(fileRef, file);
-  const url = await getDownloadURL(fileRef);
-  return url;
+//#3 – Upload to Firebase
+async function uploadToFirebase(file) {
+  const storageRef = storage.ref();
+  const imageRef = storageRef.child(`uploads/${file.name}`);
+  await imageRef.put(file);
+  const downloadURL = await imageRef.getDownloadURL();
+  return downloadURL;
 }
 
-// ================================
-// #5 — Enhance Button Listener
-document.getElementById("enhance-button").addEventListener("click", async () => {
-  const fileInput = document.getElementById("image-upload");
-  const file = fileInput.files[0];
-  const prompt = document.getElementById("flip-plan").value;
+//#4 – Enhance Image via Render Backend
+async function enhanceImageWithRunway(imageUrl, prompt) {
+  const response = await fetch('https://flip-ai.onrender.com/enhance', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ imageUrl, prompt })
+  });
+
+  if (!response.ok) {
+    throw new Error('Enhancement failed. Please try again.');
+  }
+
+  const data = await response.json();
+  return data.image; // base64 image string
+}
+
+//#5 – Handle Generate Button Click
+generateBtn.addEventListener('click', async () => {
+  const file = uploadInput.files[0];
+  const prompt = promptInput.value.trim();
 
   if (!file || !prompt) {
-    alert("Please upload an image and enter a flip plan.");
+    alert('Please upload an image and enter a prompt.');
     return;
   }
 
-  // Show loading state
-  document.getElementById("enhance-button").disabled = true;
-  document.getElementById("enhance-button").innerText = "✨ Enhancing...";
-
   try {
-    // Upload image to Firebase
-    const imageUrl = await uploadImageAndGetURL(file);
+    loader.style.display = 'block';
+    outputContainer.style.display = 'none';
 
-    // Send to Netlify function
-    const response = await fetch("/.netlify/functions/runwayEnhance", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ imageUrl, prompt })
-    });
+    // Upload image
+    const imageUrl = await uploadToFirebase(file);
 
-    const data = await response.json();
+    // Call backend
+    const enhancedImage = await enhanceImageWithRunway(imageUrl, prompt);
 
-    if (response.ok && data.image) {
-      document.getElementById("result-image").src = data.image;
-    } else {
-      alert("Failed to generate image: " + (data.error || "Unknown error"));
-      console.error("Error response:", data);
-    }
+    // Show result
+    outputImage.src = enhancedImage;
+    outputContainer.style.display = 'block';
   } catch (err) {
-    alert("Error: " + err.message);
-    console.error("Enhance Error:", err);
+    console.error('Error:', err);
+    alert('Something went wrong. Check console for details.');
   } finally {
-    document.getElementById("enhance-button").disabled = false;
-    document.getElementById("enhance-button").innerText = "Generate Flip Preview";
+    loader.style.display = 'none';
   }
 });
