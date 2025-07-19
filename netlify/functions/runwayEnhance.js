@@ -4,39 +4,38 @@ exports.handler = async function(event) {
   try {
     const { flipPlan } = JSON.parse(event.body);
 
-    const response = await fetch("https://api.runwayml.com/v1/inference", {
+    const response = await fetch("https://api.runwayml.com/v1/text-to-image", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${process.env.RUNWAY_API_KEY}`,
-        "X-Runway-Version": "2024-06-01" // ✅ Important version header
+        "X-Runway-Version": "2024-06-15"  // ✅ Correct version
       },
       body: JSON.stringify({
-        model: "gen4_turbo", // ✅ Must match Runway's latest model slug
-        input: {
-          prompt: flipPlan,
-          ratio: "16:9",
-          seed: Math.floor(Math.random() * 999999999)
-        }
+        model: "gen4_image",
+        prompt_text: flipPlan,
+        ratio: "1920:1080",
+        seed: Math.floor(Math.random() * 4294967295)
       })
     });
 
     const result = await response.json();
 
-    if (!response.ok || !result?.output?.image_url) {
+    if (!response.ok || !result?.output?.image) {
       console.error("Runway error:", result);
       throw new Error(result?.error || "Runway API failed.");
     }
 
-    const imageResponse = await fetch(result.output.image_url);
-    const imageBuffer = await imageResponse.arrayBuffer();
+    const imgFetch = await fetch(result.output.image);
+    const imgBuffer = await imgFetch.arrayBuffer();
 
     return {
       statusCode: 200,
       headers: { "Content-Type": "image/jpeg" },
-      body: Buffer.from(imageBuffer).toString('base64'),
+      body: Buffer.from(imgBuffer).toString('base64'),
       isBase64Encoded: true
     };
+
   } catch (error) {
     console.error("Runway Handler Error:", error);
     return {
