@@ -1,47 +1,90 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Flip.ai - AI Flip Enhancer</title>
-    <link rel="stylesheet" href="style.css" />
-    <link rel="preconnect" href="https://fonts.googleapis.com"/>
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet"/>
-  </head>
-  <body class="dark-mode">
-    <!-- Light & Dark Mode Toggle (optional for future use) -->
-    <div class="toggle-container">
-      Dark Mode: On
-    </div>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flip.ai ROI Analyzer</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
 
-    <!-- Background Video (Optional placeholder setup) -->
-    <video id="lightVideo" autoplay muted loop playsinline>
-      <source src="videos/light-bg.mp4" type="video/mp4" />
-    </video>
-    <video id="darkVideo" autoplay muted loop playsinline>
-      <source src="videos/dark-bg.mp4" type="video/mp4" />
-    </video>
+  <!-- Firebase SDKs (Firebase 9 compat version) -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
 
-    <!-- Upload & Prompt Form -->
-    <form id="enhanceForm">
-      <h2>Flip.ai: Enhance Your Flip</h2>
-      <p>Upload your property image and describe your flip vision.</p>
+  <!-- Initialize Firebase -->
+  <script>
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_AUTH_DOMAIN",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_STORAGE_BUCKET",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+    firebase.initializeApp(firebaseConfig);
+  </script>
+</head>
+<body>
 
-      <label for="imageInput">Property Image</label>
-      <input type="file" id="imageInput" name="image" accept="image/*" required />
+  <!-- 🌙 Dark Mode Toggle -->
+  <div class="toggle-container">
+    <label>
+      <input type="checkbox" id="themeToggle" />
+      🌙 Dark Mode
+    </label>
+  </div>
 
-      <label for="description">Renovation Description</label>
-      <input type="text" id="description" name="description" placeholder="e.g. Modernize kitchen, repaint exterior..." required />
+  <!-- 🎥 Ambient Corner Video Background -->
+  <video id="lightVideo" autoplay muted loop playsinline>
+    <source src="/images/uploads/lightcornervideo.mp4" type="video/mp4" />
+    Your browser does not support the video tag.
+  </video>
 
-      <button type="submit">Generate Enhanced Image</button>
+  <video id="darkVideo" autoplay muted loop playsinline>
+    <source src="/images/uploads/darkcornervideo.mp4" type="video/mp4" />
+    Your browser does not support the video tag.
+  </video>
+
+  <!-- 💼 Main Content -->
+  <div class="container">
+    <h2>Flip.ai ROI Analyzer</h2>
+    <p>Unlock your property’s true investment potential</p>
+
+    <!-- ROI Form -->
+    <form id="roiForm">
+      <label for="purchasePrice">Purchase Price</label>
+      <input type="number" id="purchasePrice" placeholder="e.g. 180000" required />
+
+      <label for="rehabBudget">Rehab Budget</label>
+      <input type="number" id="rehabBudget" placeholder="e.g. 35000" required />
+
+      <label for="arv">After Repair Value (ARV)</label>
+      <input type="number" id="arv" placeholder="e.g. 290000" required />
+
+      <label for="zipCode">Property ZIP Code</label>
+      <input type="text" id="zipCode" placeholder="e.g. 78245" required />
+
+      <button type="submit">Analyze Deal</button>
     </form>
 
-    <!-- Result Display -->
-    <div id="result" style="margin-top: 40px;"></div>
+    <hr style="margin: 40px 0; border-color: #333;">
 
-    <!-- JavaScript -->
-    <script src="main.js"></script>
-  </body>
+    <!-- 🖼️ Image Enhancement -->
+    <h3>Optional: Upload Image to Enhance</h3>
+    <input type="file" id="imageInput" accept="image/*" />
+    <button id="enhanceBtn">Enhance Image</button>
+
+    <div id="enhancedResult" style="margin-top: 20px;"></div>
+  </div>
+
+  <!-- 🌗 Theme Toggle Script -->
+  <script>
+    document.getElementById('themeToggle').addEventListener('change', function () {
+      document.body.classList.toggle('dark-mode');
+    });
+  </script>
+
+  <!-- 🔧 Main Script (Handles Firebase + ROI Logic) -->
+  <script src="main.js"></script>
+</body>
 </html>
