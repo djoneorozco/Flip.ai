@@ -2,23 +2,21 @@
   "name": "flip-ai",
   "version": "1.0.0",
   "description": "AI-powered visual and ROI analyzer for real estate flippers",
-  "main": "main.js",
+  "main": "server.js",
   "scripts": {
+    "start": "node server.js",
     "test": "echo \"No test command defined\" && exit 0"
   },
   "author": "Josue @ RealtySaSS",
   "license": "MIT",
   "dependencies": {
+    "@runwayml/sdk": "^0.2.1",
     "busboy": "^1.6.0",
     "dotenv": "^17.2.0",
     "firebase-admin": "^11.10.1",
     "form-data": "^4.0.0",
     "node-fetch": "^2.6.7",
     "openai": "^5.10.1",
-    "uuid": "^9.0.0",
-    "@runwayml/sdk": "^0.2.7",
-    "express": "^4.18.2",
-    "cors": "^2.8.5",
-    "body-parser": "^1.20.2"
+    "uuid": "^9.0.0"
   }
 }
