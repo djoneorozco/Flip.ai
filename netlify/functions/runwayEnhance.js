@@ -49,8 +49,7 @@ exports.handler = async (event) => {
 
     await parsePromise;
 
-    // ✅ SET YOUR MODEL ID HERE (get it from Runway Dashboard)
-    const MODEL_ID = 'gen-2'; // Change this to gen-1 or gen-4 if needed
+    const MODEL_ID = 'gen-2'; // Change if needed
 
     const formData = new FormData();
     formData.append('image', fs.createReadStream(uploadedFilePath));
@@ -58,7 +57,7 @@ exports.handler = async (event) => {
     const runwayRes = await fetch(`https://api.runwayml.com/v2/models/${MODEL_ID}/outputs`, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${process.env.RUNWAY_API_KEY}`,
+        'X-API-Key': process.env.RUNWAY_API_KEY,
         ...formData.getHeaders(),
       },
       body: formData,
@@ -66,8 +65,12 @@ exports.handler = async (event) => {
 
     const runwayData = await runwayRes.json();
 
-    if (!runwayRes.ok || !runwayData.output?.url) {
-      console.error('Runway Error:', runwayData);
+    // 👇 DEBUG the actual response
+    console.log("Runway Response:", JSON.stringify(runwayData));
+
+    const outputUrl = runwayData.result || runwayData.output?.url || runwayData.output;
+
+    if (!runwayRes.ok || !outputUrl) {
       return {
         statusCode: 500,
         body: JSON.stringify({ error: 'Runway enhancement failed', details: runwayData }),
@@ -76,7 +79,7 @@ exports.handler = async (event) => {
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ outputUrl: runwayData.output.url }),
+      body: JSON.stringify({ outputUrl }),
     };
 
   } catch (error) {
