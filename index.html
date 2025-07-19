@@ -1,116 +1,47 @@
+<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Flip.ai – AI Property Enhancer</title>
-  <style>
-    body {
-      background: #0e0e0e;
-      color: #f4f4f4;
-      font-family: 'Helvetica Neue', sans-serif;
-      margin: 0;
-      padding: 2rem;
-      text-align: center;
-    }
-    input, textarea, button {
-      margin: 1rem 0;
-      padding: 0.75rem;
-      font-size: 1rem;
-      border: none;
-      border-radius: 8px;
-    }
-    input[type="file"] {
-      background-color: #222;
-      color: #fff;
-    }
-    textarea {
-      width: 100%;
-      max-width: 500px;
-      height: 100px;
-    }
-    button {
-      background: #00d4ff;
-      color: #000;
-      cursor: pointer;
-      transition: background 0.3s ease;
-    }
-    button:hover {
-      background: #00b8e6;
-    }
-    img {
-      margin-top: 2rem;
-      max-width: 100%;
-      border-radius: 12px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.5);
-    }
-    #loader {
-      display: none;
-      margin-top: 2rem;
-      font-size: 1.2rem;
-      color: #ccc;
-    }
-  </style>
-</head>
-<body>
-  <h1>🛠️ Flip.ai</h1>
-  <p>Upload your property image & describe your vision. Let AI generate the future.</p>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Flip.ai - AI Flip Enhancer</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet"/>
+  </head>
+  <body class="dark-mode">
+    <!-- Light & Dark Mode Toggle (optional for future use) -->
+    <div class="toggle-container">
+      Dark Mode: On
+    </div>
 
-  <form id="enhanceForm">
-    <input type="file" id="imageUpload" accept="image/*" required /><br/>
-    <textarea id="flipPlan" placeholder="Describe your renovation vision..." required></textarea><br/>
-    <button type="submit">Generate Flip Preview</button>
-  </form>
+    <!-- Background Video (Optional placeholder setup) -->
+    <video id="lightVideo" autoplay muted loop playsinline>
+      <source src="videos/light-bg.mp4" type="video/mp4" />
+    </video>
+    <video id="darkVideo" autoplay muted loop playsinline>
+      <source src="videos/dark-bg.mp4" type="video/mp4" />
+    </video>
 
-  <div id="loader">✨ Generating enhanced image... please wait.</div>
-  <img id="outputImage" src="" alt="" style="display:none;" />
-</body>
+    <!-- Upload & Prompt Form -->
+    <form id="enhanceForm">
+      <h2>Flip.ai: Enhance Your Flip</h2>
+      <p>Upload your property image and describe your flip vision.</p>
 
-<script>
-  const form = document.getElementById("enhanceForm");
-  const loader = document.getElementById("loader");
-  const outputImage = document.getElementById("outputImage");
+      <label for="imageInput">Property Image</label>
+      <input type="file" id="imageInput" name="image" accept="image/*" required />
 
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    loader.style.display = "block";
-    outputImage.style.display = "none";
-    outputImage.src = "";
+      <label for="description">Renovation Description</label>
+      <input type="text" id="description" name="description" placeholder="e.g. Modernize kitchen, repaint exterior..." required />
 
-    const imageFile = document.getElementById("imageUpload").files[0];
-    const flipPlan = document.getElementById("flipPlan").value;
+      <button type="submit">Generate Enhanced Image</button>
+    </form>
 
-    const base64 = await toBase64(imageFile);
-    const base64Clean = base64.replace(/^data:image\/\w+;base64,/, "");
+    <!-- Result Display -->
+    <div id="result" style="margin-top: 40px;"></div>
 
-    const response = await fetch("/.netlify/functions/runwayEnhance", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        flipPlan,
-        imageBase64: base64Clean
-      })
-    });
-
-    const result = await response.json();
-
-    if (response.ok) {
-      outputImage.src = `data:image/jpeg;base64,${result.body}`;
-      outputImage.style.display = "block";
-    } else {
-      alert("❌ Failed to generate image: " + result.error);
-    }
-
-    loader.style.display = "none";
-  });
-
-  function toBase64(file) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = reject;
-    });
-  }
-</script>
+    <!-- JavaScript -->
+    <script src="main.js"></script>
+  </body>
 </html>
