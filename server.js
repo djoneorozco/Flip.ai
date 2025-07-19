@@ -1,73 +1,58 @@
 // ================================
-// # Imports and Setup
+// # server.js — Flip.ai backend
 // ================================
 
-const express = require("express");
-const cors = require("cors");
-const bodyParser = require("body-parser");
-const dotenv = require("dotenv");
-const Runway = require("@runwayml/sdk");
+const express = require('express');
+const bodyParser = require('body-parser');
+const cors = require('cors');
+const { Runway } = require('@runwayml/sdk'); // Version 2.5.0+
 
-dotenv.config();
+require('dotenv').config();
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-// ================================
-// # Middleware
-// ================================
-
 app.use(cors());
-app.use(bodyParser.json({ limit: "25mb" }));
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json({ limit: '10mb' }));
 
-// ================================
-// # POST /enhance-image
-// ================================
+// Initialize Runway SDK with your API key
+const runway = new Runway({
+  apiKey: process.env.RUNWAY_API_KEY,
+});
 
-app.post("/enhance-image", async (req, res) => {
-  const { prompt, imageUrl, imageBase64 } = req.body;
+// Endpoint to receive POST requests for image enhancement
+app.post('/enhance', async (req, res) => {
+  const { imageUrl, prompt } = req.body;
 
-  if (!prompt || (!imageUrl && !imageBase64)) {
-    return res.status(400).json({ error: "Missing prompt or image input." });
+  if (!imageUrl || !prompt) {
+    return res.status(400).json({ error: 'Missing imageUrl or prompt' });
   }
-
-  // Determine input format
-  let referenceUrl;
-  if (imageUrl) {
-    referenceUrl = imageUrl;
-  } else {
-    referenceUrl = imageBase64; // Should already be formatted as data URI
-  }
-
-  const client = new Runway({
-    apiKey: process.env.RUNWAY_API_KEY,
-  });
 
   try {
-    const result = await client.images.generate({
-      model: "gen-4",
-      prompt: prompt,
-      prompt_image: referenceUrl,
+    const output = await runway.run('gen-4', {
+      input: {
+        prompt,
+        image: imageUrl,
+        guidance_scale: 9,
+        strength: 0.7,
+        num_inference_steps: 25,
+      },
     });
 
-    const output = result?.outputs?.[0];
-
-    if (!output) {
-      throw new Error("No image output returned.");
+    if (!output || !output.output || !output.output.image) {
+      throw new Error('Runway returned an unexpected response format');
     }
 
-    res.status(200).json({ image: output });
+    const base64Image = output.output.image;
+
+    return res.json({ image: base64Image });
   } catch (error) {
-    console.error("Runway API Error:", error.message);
-    res.status(500).json({ error: error.message });
+    console.error('Runway API error:', error);
+    return res.status(500).json({ error: 'Image generation failed' });
   }
 });
 
-// ================================
-// # Start Server
-// ================================
-
+// Start the server
 app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+  console.log(`Flip.ai backend running on port ${port}`);
 });
