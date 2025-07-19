@@ -2,19 +2,23 @@ const fetch = require('node-fetch');
 
 exports.handler = async function(event) {
   try {
-    const { flipPlan } = JSON.parse(event.body);
+    const { flipPlan, imageBase64 } = JSON.parse(event.body);
 
-    const response = await fetch("https://api.runwayml.com/v1/text-to-image", {
+    const response = await fetch("https://api.runwayml.com/v1/inference", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.RUNWAY_API_KEY}`
+        "Authorization": `Bearer ${process.env.RUNWAY_API_KEY}`,
+        "X-Runway-Version": "2024-11-06"
       },
       body: JSON.stringify({
         model: "gen4_image",
-        prompt_text: flipPlan,
-        ratio: "1920:1080",
-        seed: Math.floor(Math.random() * 4294967295)
+        input: {
+          promptText: flipPlan,
+          image: imageBase64,
+          ratio: "1920:1080",
+          seed: Math.floor(Math.random() * 4294967295)
+        }
       })
     });
 
@@ -34,7 +38,6 @@ exports.handler = async function(event) {
       body: Buffer.from(imgBuffer).toString('base64'),
       isBase64Encoded: true
     };
-
   } catch (error) {
     console.error("Runway Handler Error:", error);
     return {
