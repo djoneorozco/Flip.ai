@@ -2,8 +2,7 @@ const fetch = require('node-fetch');
 
 exports.handler = async function(event) {
   try {
-    const { flipPlan } = event.queryStringParameters;
-    const { imageBase64 } = JSON.parse(event.body);
+    const { flipPlan, imageBase64 } = JSON.parse(event.body);
 
     const response = await fetch("https://api.runwayml.com/v1/text-to-image", {
       method: "POST",
