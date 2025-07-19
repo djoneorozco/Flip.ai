@@ -1,71 +1,123 @@
+//=========================
+// #0 — Import Libraries & Init Firebase
+//=========================
 const fetch = require('node-fetch');
+const { initializeApp, cert } = require('firebase-admin/app');
+const { getStorage } = require('firebase-admin/storage');
+const { v4: uuidv4 } = require('uuid');
+const Busboy = require('busboy');
+const fs = require('fs');
+const path = require('path');
+const os = require('os');
 
-exports.handler = async function(event) {
-  try {
-    // Step 1: Parse the input from frontend
-    const { flipPlan, imageURL } = JSON.parse(event.body);
+require('dotenv').config();
 
-    // Sanity check for image URL
-    if (!flipPlan || !imageURL) {
-      throw new Error("Missing required fields: flipPlan or imageURL");
-    }
+const firebaseApp = initializeApp({
+  credential: cert({
+    projectId: process.env.FIREBASE_PROJECT_ID,
+    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+    privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+  }),
+  storageBucket: process.env.FIREBASE_BUCKET_URL,
+});
 
-    // Step 2: Log what we’re sending to Runway for debugging
-    console.log("🔍 Sending to Runway:", {
-      model: "gen4_turbo",
-      input: {
-        prompt: flipPlan,
-        image: imageURL
+const bucket = getStorage().bucket();
+
+//=========================
+// #1 — Helper: Upload File to Firebase
+//=========================
+async function uploadToFirebase(file, filename) {
+  const tempFilePath = path.join(os.tmpdir(), filename);
+  await fs.promises.writeFile(tempFilePath, file);
+
+  const firebaseFile = bucket.file(`uploads/${filename}`);
+  await firebaseFile.save(file, {
+    metadata: {
+      contentType: 'image/jpeg',
+      metadata: {
+        firebaseStorageDownloadTokens: uuidv4(),
+      },
+    },
+    public: true,
+    validation: 'md5',
+  });
+
+  const publicUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/uploads%2F${encodeURIComponent(filename)}?alt=media`;
+  return publicUrl;
+}
+
+//=========================
+// #2 — Netlify Handler
+//=========================
+exports.handler = async function (event) {
+  if (event.httpMethod !== 'POST') {
+    return {
+      statusCode: 405,
+      body: JSON.stringify({ error: 'Method Not Allowed' }),
+    };
+  }
+
+  return new Promise((resolve, reject) => {
+    const busboy = new Busboy({ headers: event.headers });
+    let imageBuffer = Buffer.from([]);
+    let fileName = '';
+    let prompt = '';
+
+    busboy.on('file', (fieldname, file, filename) => {
+      fileName = filename;
+      file.on('data', (data) => {
+        imageBuffer = Buffer.concat([imageBuffer, data]);
+      });
+    });
+
+    busboy.on('field', (fieldname, val) => {
+      if (fieldname === 'prompt') {
+        prompt = val;
       }
     });
 
-    // Step 3: Send request to Runway
-    const runwayResponse = await fetch("https://api.runwayml.com/v1/inference", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.RUNWAY_API_KEY}`,
-        "X-Runway-Version": "2024-07-01"
-      },
-      body: JSON.stringify({
-        model: "gen4_turbo",
-        input: {
-          prompt: flipPlan,
-          image: imageURL
+    busboy.on('finish', async () => {
+      try {
+        // Step 1: Upload image to Firebase
+        const imageUrl = await uploadToFirebase(imageBuffer, fileName);
+
+        // Step 2: Call Runway API
+        const runwayResponse = await fetch('https://api.runwayml.com/v1/inference/gen-4-turbo', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${process.env.RUNWAY_API_KEY}`,
+          },
+          body: JSON.stringify({
+            input: {
+              prompt,
+              image_url: imageUrl,
+            },
+          }),
+        });
+
+        const data = await runwayResponse.json();
+
+        if (!runwayResponse.ok) {
+          return resolve({
+            statusCode: 500,
+            body: JSON.stringify({ error: data.error || 'Runway API call failed' }),
+          });
         }
-      })
+
+        return resolve({
+          statusCode: 200,
+          body: JSON.stringify(data),
+        });
+      } catch (error) {
+        console.error('Error in enhancement pipeline:', error);
+        return resolve({
+          statusCode: 500,
+          body: JSON.stringify({ error: error.message }),
+        });
+      }
     });
 
-    const result = await runwayResponse.json();
-
-    // Step 4: Log Runway's raw response
-    console.log("🔁 Runway Response:", result);
-
-    // Step 5: Error check response
-    if (!runwayResponse.ok || !result?.output?.image) {
-      console.error("Runway API Error:", result);
-      throw new Error(result?.error || "Runway API failed to generate image.");
-    }
-
-    // Step 6: Fetch the generated image
-    const imageFetch = await fetch(result.output.image);
-    const imageBuffer = await imageFetch.arrayBuffer();
-
-    // Step 7: Return base64 image back to frontend
-    return {
-      statusCode: 200,
-      headers: {
-        "Content-Type": "image/jpeg"
-      },
-      body: Buffer.from(imageBuffer).toString('base64'),
-      isBase64Encoded: true
-    };
-
-  } catch (error) {
-    console.error("❌ RunwayEnhance Error:", error.message);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: error.message })
-    };
-  }
+    busboy.end(Buffer.from(event.body, 'base64'));
+  });
 };
