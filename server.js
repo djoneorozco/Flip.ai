@@ -1,12 +1,12 @@
 // ================================
-// # server.js — Flip.ai backend (ESM Version)
+// # server.js — Flip.ai backend (Fixed)
 // ================================
 
 import express from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { Runway } from '@runwayml/sdk';
+import Runway from '@runwayml/sdk'; // ✅ default import
 
 dotenv.config();
 
@@ -53,7 +53,6 @@ app.post('/enhance', async (req, res) => {
   }
 });
 
-// Start the server
 app.listen(port, () => {
   console.log(`Flip.ai backend running on port ${port}`);
 });
