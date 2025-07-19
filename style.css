@@ -16,7 +16,8 @@
 }
 
 /* === VIDEO FIX: BOTTOM-LEFT CORNER === */
-#cornerVideo {
+#lightVideo,
+#darkVideo {
   position: fixed;
   bottom: 20px;
   left: 20px;
@@ -25,8 +26,18 @@
   z-index: 2;
   border-radius: 16px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-  opacity: 1; /* fully visible */
+  opacity: 1;
   pointer-events: none;
+}
+
+/* Hide dark video in light mode */
+body:not(.dark-mode) #darkVideo {
+  display: none;
+}
+
+/* Hide light video in dark mode */
+body.dark-mode #lightVideo {
+  display: none;
 }
 
 /* === BACKGROUND & THEME === */
@@ -193,7 +204,8 @@ button:hover {
     padding: 32px 20px;
   }
 
-  #cornerVideo {
+  #lightVideo,
+  #darkVideo {
     width: 100px;
     bottom: 12px;
     left: 12px;
