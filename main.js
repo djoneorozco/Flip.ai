@@ -1,65 +1,61 @@
-//#1: Wait for DOM to load
-document.addEventListener("DOMContentLoaded", function () {
-  const uploadInput = document.getElementById("upload");
-  const previewImg = document.getElementById("preview");
-  const resultImg = document.getElementById("result");
-  const planInput = document.getElementById("flip-plan");
-  const generateBtn = document.getElementById("generate");
-  const loader = document.getElementById("loader");
+//#1 Initialize Firebase
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import {
+  getStorage,
+  ref,
+  uploadBytes,
+  getDownloadURL
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
-  let base64Image = "";
+const firebaseConfig = {
+  apiKey: "AIzaSyDkS2K8aLmO1cn4eF2D_5w3-N0usmodPto",
+  authDomain: "orozcorealty-a7ce6.firebaseapp.com",
+  projectId: "orozcorealty-a7ce6",
+  storageBucket: "orozcorealty-a7ce6.appspot.com",
+  messagingSenderId: "510699377586",
+  appId: "1:510699377586:web:de0887b54664a8edf08aab"
+};
 
-  //#2: Convert uploaded image to base64
-  uploadInput.addEventListener("change", function () {
-    const file = uploadInput.files[0];
-    if (!file) return;
+const app = initializeApp(firebaseConfig);
+const storage = getStorage(app);
 
-    const reader = new FileReader();
-    reader.onload = function (e) {
-      base64Image = e.target.result.split(",")[1]; // Remove base64 prefix
-      previewImg.src = e.target.result;
-      previewImg.style.display = "block";
-    };
-    reader.readAsDataURL(file);
-  });
+//#2 Image Upload Handler
+document.getElementById("generateBtn").addEventListener("click", async () => {
+  const imageInput = document.getElementById("imageInput");
+  const flipPlan = document.getElementById("flipPlan").value.trim();
 
-  //#3: Send POST to runwayEnhance function
-  generateBtn.addEventListener("click", async function () {
-    const flipPlan = planInput.value.trim();
+  if (!imageInput.files[0] || !flipPlan) {
+    alert("Upload an image and enter a flip plan first.");
+    return;
+  }
 
-    if (!base64Image || !flipPlan) {
-      alert("Please upload an image and enter a flip plan.");
-      return;
+  const file = imageInput.files[0];
+  const storageRef = ref(storage, `uploads/${file.name}`);
+
+  try {
+    const snapshot = await uploadBytes(storageRef, file);
+    const imageUrl = await getDownloadURL(snapshot.ref);
+
+    console.log("Image uploaded. URL:", imageUrl);
+
+    //#3 Send to Netlify Function
+    const response = await fetch("/.netlify/functions/runwayEnhance", {
+      method: "POST",
+      body: JSON.stringify({
+        prompt: flipPlan,
+        image_url: imageUrl
+      })
+    });
+
+    const data = await response.json();
+    if (data.image_base64) {
+      const resultImage = document.getElementById("resultImage");
+      resultImage.src = `data:image/png;base64,${data.image_base64}`;
+    } else {
+      alert("Error: " + JSON.stringify(data));
     }
-
-    loader.style.display = "block";
-    resultImg.style.display = "none";
-
-    try {
-      const response = await fetch(`/.netlify/functions/runwayEnhance?flipPlan=${encodeURIComponent(flipPlan)}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          imageBase64: base64Image
-        })
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Unknown error from server");
-      }
-
-      const imageBlob = await response.blob();
-      const imageURL = URL.createObjectURL(imageBlob);
-      resultImg.src = imageURL;
-      resultImg.style.display = "block";
-    } catch (err) {
-      console.error("Runway enhancement failed:", err.message);
-      alert("Image generation failed. Check logs or try a different image.");
-    } finally {
-      loader.style.display = "none";
-    }
-  });
+  } catch (err) {
+    console.error("Upload or API error:", err);
+    alert("Something went wrong: " + err.message);
+  }
 });
