@@ -1,54 +1,11 @@
-//=========================
-// #0 — Import Libraries & Init Firebase
-//=========================
+// # runwayEnhance.js
 const fetch = require('node-fetch');
-const { initializeApp, cert } = require('firebase-admin/app');
-const { getStorage } = require('firebase-admin/storage');
-const { v4: uuidv4 } = require('uuid');
 const Busboy = require('busboy');
-const fs = require('fs');
-const path = require('path');
+const { uploadImageToFirebase } = require('./utilities/firebaseUpload');
 const os = require('os');
+const path = require('path');
+const fs = require('fs');
 
-require('dotenv').config();
-
-const firebaseApp = initializeApp({
-  credential: cert({
-    projectId: process.env.FIREBASE_PROJECT_ID,
-    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-    privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-  }),
-  storageBucket: process.env.FIREBASE_BUCKET_URL,
-});
-
-const bucket = getStorage().bucket();
-
-//=========================
-// #1 — Helper: Upload File to Firebase
-//=========================
-async function uploadToFirebase(file, filename) {
-  const tempFilePath = path.join(os.tmpdir(), filename);
-  await fs.promises.writeFile(tempFilePath, file);
-
-  const firebaseFile = bucket.file(`uploads/${filename}`);
-  await firebaseFile.save(file, {
-    metadata: {
-      contentType: 'image/jpeg',
-      metadata: {
-        firebaseStorageDownloadTokens: uuidv4(),
-      },
-    },
-    public: true,
-    validation: 'md5',
-  });
-
-  const publicUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/uploads%2F${encodeURIComponent(filename)}?alt=media`;
-  return publicUrl;
-}
-
-//=========================
-// #2 — Netlify Handler
-//=========================
 exports.handler = async function (event) {
   if (event.httpMethod !== 'POST') {
     return {
@@ -59,14 +16,16 @@ exports.handler = async function (event) {
 
   return new Promise((resolve, reject) => {
     const busboy = new Busboy({ headers: event.headers });
-    let imageBuffer = Buffer.from([]);
-    let fileName = '';
+    let uploadBuffer = null;
     let prompt = '';
 
     busboy.on('file', (fieldname, file, filename) => {
-      fileName = filename;
+      const filepath = path.join(os.tmpdir(), filename);
+      const writeStream = fs.createWriteStream(filepath);
+      file.pipe(writeStream);
       file.on('data', (data) => {
-        imageBuffer = Buffer.concat([imageBuffer, data]);
+        if (!uploadBuffer) uploadBuffer = data;
+        else uploadBuffer = Buffer.concat([uploadBuffer, data]);
       });
     });
 
@@ -78,40 +37,29 @@ exports.handler = async function (event) {
 
     busboy.on('finish', async () => {
       try {
-        // Step 1: Upload image to Firebase
-        const imageUrl = await uploadToFirebase(imageBuffer, fileName);
+        const firebaseUrl = await uploadImageToFirebase(uploadBuffer, `input-${Date.now()}.jpg`);
 
-        // Step 2: Call Runway API
-        const runwayResponse = await fetch('https://api.runwayml.com/v1/inference/gen-4-turbo', {
+        const runwayResponse = await fetch('https://api.runwayml.com/v1/inference/gen4_turbo', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${process.env.RUNWAY_API_KEY}`,
           },
           body: JSON.stringify({
-            input: {
-              prompt,
-              image_url: imageUrl,
-            },
+            input_image: firebaseUrl,
+            prompt: prompt,
           }),
         });
 
-        const data = await runwayResponse.json();
+        const result = await runwayResponse.json();
 
-        if (!runwayResponse.ok) {
-          return resolve({
-            statusCode: 500,
-            body: JSON.stringify({ error: data.error || 'Runway API call failed' }),
-          });
-        }
-
-        return resolve({
+        resolve({
           statusCode: 200,
-          body: JSON.stringify(data),
+          body: JSON.stringify(result),
         });
       } catch (error) {
-        console.error('Error in enhancement pipeline:', error);
-        return resolve({
+        console.error('Runway Enhance Error:', error);
+        reject({
           statusCode: 500,
           body: JSON.stringify({ error: error.message }),
         });
