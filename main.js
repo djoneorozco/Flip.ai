@@ -1,10 +1,9 @@
 //#1 – DOM Elements
-const uploadInput = document.getElementById('imageUpload');
-const promptInput = document.getElementById('flipPrompt');
-const generateBtn = document.getElementById('generateBtn');
-const outputImage = document.getElementById('outputImage');
-const loader = document.getElementById('loader');
-const outputContainer = document.getElementById('outputContainer');
+const uploadInput = document.getElementById('imageInput');        // Match your index.html ID
+const generateBtn = document.getElementById('enhanceBtn');        // Match your enhance button ID
+const outputImage = document.createElement('img');                // Dynamically created output image
+const loader = document.createElement('div');                     // Optional: loader UI (not shown)
+const outputContainer = document.getElementById('enhancedResult');
 
 //#2 – Firebase Config
 const firebaseConfig = {
@@ -42,36 +41,33 @@ async function enhanceImageWithRunway(imageUrl, prompt) {
   }
 
   const data = await response.json();
-  return data.image; // base64 image string
+  return data.image; // base64-encoded image string
 }
 
-//#5 – Handle Generate Button Click
+//#5 – Handle Enhance Button
 generateBtn.addEventListener('click', async () => {
   const file = uploadInput.files[0];
-  const prompt = promptInput.value.trim();
+  const prompt = "Enhance this image for flip potential"; // Optional: customize or add an input box
 
-  if (!file || !prompt) {
-    alert('Please upload an image and enter a prompt.');
+  if (!file) {
+    alert('Please upload an image.');
     return;
   }
 
   try {
-    loader.style.display = 'block';
-    outputContainer.style.display = 'none';
+    outputContainer.innerHTML = "⏳ Enhancing image... please wait.";
+    outputContainer.style.display = 'block';
 
-    // Upload image
     const imageUrl = await uploadToFirebase(file);
-
-    // Call backend
     const enhancedImage = await enhanceImageWithRunway(imageUrl, prompt);
 
-    // Show result
     outputImage.src = enhancedImage;
-    outputContainer.style.display = 'block';
+    outputImage.style.maxWidth = "100%";
+    outputImage.style.border = "1px solid #666";
+    outputContainer.innerHTML = "<p><strong>Enhanced Image:</strong></p>";
+    outputContainer.appendChild(outputImage);
   } catch (err) {
     console.error('Error:', err);
-    alert('Something went wrong. Check console for details.');
-  } finally {
-    loader.style.display = 'none';
+    outputContainer.innerHTML = "❌ Enhancement failed. Try again.";
   }
 });
