@@ -7,22 +7,9 @@
   <link rel="stylesheet" href="style.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
 
-  <!-- Firebase SDKs (Firebase 9 compat version) -->
+  <!-- Firebase SDKs (v9 compat for main.js) -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
-
-  <!-- Initialize Firebase -->
-  <script>
-    const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_AUTH_DOMAIN",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_STORAGE_BUCKET",
-      messagingSenderId: "YOUR_SENDER_ID",
-      appId: "YOUR_APP_ID"
-    };
-    firebase.initializeApp(firebaseConfig);
-  </script>
 </head>
 <body>
 
@@ -84,7 +71,7 @@
     });
   </script>
 
-  <!-- 🔧 Main Script (Handles Firebase + ROI Logic) -->
+  <!-- 🚀 App Logic -->
   <script src="main.js"></script>
 </body>
 </html>
