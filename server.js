@@ -1,5 +1,5 @@
 //# ====================================================================
-//# server.js — Flip.ai Backend w/ Enhanced Debugging
+//# server.js — Flip.ai Backend w/ Explicit CORS Policy
 //# ====================================================================
 
 import express from 'express';
@@ -13,79 +13,90 @@ dotenv.config();
 //#region App Setup
 const app = express();
 const port = process.env.PORT || 3000;
-app.use(cors());
+
+// 🔐 CORS Configuration
+const FRONTEND_ORIGINS = [
+  'https://flip-ai.netlify.app',
+  'https://flip-ai.onrender.com',   // in case you call it from its own domain
+];
+const corsOptions = {
+  origin: (origin, callback) => {
+    // allow requests with no origin (e.g. Postman) or if in our whitelist
+    if (!origin || FRONTEND_ORIGINS.includes(origin)) {
+      return callback(null, true);
+    }
+    callback(new Error(`CORS policy blocked request from ${origin}`));
+  },
+  methods: ['GET','POST','OPTIONS'],
+  allowedHeaders: ['Content-Type','Authorization'],
+  optionsSuccessStatus: 204,
+};
+
+// Apply CORS to all routes and preflights
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
+
+// JSON bodies up to 10 MB
 app.use(bodyParser.json({ limit: '10mb' }));
 //#endregion
 
-//#region SDK Initialization with Key-Check
+//#region RunwaySDK Init (with Key Fallback & Debug)
 let runway;
 let usedKeyName = null;
 try {
-  // Allow either env var name
-  const key =
-    process.env.RUNWAYML_API_SECRET?.trim() ||
-    process.env.RUNWAY_API_KEY?.trim();
-
-  // Remember which one we used
+  const key = process.env.RUNWAYML_API_SECRET?.trim() ||
+              process.env.RUNWAY_API_KEY?.trim();
   usedKeyName = process.env.RUNWAYML_API_SECRET
     ? 'RUNWAYML_API_SECRET'
     : process.env.RUNWAY_API_KEY
     ? 'RUNWAY_API_KEY'
     : null;
 
-  console.log('🔑 Attempting RunwayML init with key from:', usedKeyName);
-
+  console.log('🔑 Initializing RunwayML SDK with key from', usedKeyName);
   runway = new RunwayML({ apiKey: key });
-  console.log('✅ RunwayML SDK initialized successfully.');
+  console.log('✅ RunwayML SDK ready.');
 } catch (err) {
-  console.error('❌ RunwayML init error:', err.message || err);
-  console.group('ℹ️ Environment snapshot:');
-  console.log('RUNWAYML_API_SECRET:', process.env.RUNWAYML_API_SECRET);
-  console.log('RUNWAY_API_KEY:', process.env.RUNWAY_API_KEY);
+  console.error('❌ RunwayML init failed:', err.message || err);
+  console.group('ℹ️ Env vars:');
+  console.log('RUNWAYML_API_SECRET=', process.env.RUNWAYML_API_SECRET);
+  console.log('RUNWAY_API_KEY=', process.env.RUNWAY_API_KEY);
   console.groupEnd();
-  // Exit so you see this in logs immediately
   process.exit(1);
 }
 //#endregion
 
 //#region Debug Endpoints
-// Healthcheck
 app.get('/', (_req, res) => res.send('✅ Flip.ai backend is running'));
 
-// Which key loaded?
 app.get('/debug/env', (_req, res) => {
   res.json({
     usedKeyName,
-    runwayKeyPresent: !!(
-      process.env.RUNWAYML_API_SECRET || process.env.RUNWAY_API_KEY
-    ),
+    runwayKeyPresent: !!(process.env.RUNWAYML_API_SECRET || process.env.RUNWAY_API_KEY),
   });
 });
 
-// What methods exist on the SDK instance?
 app.get('/debug/runway-methods', (_req, res) => {
   const proto = Object.getPrototypeOf(runway) || {};
   res.json({ methods: Object.getOwnPropertyNames(proto) });
 });
 //#endregion
 
-//#region /enhance — Image Enhancement Endpoint
+//#region /enhance — Image Enhancement
 app.post('/enhance', async (req, res) => {
   const { imageUrl, prompt } = req.body;
   if (!imageUrl || !prompt) {
-    console.warn('⚠️  Missing imageUrl or prompt:', { imageUrl, prompt });
+    console.warn('⚠️ Missing imageUrl or prompt:', { imageUrl, prompt });
     return res.status(400).json({ error: 'Missing imageUrl or prompt' });
   }
 
   try {
-    console.log('🚀 Creating textToImage task:', { imageUrl, prompt });
-
+    console.log('🚀 textToImage.create:', { imageUrl, prompt });
     const task = await runway.textToImage.create({
       model: 'gen4_image',
       promptImage: imageUrl,
       promptText: prompt,
     });
-    console.log(`🔄 Task ${task.id} created, waiting for output…`);
+    console.log(`🔄 Task ${task.id} created, waiting…`);
 
     const completed = await task.waitForTaskOutput();
     console.log('✅ Task complete:', completed);
@@ -93,22 +104,19 @@ app.post('/enhance', async (req, res) => {
     const enhanced = completed.output?.image;
     if (!enhanced) {
       console.error('❌ No image in response:', completed);
-      return res
-        .status(500)
-        .json({ error: 'Runway response missing enhanced image' });
+      return res.status(500).json({ error: 'Runway response missing enhanced image' });
     }
     return res.json({ image: enhanced });
+
   } catch (err) {
     if (err instanceof TaskFailedError) {
-      console.error('🔥 Runway TaskFailedError:', err.taskDetails);
+      console.error('🔥 TaskFailedError:', err.taskDetails);
     } else if (err instanceof RunwayMLError) {
       console.error('🔥 RunwayMLError:', err.message, err);
     } else {
       console.error('🔥 Unknown error:', err);
     }
-    return res
-      .status(500)
-      .json({ error: 'Image enhancement failed. See server logs.' });
+    return res.status(500).json({ error: 'Image enhancement failed—see server logs.' });
   }
 });
 //#endregion
