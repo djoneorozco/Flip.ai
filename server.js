@@ -1,69 +1,73 @@
-//# ==========================
-//# 1. Dependencies
-//# ==========================
-const express = require('express');
-const cors = require('cors');
-const multer = require('multer');
-const { Readable } = require('stream');
-const fetch = require('node-fetch');
-require('dotenv').config();
+// =========================================
+// # server.js — Flip.ai Render API Backend
+// =========================================
 
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+import { Runway } from "@runwayml/sdk";
+
+dotenv.config();
 const app = express();
-const port = process.env.PORT || 10000;
+const port = process.env.PORT || 3000;
+
 app.use(cors());
 app.use(express.json());
 
-const upload = multer();
+const client = new Runway({
+  apiKey: process.env.RUNWAY_API_KEY,
+});
 
-//# ==========================
-//# 2. Runway Enhance Route
-//# ==========================
-app.post('/enhance', upload.single('image'), async (req, res) => {
+// Allowed resolutions per 2024-11-06 API
+const allowedRatios = ["1280:768", "768:1280"];
+
+app.post("/enhance", async (req, res) => {
+  const { prompt, imageURL, ratio } = req.body;
+
+  // ✅ Step 1: Check for required fields
+  if (!prompt || !imageURL || !ratio) {
+    return res.status(400).json({
+      error: "Missing required fields: prompt, imageURL, or ratio.",
+    });
+  }
+
+  // ✅ Step 2: Check that ratio is valid
+  if (!allowedRatios.includes(ratio)) {
+    return res.status(400).json({
+      error: `Invalid ratio value. Must be one of: ${allowedRatios.join(" or ")}`,
+    });
+  }
+
+  // ✅ Step 3: Log the full payload for debugging
+  console.log("🟦 Runway Enhancement Request:", {
+    prompt,
+    imageURL,
+    ratio,
+  });
+
   try {
-    const imageBuffer = req.file.buffer;
-    const prompt = req.body.prompt;
-
-    const runwayResponse = await fetch('https://api.runwayml.com/v1/generation/gen4_turbo', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.RUNWAY_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        prompt,
-        promptStrength: 7,
-        outputQuality: "standard",
-        steps: 30,
-        seed: 42,
-        // ✅ ✅ THIS IS THE FIX — use valid ratio format
-        ratio: "1280x768",  
+    const response = await client.runway.generate({
+      model: "gen-4",
+      input: {
+        prompt: prompt,
         promptImage: {
-          uri: 'data:image/jpeg;base64,' + imageBuffer.toString('base64'),
-          position: 'first'
-        }
-      })
+          uri: imageURL,
+          position: "first",
+        },
+        ratio: ratio,
+        numInferenceSteps: 30,
+        guidanceScale: 7.5,
+      },
     });
 
-    const json = await runwayResponse.json();
-
-    if (runwayResponse.ok) {
-      res.json(json);
-    } else {
-      console.error("Runway error:", json);
-      res.status(500).json({ error: "Enhancement failed. Please try again." });
-    }
-
-  } catch (err) {
-    console.error("Enhancement error:", err);
-    res.status(500).json({ error: "Server error during enhancement." });
+    console.log("✅ Enhancement successful");
+    res.json(response);
+  } catch (error) {
+    console.error("🟥 Runway API Error:", error);
+    res.status(500).json({ error: "Enhancement failed. Please try again." });
   }
 });
 
-//# ==========================
-//# 3. Start Server
-//# ==========================
 app.listen(port, () => {
-  console.log(`\n==> Server listening on port ${port}`);
-  console.log(`==> Your service is live 🎉`);
-  console.log(`==> Available at your primary URL https://flip-ai.onrender.com`);
+  console.log(`✅ Flip.ai backend running on port ${port}`);
 });
