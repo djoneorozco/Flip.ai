@@ -1,54 +1,69 @@
-//#1 – Required dependencies
-import express from "express";
-import cors from "cors";
-import bodyParser from "body-parser";
-import dotenv from "dotenv";
-import { Readable } from "stream";
-import { createWriteStream } from "fs";
-import { v4 as uuidv4 } from "uuid";
-import { createClient } from "@runwayml/sdk";
+//# ==========================
+//# 1. Dependencies
+//# ==========================
+const express = require('express');
+const cors = require('cors');
+const multer = require('multer');
+const { Readable } = require('stream');
+const fetch = require('node-fetch');
+require('dotenv').config();
 
-//#2 – Init server + env
-dotenv.config();
 const app = express();
 const port = process.env.PORT || 10000;
-const client = createClient({ apiKey: process.env.RUNWAY_API_KEY });
-
 app.use(cors());
-app.use(bodyParser.json({ limit: "10mb" }));
+app.use(express.json());
 
-//#3 – Root route test
-app.get("/", (req, res) => {
-  res.send("🧠 Flip.ai enhancement server is live!");
-});
+const upload = multer();
 
-//#4 – POST endpoint to enhance image
-app.post("/enhance", async (req, res) => {
-  const { imageUrl, prompt } = req.body;
-
-  if (!imageUrl || !prompt) {
-    return res.status(400).json({ error: "Missing imageUrl or prompt." });
-  }
-
+//# ==========================
+//# 2. Runway Enhance Route
+//# ==========================
+app.post('/enhance', upload.single('image'), async (req, res) => {
   try {
-    //#5 – Call Runway Gen-4 model WITHOUT ratio
-    const result = await client.run("gen-4", {
-      input: {
-        prompt: prompt,
-        image: imageUrl
-        // ratio: REMOVED to comply with latest version
-      }
+    const imageBuffer = req.file.buffer;
+    const prompt = req.body.prompt;
+
+    const runwayResponse = await fetch('https://api.runwayml.com/v1/generation/gen4_turbo', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.RUNWAY_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        prompt,
+        promptStrength: 7,
+        outputQuality: "standard",
+        steps: 30,
+        seed: 42,
+        // ✅ ✅ THIS IS THE FIX — use valid ratio format
+        ratio: "1280x768",  
+        promptImage: {
+          uri: 'data:image/jpeg;base64,' + imageBuffer.toString('base64'),
+          position: 'first'
+        }
+      })
     });
 
-    //#6 – Respond with base64 image
-    res.status(200).json({ image: result.image });
-  } catch (error) {
-    console.error("🔥 Runway Error:", error);
-    res.status(500).json({ error: "Enhancement failed. Please try again." });
+    const json = await runwayResponse.json();
+
+    if (runwayResponse.ok) {
+      res.json(json);
+    } else {
+      console.error("Runway error:", json);
+      res.status(500).json({ error: "Enhancement failed. Please try again." });
+    }
+
+  } catch (err) {
+    console.error("Enhancement error:", err);
+    res.status(500).json({ error: "Server error during enhancement." });
   }
 });
 
-//#7 – Start server
+//# ==========================
+//# 3. Start Server
+//# ==========================
 app.listen(port, () => {
-  console.log(`\n🚀 Flip.ai enhancement server running at http://localhost:${port}`);
+  console.log(`\n==> Server listening on port ${port}`);
+  console.log(`==> Your service is live 🎉`);
+  console.log(`==> Available at your primary URL https://flip-ai.onrender.com`);
 });
