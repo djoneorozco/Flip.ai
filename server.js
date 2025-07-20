@@ -1,6 +1,6 @@
-// ==============================
-// # server.js — Flip.ai Backend
-// ==============================
+// ===================================
+// # server.js — Flip.ai Final Fix ✅
+// ===================================
 
 const express = require("express");
 const cors = require("cors");
@@ -15,6 +15,7 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
+// ✅ CORRECT USAGE FOR RUNWAY SDK V2
 const client = createClient({ apiKey: process.env.RUNWAY_API_KEY });
 
 app.post("/enhance", async (req, res) => {
@@ -26,11 +27,11 @@ app.post("/enhance", async (req, res) => {
 
   try {
     const result = await client.run({
-      model: "gen-2", // or "gen-1", or "gen-4", depending on access
+      model: "gen-2", // Use "gen-4" or "gen-1" if enabled
       input: {
         prompt,
         image: imageURL,
-        ratio
+        ratio: ratio
       }
     });
 
