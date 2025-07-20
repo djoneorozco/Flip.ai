@@ -1,86 +1,59 @@
-// =========================================
-// # server.js — Flip.ai Render API Backend
-// =========================================
+// ================================
+// # server.js — Flip.ai Enhance Endpoint (Gen-4)
+// ================================
 
-import express from "express";
-import cors from "cors";
-import dotenv from "dotenv";
-import { Runway } from "@runwayml/sdk";
+const express = require("express");
+const cors = require("cors");
+const bodyParser = require("body-parser");
+require("dotenv").config();
 
-dotenv.config();
+const { Runway } = require("@runwayml/client");
 const app = express();
-const port = process.env.PORT || 3000;
+const port = 3000;
 
+// Middleware
 app.use(cors());
-app.use(express.json());
+app.use(bodyParser.json());
 
-// ✅ Initialize Runway client with secret
-const client = new Runway({
-  apiKey: process.env.RUNWAY_API_KEY,
-});
+// Init Runway client
+const runway = new Runway({ apiKey: process.env.RUNWAY_API_KEY });
 
-// ✅ Supported aspect ratio formats for Gen-4 Turbo (image)
-const allowedRatios = [
-  "1280:720",   // Landscape
-  "1584:672",   // Landscape
-  "1104:832",   // Landscape
-  "720:1280",   // Portrait
-  "832:1104",   // Portrait
-  "960:960"     // Square
-];
-
-// =====================
-// # /enhance POST route
-// =====================
+// Endpoint to enhance images
 app.post("/enhance", async (req, res) => {
   const { prompt, imageURL, ratio } = req.body;
 
-  // 🔍 Step 1: Check for required fields
+  // ✅ Debug log incoming values
+  console.log("Received:", { prompt, imageURL, ratio });
+
+  // Validate all inputs are provided
   if (!prompt || !imageURL || !ratio) {
-    return res.status(400).json({
-      error: "Missing required fields: prompt, imageURL, or ratio.",
-    });
+    return res.status(400).json({ error: "Missing inputs" });
   }
-
-  // 🔍 Step 2: Validate ratio format
-  if (!allowedRatios.includes(ratio)) {
-    return res.status(400).json({
-      error: `Invalid ratio. Must be one of: ${allowedRatios.join(", ")}`,
-    });
-  }
-
-  // 🧠 Debug payload logging
-  console.log("📦 Payload Received:", {
-    prompt,
-    imageURL,
-    ratio
-  });
 
   try {
-    // 🧪 Step 3: Call Runway Gen-4 image model
-    const task = await client.textToImage
-      .create({
-        model: "gen4_image",
-        promptText: prompt,
-        promptImage: imageURL,
-        ratio: ratio, // string format expected (e.g. "1280:720")
-        guidanceScale: 7.5,
+    const response = await runway.generate({
+      model: "gen-4",
+      input: {
+        prompt,
+        promptImage: {
+          uri: imageURL,
+          position: "first",
+        },
+        ratio, // example: "cinematic", "square", etc.
         numInferenceSteps: 30,
-      })
-      .waitForTaskOutput();
+        guidanceScale: 7.5,
+      },
+    });
 
-    // 🟢 Output image from Runway
-    console.log("✅ Enhancement Success:", task.output?.[0]);
-
-    res.json({ image: task.output?.[0] });
+    console.log("✅ Runway response:", response);
+    return res.json(response);
   } catch (error) {
-    // 🔴 Log the full error
-    console.error("🛑 Runway API Error:", error);
-    res.status(500).json({ error: "Enhancement failed. Please try again." });
+    console.error("❌ Runway Error:", error);
+    return res.status(500).json({ error: "Runway generation failed" });
   }
 });
 
-// 🚀 Start the server
+// Start server
 app.listen(port, () => {
-  console.log(`🟢 Flip.ai backend running on port ${port}`);
+  console.log(`✅ Flip.ai backend running on http://localhost:${port}`);
 });
