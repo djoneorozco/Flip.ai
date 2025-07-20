@@ -1,84 +1,67 @@
-// =============================================
-// # server.js — Flip.ai backend for Runway Gen-4
-// =============================================
+// ================================
+// # server.js — Flip.ai backend (Final Diagnosed Version)
+// ================================
 
 import express from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
+import Runway from '@runwayml/sdk';
 import dotenv from 'dotenv';
-import { Runway } from '@runwayml/sdk';
-
-// ---------------------------------------------
-// # 1. Config + App Setup
-// ---------------------------------------------
 
 dotenv.config();
+
 const app = express();
-const port = process.env.PORT || 10000;
+const port = process.env.PORT || 3000;
+
 app.use(cors());
-app.use(bodyParser.json());
+app.use(bodyParser.json({ limit: '10mb' }));
 
-// ---------------------------------------------
-// # 2. Route: Enhance Image
-// ---------------------------------------------
+// ✅ Root status check
+app.get('/', (req, res) => {
+  res.send('✅ Flip.ai backend is running');
+});
 
+// ✅ Runway SDK Init (with logging)
+console.log('🔐 Initializing Runway SDK...');
+const runway = new Runway({ apiKey: process.env.RUNWAY_API_KEY });
+
+// ✅ Enhancement endpoint
 app.post('/enhance', async (req, res) => {
-  console.log('[🟢 API HIT] /enhance route called');
+  const { imageUrl, prompt } = req.body;
+
+  if (!imageUrl || !prompt) {
+    console.warn('⚠️ Missing required fields:', { imageUrl, prompt });
+    return res.status(400).json({ error: 'Missing imageUrl or prompt' });
+  }
 
   try {
-    const { imageUrl, prompt: rawPrompt } = req.body;
+    console.log('🚀 Sending to Runway:', { imageUrl, prompt });
 
-    // Fallback prompt if none provided
-    const prompt =
-      rawPrompt?.trim() ||
-      'Enhance this real estate photo to look modern, clean, and professionally staged.';
-
-    if (!imageUrl) {
-      console.error('[❌ ERROR] Missing imageUrl in request body.');
-      return res.status(400).json({ error: 'Missing imageUrl' });
-    }
-
-    console.log('[📤 INPUT]', { prompt, imageUrl });
-
-    // ---------------------------------------------
-    // # 3. Runway SDK Setup
-    // ---------------------------------------------
-
-    const runway = new Runway({ apiKey: process.env.RUNWAY_API_KEY });
-    const model = runway.model('gen-4');
-
-    if (!model || typeof model.generate !== 'function') {
-      console.error('[❌ SDK ERROR] Runway model not initialized correctly.');
-      return res.status(500).json({ error: 'Runway model setup failed' });
-    }
-
-    // ---------------------------------------------
-    // # 4. Generate Output
-    // ---------------------------------------------
-
-    console.log('[⚙️ RUNNING] model.generate()...');
-    const output = await model.generate({
-      prompt,
-      image: imageUrl,
+    const output = await runway.run('gen-4', {
+      input: {
+        prompt,
+        image: imageUrl,
+        guidance_scale: 9,
+        strength: 0.7,
+        num_inference_steps: 25,
+      },
     });
 
-    if (!output || !output.outputs || !output.outputs[0]) {
-      console.error('[❌ ERROR] Invalid response from Runway model');
-      return res.status(500).json({ error: 'No output from model' });
+    console.log('✅ Runway response received.');
+
+    if (!output?.output?.image) {
+      console.error('❌ Runway response missing expected "image" field.', output);
+      return res.status(500).json({ error: 'Runway response invalid' });
     }
 
-    console.log('[✅ SUCCESS] Output received from model.');
-    res.json({ result: output.outputs[0].image });
-  } catch (err) {
-    console.error('[🔥 UNHANDLED ERROR]', err);
-    res.status(500).json({ error: 'Enhancement failed. Please try again.' });
+    return res.json({ image: output.output.image });
+  } catch (error) {
+    console.error('🔥 Runway API Error:', error?.message || error);
+    return res.status(500).json({ error: 'Image enhancement failed. Please check logs.' });
   }
 });
 
-// ---------------------------------------------
-// # 5. Launch Server
-// ---------------------------------------------
-
+// 🏁 Server start
 app.listen(port, () => {
-  console.log(`\n✅ Flip.ai backend running on port ${port}`);
+  console.log(`✅ Flip.ai backend running at http://localhost:${port}`);
 });
