@@ -1,67 +1,76 @@
-// ================================
-// # server.js — Flip.ai backend (Final Diagnosed Version)
-// ================================
-
 import express from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
-import Runway from '@runwayml/sdk';
+import RunwayML, { TaskFailedError } from '@runwayml/sdk';
 import dotenv from 'dotenv';
-
 dotenv.config();
 
+//#1: Setup Express
 const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(bodyParser.json({ limit: '10mb' }));
 
-// ✅ Root status check
+//#2: Healthcheck route
 app.get('/', (req, res) => {
-  res.send('✅ Flip.ai backend is running');
+  res.send('✅ Flip.ai backend is up and running.');
 });
 
-// ✅ Runway SDK Init (with logging)
-console.log('🔐 Initializing Runway SDK...');
-const runway = new Runway({ apiKey: process.env.RUNWAY_API_KEY });
+//#3: Init Runway SDK
+console.log('🧠 Initializing Runway SDK...');
+const runway = new RunwayML({
+  apiKey: process.env.RUNWAYML_API_SECRET || process.env.RUNWAY_API_KEY,
+});
 
-// ✅ Enhancement endpoint
+//#4: Enhance Endpoint
 app.post('/enhance', async (req, res) => {
   const { imageUrl, prompt } = req.body;
 
   if (!imageUrl || !prompt) {
-    console.warn('⚠️ Missing required fields:', { imageUrl, prompt });
+    console.warn('❗Missing imageUrl or prompt.');
     return res.status(400).json({ error: 'Missing imageUrl or prompt' });
   }
 
   try {
-    console.log('🚀 Sending to Runway:', { imageUrl, prompt });
+    console.log(`🚀 Creating enhancement task → model: gen4_image`);
+    console.log(`🔗 Source Image URL: ${imageUrl}`);
+    console.log(`🧠 Prompt: ${prompt}`);
 
-    const output = await runway.run('gen-4', {
-      input: {
-        prompt,
-        image: imageUrl,
-        guidance_scale: 9,
-        strength: 0.7,
-        num_inference_steps: 25,
-      },
+    const task = await runway.textToImage.create({
+      model: 'gen4_image',
+      promptImage: imageUrl,
+      promptText: prompt,
+      // Optional: Adjust model behavior below
+      // strength: 0.7,
+      // guidanceScale: 9,
+      // numInferenceSteps: 25,
+      // ratio: '1:1'
     });
 
-    console.log('✅ Runway response received.');
+    console.log(`⏳ Task created (ID: ${task.id}). Polling until complete…`);
 
-    if (!output?.output?.image) {
-      console.error('❌ Runway response missing expected "image" field.', output);
-      return res.status(500).json({ error: 'Runway response invalid' });
+    const result = await task.waitForTaskOutput();
+
+    if (!result.output || !result.output.image) {
+      console.error('❌ No image returned in output:', result);
+      return res.status(500).json({ error: 'No image returned by RunwayML' });
     }
 
-    return res.json({ image: output.output.image });
-  } catch (error) {
-    console.error('🔥 Runway API Error:', error?.message || error);
-    return res.status(500).json({ error: 'Image enhancement failed. Please check logs.' });
+    console.log('✅ Enhancement complete. Returning image.');
+    return res.json({ image: result.output.image });
+
+  } catch (err) {
+    if (err instanceof TaskFailedError) {
+      console.error('🔥 Runway task failed:', err.taskDetails);
+    } else {
+      console.error('🔥 Unexpected Runway error:', err.message || err);
+    }
+    return res.status(500).json({ error: 'Image enhancement failed. Check server logs.' });
   }
 });
 
-// 🏁 Server start
+//#5: Start Server
 app.listen(port, () => {
-  console.log(`✅ Flip.ai backend running at http://localhost:${port}`);
+  console.log(`✅ Flip.ai backend live at http://localhost:${port}`);
 });
