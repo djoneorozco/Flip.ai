@@ -1,5 +1,5 @@
 // ================================
-// # server.js — Flip.ai backend (Fixed)
+// # server.js — Flip.ai backend
 // ================================
 
 import express from 'express';
@@ -13,10 +13,16 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.use(cors());
+// ✅ Allow Netlify frontend
+app.use(cors({
+  origin: ['https://flip-ai.netlify.app'],
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Content-Type'],
+}));
+
 app.use(bodyParser.json({ limit: '10mb' }));
 
-// 🌐 Root route for status check
+// 🌐 Root route
 app.get('/', (req, res) => {
   res.send('Flip.ai backend is running ✅');
 });
@@ -35,26 +41,23 @@ app.post('/enhance', async (req, res) => {
   }
 
   try {
-    const response = await runway.image.generate({
-      model: 'gen4-turbo',
+    const output = await runway.run('gen-4', {
       input: {
         prompt,
-        prompt_image: imageUrl,
-        guidance_scale: 6,
-        image_strength: 0.6,
-        num_images: 1,
+        image: imageUrl,
+        guidance_scale: 9,
+        strength: 0.7,
+        num_inference_steps: 25,
       },
     });
 
-    const base64Image = response.outputs[0]?.image_base64;
-
-    if (!base64Image) {
-      throw new Error('Runway did not return an image');
+    if (!output?.output?.image) {
+      throw new Error('Runway returned an unexpected response format');
     }
 
-    return res.json({ image: `data:image/png;base64,${base64Image}` });
+    return res.json({ image: output.output.image });
   } catch (error) {
-    console.error('🔥 Runway API error:', error.message || error);
+    console.error('Runway API error:', error);
     return res.status(500).json({ error: 'Image generation failed' });
   }
 });
