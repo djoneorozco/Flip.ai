@@ -1,59 +1,51 @@
-// ================================
-// # server.js — Flip.ai Enhance Endpoint (Gen-4)
-// ================================
+//#1 - Imports
+const express = require('express');
+const cors = require('cors');
+const dotenv = require('dotenv');
+const { Runway } = require('@runwayml/sdk');
 
-const express = require("express");
-const cors = require("cors");
-const bodyParser = require("body-parser");
-require("dotenv").config();
-
-const { Runway } = require("@runwayml/client");
+//#2 - Config
+dotenv.config();
 const app = express();
-const port = 3000;
-
-// Middleware
+const port = process.env.PORT || 3000;
 app.use(cors());
-app.use(bodyParser.json());
+app.use(express.json());
 
-// Init Runway client
-const runway = new Runway({ apiKey: process.env.RUNWAY_API_KEY });
-
-// Endpoint to enhance images
-app.post("/enhance", async (req, res) => {
+//#3 - POST /enhance Route
+app.post('/enhance', async (req, res) => {
   const { prompt, imageURL, ratio } = req.body;
 
-  // ✅ Debug log incoming values
-  console.log("Received:", { prompt, imageURL, ratio });
-
-  // Validate all inputs are provided
+  // Validate required inputs
   if (!prompt || !imageURL || !ratio) {
-    return res.status(400).json({ error: "Missing inputs" });
+    return res.status(400).json({ error: 'Missing inputs' });
   }
 
   try {
-    const response = await runway.generate({
-      model: "gen-4",
-      input: {
-        prompt,
-        promptImage: {
-          uri: imageURL,
-          position: "first",
-        },
-        ratio, // example: "cinematic", "square", etc.
-        numInferenceSteps: 30,
-        guidanceScale: 7.5,
-      },
+    // Initialize Runway client
+    const runway = new Runway({
+      apiKey: process.env.RUNWAY_API_KEY,
     });
 
-    console.log("✅ Runway response:", response);
-    return res.json(response);
-  } catch (error) {
-    console.error("❌ Runway Error:", error);
-    return res.status(500).json({ error: "Runway generation failed" });
+    // Runway Gen-4 call
+    const result = await runway.gen4.turbo.run({
+      prompt: prompt,
+      image: imageURL,
+      ratio: ratio,
+      output_format: 'base64',
+    });
+
+    // Return enhanced image
+    res.status(200).json({
+      success: true,
+      result: result,
+    });
+  } catch (err) {
+    console.error('❌ Runway Error:', err);
+    res.status(500).json({ error: 'Runway generation failed', details: err.message });
   }
 });
 
-// Start server
+//#4 - Start Server
 app.listen(port, () => {
-  console.log(`✅ Flip.ai backend running on http://localhost:${port}`);
+  console.log(`🚀 Flip.ai backend is live on port ${port}`);
 });
