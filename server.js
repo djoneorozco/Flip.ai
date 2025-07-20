@@ -1,11 +1,11 @@
 // ================================
-// # server.js — Flip.ai backend
+// # server.js — Flip.ai backend (Fixed)
 // ================================
 
 import express from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
-import Runway from '@runwayml/sdk'; // ✅ Fixed here
+import { Runway } from '@runwayml/sdk'; // ✅ Correct import
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -35,23 +35,26 @@ app.post('/enhance', async (req, res) => {
   }
 
   try {
-    const output = await runway.run('gen-4', {
+    const response = await runway.image.generate({
+      model: 'gen4-turbo',
       input: {
         prompt,
-        image: imageUrl,
-        guidance_scale: 9,
-        strength: 0.7,
-        num_inference_steps: 25,
+        prompt_image: imageUrl,
+        guidance_scale: 6,
+        image_strength: 0.6,
+        num_images: 1,
       },
     });
 
-    if (!output?.output?.image) {
-      throw new Error('Runway returned an unexpected response format');
+    const base64Image = response.outputs[0]?.image_base64;
+
+    if (!base64Image) {
+      throw new Error('Runway did not return an image');
     }
 
-    return res.json({ image: output.output.image });
+    return res.json({ image: `data:image/png;base64,${base64Image}` });
   } catch (error) {
-    console.error('Runway API error:', error);
+    console.error('🔥 Runway API error:', error.message || error);
     return res.status(500).json({ error: 'Image generation failed' });
   }
 });
