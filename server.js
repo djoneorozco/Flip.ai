@@ -5,8 +5,8 @@
 import express from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
-import Runway from '@runwayml/sdk';
 import dotenv from 'dotenv';
+import { getModel } from '@runwayml/sdk'; // ✅ Correct import for SDK v2.5.0+
 
 dotenv.config();
 
@@ -21,10 +21,7 @@ app.get('/', (req, res) => {
   res.send('Flip.ai backend is running ✅');
 });
 
-// 🔑 Initialize Runway SDK
-const runway = new Runway({ apiKey: process.env.RUNWAY_API_KEY });
-
-// 🎯 Enhance endpoint using SDK v2.5.0 syntax
+// 🎯 Enhance endpoint
 app.post('/enhance', async (req, res) => {
   const { imageUrl, prompt } = req.body;
 
@@ -33,8 +30,12 @@ app.post('/enhance', async (req, res) => {
   }
 
   try {
-    const model = await runway.getModel('gen-4');
+    // ✅ Get the Gen-4 model handle
+    const model = await getModel('gen-4', {
+      apiKey: process.env.RUNWAY_API_KEY,
+    });
 
+    // ✅ Call generate method (correct method for this SDK version)
     const output = await model.generate({
       input: {
         prompt,
@@ -45,11 +46,12 @@ app.post('/enhance', async (req, res) => {
       },
     });
 
-    if (!output?.output?.image) {
+    // ✅ Handle the image response
+    if (!output?.outputs?.[0]?.image) {
       throw new Error('Runway returned an unexpected response format');
     }
 
-    return res.json({ image: output.output.image });
+    return res.json({ image: output.outputs[0].image });
   } catch (error) {
     console.error('Runway API error:', error);
     return res.status(500).json({ error: 'Image generation failed' });
