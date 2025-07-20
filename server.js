@@ -1,5 +1,5 @@
 // =========================================
-// # server.js — Flip.ai Render API Backend
+// # server.js — Flip.ai Render API Backend (Diagnostic Ratios)
 // =========================================
 
 import express from "express";
@@ -18,62 +18,80 @@ const client = new Runway({
   apiKey: process.env.RUNWAY_API_KEY,
 });
 
-// ✅ Allowed ratio strings (latest API spec)
-const allowedRatios = ["1280:768", "768:1280"];
+// ✅ List of all ratio candidates
+const allowedRatios = [
+  "1280:768", 
+  "768:1280", 
+  "1024:1024", 
+  "1920:1080", 
+  "1080:1920"
+];
 
-// ✅ Convert ratio string to object for API
+// ✅ Convert ratio string to object { width, height }
 const parseRatio = (ratioStr) => {
   const [width, height] = ratioStr.split(":").map(Number);
   return { width, height };
 };
 
+// ✅ Helper function to test each ratio
+const testRatio = async (prompt, imageURL) => {
+  for (const r of allowedRatios) {
+    try {
+      console.log(`🔍 Testing ratio: ${r}`);
+      const ratioObj = parseRatio(r);
+      
+      await client.runway.generate({
+        model: "gen-4",
+        input: {
+          prompt: "Ratio Test",
+          promptImage: {
+            uri: imageURL,
+            position: "first",
+          },
+          ratio: ratioObj,
+          numInferenceSteps: 1,
+          guidanceScale: 1,
+        },
+      });
+      console.log(`✅ Ratio accepted: ${r}`);
+      return r; // Stop at first valid ratio
+    } catch (error) {
+      console.log(`❌ Ratio failed: ${r} — ${error.message}`);
+    }
+  }
+  throw new Error("No valid ratio found from allowed list.");
+};
+
 app.post("/enhance", async (req, res) => {
-  const { prompt, imageURL, ratio } = req.body;
+  const { prompt, imageURL } = req.body;
 
-  // ✅ Step 1: Ensure all required fields are present
-  if (!prompt || !imageURL || !ratio) {
-    return res.status(400).json({
-      error: "Missing required fields: prompt, imageURL, or ratio.",
-    });
+  if (!prompt || !imageURL) {
+    return res.status(400).json({ error: "Missing required fields: prompt or imageURL." });
   }
-
-  // ✅ Step 2: Validate the ratio string format
-  if (!allowedRatios.includes(ratio)) {
-    return res.status(400).json({
-      error: `Invalid ratio. Must be one of: ${allowedRatios.join(" or ")}`,
-    });
-  }
-
-  // ✅ Step 3: Convert string to object { width, height }
-  const ratioObject = parseRatio(ratio);
-
-  // ✅ Step 4: Log payload for diagnostics
-  console.log("🔹 Enhancement Request Payload:", {
-    prompt,
-    imageURL,
-    ratio: ratioObject,
-  });
 
   try {
+    // ✅ Dynamically find valid ratio
+    const validRatio = await testRatio(prompt, imageURL);
+    const ratioObject = parseRatio(validRatio);
+
+    console.log("🔹 Final Enhancement Payload:", { prompt, imageURL, ratioObject });
+
     const response = await client.runway.generate({
       model: "gen-4",
       input: {
         prompt: prompt,
-        promptImage: {
-          uri: imageURL,
-          position: "first",
-        },
-        ratio: ratioObject, // ✅ Converted object
+        promptImage: { uri: imageURL, position: "first" },
+        ratio: ratioObject,
         numInferenceSteps: 30,
         guidanceScale: 7.5,
       },
     });
 
-    console.log("✅ Enhancement succeeded");
-    res.json(response);
+    console.log("✅ Enhancement succeeded with ratio:", validRatio);
+    res.json({ ratioUsed: validRatio, result: response });
   } catch (error) {
     console.error("🟥 Runway API Error:", error);
-    res.status(500).json({ error: "Enhancement failed. Please try again." });
+    res.status(500).json({ error: "Enhancement failed. Please check logs for details." });
   }
 });
 
