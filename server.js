@@ -1,5 +1,5 @@
 //# ====================================================================
-//# server.js — Flip.ai Backend (with SDK Version Reporting + Debugging)
+//# server.js — Flip.ai Backend (SDK 2.5.0+, Enhanced for Debugging)
 //# ====================================================================
 
 //# Section 1: Imports & Configuration
@@ -109,29 +109,30 @@ app.post('/enhance', async (req, res) => {
       model: 'gen4_image',
       promptImage: imageUrl,
       promptText: prompt,
-      ratio: '1:1',               // valid Gen-4 ratio
+      ratio: 'square',               // ✅ FIXED: valid Gen-4 format
       guidanceScale: 9,
       strength: 0.7,
       numInferenceSteps: 25
     };
-    console.log('🛠️ Payload for Runway:', JSON.stringify(options, null, 2));
 
-    // Create task
+    console.log('🛠️ Payload to RunwayML SDK:');
+    console.dir(options, { depth: null });
+
+    // Create and submit task
     const task = await runway.textToImage.create(options);
-    console.log(`🔄 Task ${task.id} created, waiting for output...`);
+    console.log(`🔄 Task ${task.id} created. Awaiting output...`);
 
-    // Wait for completion
+    // Wait for result
     const completed = await task.waitForTaskOutput();
     console.log('✅ Task completed:', completed);
 
     // Extract enhanced image
     const enhanced = completed.output?.image;
     if (!enhanced) {
-      console.error('❌ No enhanced image returned:', completed);
+      console.error('❌ No image returned:', completed);
       return res.status(500).json({ error: 'Runway response missing image' });
     }
 
-    // Respond with enhanced image
     return res.json({ image: enhanced });
 
   } catch (err) {
@@ -140,11 +141,11 @@ app.post('/enhance', async (req, res) => {
     } else if (err instanceof RunwayMLError) {
       console.error('🔥 RunwayMLError:', err.message, err);
     } else {
-      console.error('🔥 Unexpected error:', err);
+      console.error('🔥 Unknown error in /enhance:', err);
     }
-    return res
-      .status(500)
-      .json({ error: 'Image enhancement failed. Check server logs for details.' });
+    return res.status(500).json({
+      error: 'Image enhancement failed. Check server logs for details.'
+    });
   }
 });
 
