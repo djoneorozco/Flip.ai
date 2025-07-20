@@ -1,6 +1,6 @@
-// ==============================
-// # server.js — Dynamic Ratio Handler for Runway Gen-4
-// ==============================
+// =========================================
+// # server.js — Flip.ai Render API Backend
+// =========================================
 
 import express from "express";
 import cors from "cors";
@@ -18,61 +18,65 @@ const client = new Runway({
   apiKey: process.env.RUNWAY_API_KEY,
 });
 
-// ✅ Supported ratio map
-const ratioMap = {
-  "1280:768": { width: 1280, height: 768 },
-  "768:1280": { width: 768, height: 1280 },
-  "1:1": { width: 1024, height: 1024 },
-  "16:9": { width: 1280, height: 720 },
-  "9:16": { width: 720, height: 1280 },
+// ✅ Allowed ratio strings (latest API spec)
+const allowedRatios = ["1280:768", "768:1280"];
+
+// ✅ Convert ratio string to object for API
+const parseRatio = (ratioStr) => {
+  const [width, height] = ratioStr.split(":").map(Number);
+  return { width, height };
 };
 
 app.post("/enhance", async (req, res) => {
   const { prompt, imageURL, ratio } = req.body;
 
+  // ✅ Step 1: Ensure all required fields are present
   if (!prompt || !imageURL || !ratio) {
     return res.status(400).json({
-      error: "Missing prompt, imageURL, or ratio.",
+      error: "Missing required fields: prompt, imageURL, or ratio.",
     });
   }
 
-  // ✅ Lookup or fallback to error
-  const ratioKey = ratio.trim();
-  const resolution = ratioMap[ratioKey];
-
-  if (!resolution) {
+  // ✅ Step 2: Validate the ratio string format
+  if (!allowedRatios.includes(ratio)) {
     return res.status(400).json({
-      error: `Unsupported ratio '${ratio}'. Supported values: ${Object.keys(ratioMap).join(", ")}`
+      error: `Invalid ratio. Must be one of: ${allowedRatios.join(" or ")}`,
     });
   }
 
-  const { width, height } = resolution;
+  // ✅ Step 3: Convert string to object { width, height }
+  const ratioObject = parseRatio(ratio);
+
+  // ✅ Step 4: Log payload for diagnostics
+  console.log("🔹 Enhancement Request Payload:", {
+    prompt,
+    imageURL,
+    ratio: ratioObject,
+  });
 
   try {
-    console.log(`🧠 Ratio '${ratio}' → width: ${width}, height: ${height}`);
-
     const response = await client.runway.generate({
       model: "gen-4",
       input: {
-        prompt,
+        prompt: prompt,
         promptImage: {
           uri: imageURL,
           position: "first",
         },
-        width,
-        height,
+        ratio: ratioObject, // ✅ Converted object
         numInferenceSteps: 30,
         guidanceScale: 7.5,
       },
     });
 
+    console.log("✅ Enhancement succeeded");
     res.json(response);
   } catch (error) {
-    console.error("Runway API Error:", error);
+    console.error("🟥 Runway API Error:", error);
     res.status(500).json({ error: "Enhancement failed. Please try again." });
   }
 });
 
 app.listen(port, () => {
-  console.log(`🚀 Server running on port ${port}`);
+  console.log(`🚀 Flip.ai backend running on port ${port}`);
 });
