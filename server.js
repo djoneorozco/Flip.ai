@@ -1,155 +1,60 @@
-//# ====================================================================
-//# server.js — Flip.ai Backend (SDK 2.5.0+, Enhanced for Debugging)
-//# ====================================================================
+// =======================================
+// # server.js – Flip.ai Backend (Gen-4 Ready)
+// =======================================
 
-//# Section 1: Imports & Configuration
 import express from 'express';
-import bodyParser from 'body-parser';
 import cors from 'cors';
-import RunwayML, { RunwayMLError, TaskFailedError } from '@runwayml/sdk';
-import { createRequire } from 'module';
 import dotenv from 'dotenv';
+import bodyParser from 'body-parser';
+import { RunwayClient } from '@runwayml/sdk';
 
 dotenv.config();
-const requireCJS = createRequire(import.meta.url);
-
-//# Section 2: App & CORS Setup
 const app = express();
 const port = process.env.PORT || 3000;
 
-const FRONTEND_ORIGINS = [
-  'https://flip-ai.netlify.app',
-  'https://flip-ai.onrender.com'
-];
-
-const corsOptions = {
-  origin: (origin, callback) => {
-    if (!origin || FRONTEND_ORIGINS.includes(origin)) {
-      return callback(null, true);
-    }
-    callback(new Error(`CORS blocked for origin: ${origin}`));
-  },
-  methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  optionsSuccessStatus: 204
-};
-
-app.use(cors(corsOptions));
-app.options('*', cors(corsOptions));
+app.use(cors());
 app.use(bodyParser.json({ limit: '10mb' }));
 
-//# Section 3: RunwayML SDK Initialization
-let runway;
-let usedKeyName = null;
+// ✅ Initialize Runway SDK client
+const client = new RunwayClient({ apiKey: process.env.RUNWAY_API_KEY });
 
-try {
-  const key =
-    process.env.RUNWAYML_API_SECRET?.trim() ||
-    process.env.RUNWAY_API_KEY?.trim();
-
-  usedKeyName = process.env.RUNWAYML_API_SECRET
-    ? 'RUNWAYML_API_SECRET'
-    : process.env.RUNWAY_API_KEY
-    ? 'RUNWAY_API_KEY'
-    : null;
-
-  console.log(`🔑 Initializing RunwayML SDK using: ${usedKeyName}`);
-  runway = new RunwayML({ apiKey: key });
-  console.log('✅ RunwayML SDK initialized successfully');
-} catch (err) {
-  console.error('❌ RunwayML init error:', err.message || err);
-  console.group('ℹ️ Environment snapshot');
-  console.log('RUNWAYML_API_SECRET =', process.env.RUNWAYML_API_SECRET);
-  console.log('RUNWAY_API_KEY       =', process.env.RUNWAY_API_KEY);
-  console.groupEnd();
-  process.exit(1);
-}
-
-//# Section 4: Debug Endpoints
-
-// Healthcheck
-app.get('/', (_req, res) => {
-  res.send('✅ Flip.ai backend is running');
-});
-
-// Debug: Environment & SDK version
-app.get('/debug/env', (_req, res) => {
-  let sdkVersion = 'unknown';
-  try {
-    sdkVersion = requireCJS('@runwayml/sdk/package.json').version;
-  } catch (e) {
-    console.warn('⚠️ Could not read @runwayml/sdk version:', e.message);
-  }
-  res.json({
-    usedKeyName,
-    keyPresent: !!(process.env.RUNWAYML_API_SECRET || process.env.RUNWAY_API_KEY),
-    sdkVersion
-  });
-});
-
-// Debug: List SDK prototype methods
-app.get('/debug/runway-methods', (_req, res) => {
-  const proto = Object.getPrototypeOf(runway) || {};
-  res.json({ methods: Object.getOwnPropertyNames(proto) });
-});
-
-//# Section 5: /enhance — Image Enhancement Endpoint
+// =======================================
+// # POST /enhance – Main Endpoint
+// =======================================
 app.post('/enhance', async (req, res) => {
-  const { imageUrl, prompt } = req.body;
+  const { prompt, imageURL } = req.body;
 
-  // Validate inputs
-  if (!imageUrl || !prompt) {
-    console.warn('⚠️ Missing imageUrl or prompt:', { imageUrl, prompt });
-    return res.status(400).json({ error: 'Missing imageUrl or prompt' });
+  if (!prompt || !imageURL) {
+    return res.status(400).json({ error: 'Missing prompt or imageURL' });
   }
 
   try {
-    // Build payload
-    const options = {
-      model: 'gen4_image',
-      promptImage: imageUrl,
-      promptText: prompt,
-      ratio: '1:1',              // ✅ FIXED: must be a valid ratio
-      guidanceScale: 9,
-      strength: 0.7,
-      numInferenceSteps: 25
-    };
+    const result = await client.images.generate({
+      prompt: prompt,
+      image: imageURL,
+      model: 'gen-4'
+      // ❌ Do NOT include ratio for Gen-4 – causes 400 error!
+    });
 
-    console.log('🛠️ Payload to RunwayML SDK:');
-    console.dir(options, { depth: null });
-
-    // Create and submit task
-    const task = await runway.textToImage.create(options);
-    console.log(`🔄 Task ${task.id} created. Awaiting output...`);
-
-    // Wait for result
-    const completed = await task.waitForTaskOutput();
-    console.log('✅ Task completed:', completed);
-
-    // Extract enhanced image
-    const enhanced = completed.output?.image;
-    if (!enhanced) {
-      console.error('❌ No image returned:', completed);
-      return res.status(500).json({ error: 'Runway response missing image' });
-    }
-
-    return res.json({ image: enhanced });
-
-  } catch (err) {
-    if (err instanceof TaskFailedError) {
-      console.error('🔥 TaskFailedError:', err.taskDetails);
-    } else if (err instanceof RunwayMLError) {
-      console.error('🔥 RunwayMLError:', err.message, err);
-    } else {
-      console.error('🔥 Unknown error in /enhance:', err);
-    }
-    return res.status(500).json({
-      error: 'Image enhancement failed. Check server logs for details.'
+    // ✅ Success: Send enhanced image
+    res.json({ image: result.image });
+  } catch (error) {
+    console.error('Runway API error:', error.message || error);
+    res.status(500).json({
+      error: 'Runway enhancement failed',
+      detail: error.message || error
     });
   }
 });
 
-//# Section 6: Server Start
+// =======================================
+// # Health Check (Optional)
+app.get('/', (req, res) => {
+  res.send('Flip.ai backend is running 🚀');
+});
+// =======================================
+
+// ✅ Start server
 app.listen(port, () => {
-  console.log(`🚀 Flip.ai backend listening on port ${port}`);
+  console.log(`✅ Flip.ai backend listening at http://localhost:${port}`);
 });
