@@ -11,7 +11,7 @@ if (!firebase.apps.length) {
     apiKey: "AIzaSyD9VmWrU0ZVy0Lb8rxYV58SmEUxF1z4HHI", // replace if needed
     authDomain: "flip-26d24.firebaseapp.com",
     projectId: "flip-26d24",
-    storageBucket: "flip-26d24.appspot.com", // ←🔥 CORRECTED
+    storageBucket: "flip-26d24.firebasestorage.app", // ✅ FIXED HERE
     messagingSenderId: "YOUR_SENDER_ID",
     appId: "YOUR_APP_ID"
   };
