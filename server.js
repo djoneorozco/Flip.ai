@@ -1,5 +1,5 @@
 //# ====================================================================
-//# server.js — Flip.ai Backend (Fixed: Valid Ratio + CORS + Debugging)
+//# server.js — Flip.ai Backend (Fixed: Explicit Valid Ratio + CORS + Debugging)
 //# ====================================================================
 
 import express from 'express';
@@ -22,10 +22,9 @@ const FRONTEND_ORIGINS = [
 const corsOptions = {
   origin: (origin, callback) => {
     if (!origin || FRONTEND_ORIGINS.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error(`CORS blocked for origin: ${origin}`));
+      return callback(null, true);
     }
+    callback(new Error(`CORS blocked for origin: ${origin}`));
   },
   methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
@@ -96,14 +95,15 @@ app.post('/enhance', async (req, res) => {
   }
 
   try {
-    // 2️⃣ Build payload without invalid ratio
+    // 2️⃣ Build payload with an explicit, valid ratio
     const options = {
       model: 'gen4_image',
       promptImage: imageUrl,
       promptText: prompt,
-      // If you need to force a ratio, uncomment one of these:
-      // ratio: '1:1',
-      // ratio: '16:9',
+      ratio: '1:1',                // ✅ Required valid ratio
+      guidanceScale: 9,            // optional tuning params
+      strength: 0.7,
+      numInferenceSteps: 25
     };
     console.log('🛠️ Payload for Runway:', options);
 
@@ -115,7 +115,7 @@ app.post('/enhance', async (req, res) => {
     const completed = await task.waitForTaskOutput();
     console.log('✅ Task completed:', completed);
 
-    // 5️⃣ Extract result
+    // 5️⃣ Extract enhanced image
     const enhanced = completed.output?.image;
     if (!enhanced) {
       console.error('❌ No enhanced image returned:', completed);
