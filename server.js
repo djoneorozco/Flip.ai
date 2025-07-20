@@ -1,6 +1,6 @@
-// =========================================
-// # server.js — Flip.ai Render API Backend (Diagnostic Ratios)
-// =========================================
+// ===========================
+// # server.js — Flip.ai Ratio Debug Mode
+// ===========================
 
 import express from "express";
 import cors from "cors";
@@ -18,83 +18,71 @@ const client = new Runway({
   apiKey: process.env.RUNWAY_API_KEY,
 });
 
-// ✅ List of all ratio candidates
-const allowedRatios = [
-  "1280:768", 
-  "768:1280", 
-  "1024:1024", 
-  "1920:1080", 
-  "1080:1920"
+// ✅ Ratios to test (strings and objects)
+const ratioCandidates = [
+  "1:1",
+  "4:5",
+  "5:4",
+  "16:9",
+  "9:16",
+  "2:3",
+  "3:2",
+  "768:1024",
+  "1024:768",
+  { width: 1024, height: 1024 },
+  { width: 768, height: 1024 },
+  { width: 1024, height: 768 },
+  { width: 1280, height: 768 },
+  { width: 768, height: 1280 },
 ];
 
-// ✅ Convert ratio string to object { width, height }
-const parseRatio = (ratioStr) => {
-  const [width, height] = ratioStr.split(":").map(Number);
-  return { width, height };
-};
-
-// ✅ Helper function to test each ratio
-const testRatio = async (prompt, imageURL) => {
-  for (const r of allowedRatios) {
-    try {
-      console.log(`🔍 Testing ratio: ${r}`);
-      const ratioObj = parseRatio(r);
-      
-      await client.runway.generate({
-        model: "gen-4",
-        input: {
-          prompt: "Ratio Test",
-          promptImage: {
-            uri: imageURL,
-            position: "first",
-          },
-          ratio: ratioObj,
-          numInferenceSteps: 1,
-          guidanceScale: 1,
-        },
-      });
-      console.log(`✅ Ratio accepted: ${r}`);
-      return r; // Stop at first valid ratio
-    } catch (error) {
-      console.log(`❌ Ratio failed: ${r} — ${error.message}`);
-    }
-  }
-  throw new Error("No valid ratio found from allowed list.");
-};
-
+// ✅ Route: /enhance — debug each ratio format
 app.post("/enhance", async (req, res) => {
   const { prompt, imageURL } = req.body;
 
   if (!prompt || !imageURL) {
-    return res.status(400).json({ error: "Missing required fields: prompt or imageURL." });
+    return res.status(400).json({ error: "Missing prompt or imageURL" });
   }
 
-  try {
-    // ✅ Dynamically find valid ratio
-    const validRatio = await testRatio(prompt, imageURL);
-    const ratioObject = parseRatio(validRatio);
+  const results = [];
 
-    console.log("🔹 Final Enhancement Payload:", { prompt, imageURL, ratioObject });
+  for (const ratio of ratioCandidates) {
+    try {
+      console.log(`🔍 Testing ratio: ${JSON.stringify(ratio)}`);
 
-    const response = await client.runway.generate({
-      model: "gen-4",
-      input: {
-        prompt: prompt,
-        promptImage: { uri: imageURL, position: "first" },
-        ratio: ratioObject,
-        numInferenceSteps: 30,
-        guidanceScale: 7.5,
-      },
-    });
+      const response = await client.runway.generate({
+        model: "gen-4",
+        input: {
+          prompt,
+          promptImage: {
+            uri: imageURL,
+            position: "first",
+          },
+          ratio,
+          numInferenceSteps: 30,
+          guidanceScale: 7.5,
+        },
+      });
 
-    console.log("✅ Enhancement succeeded with ratio:", validRatio);
-    res.json({ ratioUsed: validRatio, result: response });
-  } catch (error) {
-    console.error("🟥 Runway API Error:", error);
-    res.status(500).json({ error: "Enhancement failed. Please check logs for details." });
+      results.push({ ratio, status: "✅ Success" });
+      console.log("✅ Enhancement succeeded with:", ratio);
+
+      // Optional: break on first success
+      break;
+
+    } catch (error) {
+      results.push({
+        ratio,
+        status: "❌ Failed",
+        message: error?.message || "Unknown error",
+      });
+      console.error(`❌ Failed with ratio ${JSON.stringify(ratio)}:`, error.message);
+    }
   }
+
+  res.json({ testResults: results });
 });
 
 app.listen(port, () => {
-  console.log(`🚀 Flip.ai backend running on port ${port}`);
+  console.log(`🚀 Ratio tester backend running on port ${port}`);
 });
