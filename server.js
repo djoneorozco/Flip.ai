@@ -1,72 +1,64 @@
-// ===============================
-// # server.js — Flip.ai Backend
-// ===============================
+//# ====================================================================
+//# server.js — Flip.ai Backend (SDK 2.5.0+, with correct ratio)
+//# ====================================================================
 
-//#1 – Import Dependencies
 import express from 'express';
-import multer from 'multer';
+import bodyParser from 'body-parser';
 import cors from 'cors';
+import RunwayML, { RunwayMLError, TaskFailedError } from '@runwayml/sdk';
 import dotenv from 'dotenv';
-import { Runway } from '@runwayml/sdk';
-import sizeOf from 'image-size';
 
 dotenv.config();
 
-//#2 – App Configuration
 const app = express();
 const port = process.env.PORT || 3000;
+
 app.use(cors());
-app.use(express.json());
+app.use(bodyParser.json({ limit: '10mb' }));
 
-//#3 – File Upload Setup
-const upload = multer();
-
-//#4 – Runway SDK Setup
-const runway = new Runway({
-  apiKey: process.env.RUNWAY_API_KEY,
+const runway = new RunwayML({
+  apiKey: process.env.RUNWAYML_API_SECRET ?? process.env.RUNWAY_API_KEY,
 });
 
-//#5 – Enhance Endpoint
-app.post('/enhance', upload.single('image'), async (req, res) => {
+// Healthcheck
+app.get('/', (_req, res) => res.send('✅ Flip.ai backend is running'));
+
+// Debug endpoint
+app.get('/debug/env', (_req, res) => {
+  let sdkVersion = 'unknown';
   try {
-    const prompt = req.body.prompt || "Modern, renovated, high-end real estate photo";
-    const imageBuffer = req.file.buffer;
+    sdkVersion = require('@runwayml/sdk/package.json').version;
+  } catch {}
+  res.json({ sdkVersion });
+});
 
-    // Get image dimensions and calculate aspect ratio
-    const dimensions = sizeOf(imageBuffer);
-    const ratio = +(dimensions.width / dimensions.height).toFixed(2); // rounded to 2 decimal places
-
-    // Optional: restrict to supported ranges if needed
-    if (!ratio || isNaN(ratio)) {
-      return res.status(400).json({ error: 'Unable to detect valid image ratio' });
+// Enhancement endpoint
+app.post('/enhance', async (req, res) => {
+  const { imageUrl, prompt } = req.body;
+  if (!imageUrl || !prompt) return res.status(400).json({ error: 'Missing inputs' });
+  try {
+    const options = {
+      model: 'gen4_image',
+      promptImage: imageUrl,
+      promptText: prompt,
+      ratio: '960:960',       // ✅ Use a numeric ratio!
+      guidanceScale: 9,
+      strength: 0.7,
+      numInferenceSteps: 25,
+    };
+    const task = await runway.textToImage.create(options);
+    const completed = await task.waitForTaskOutput();
+    const enhanced = completed.output?.image;
+    if (!enhanced) throw new Error('No image in response');
+    res.json({ image: enhanced });
+  } catch (err) {
+    if (err instanceof TaskFailedError || err instanceof RunwayMLError) {
+      console.error('Runway error:', err);
+    } else {
+      console.error('Unexpected error:', err);
     }
-
-    // Generate enhanced image with SDK
-    const result = await runway.image.toImage({
-      model: "gen-4",
-      prompt: prompt,
-      image: imageBuffer,
-      ratio: ratio,
-      output_format: "jpeg",
-    });
-
-    res.status(200).json({ base64: result });
-  } catch (error) {
-    console.error("Enhancement failed:", error.message || error);
-    res.status(500).json({ error: "Enhancement failed. Please try again." });
+    res.status(500).json({ error: 'Enhancement failed — check server logs.' });
   }
 });
 
-//#6 – Debug Route to Confirm ENV + SDK
-app.get('/debug/env', (req, res) => {
-  res.json({
-    usedKeyName: 'RUNWAY_API_KEY',
-    keyPresent: !!process.env.RUNWAY_API_KEY,
-    sdkVersion: Runway?.version || 'unknown',
-  });
-});
-
-//#7 – Launch Server
-app.listen(port, () => {
-  console.log(`🚀 Flip.ai backend running on port ${port}`);
-});
+app.listen(port, () => console.log(`🚀 Server listening on port ${port}`));
