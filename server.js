@@ -7,9 +7,11 @@ import express from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import RunwayML, { RunwayMLError, TaskFailedError } from '@runwayml/sdk';
+import { createRequire } from 'module';
 import dotenv from 'dotenv';
 
 dotenv.config();
+const requireCJS = createRequire(import.meta.url);
 
 //# Section 2: App & CORS Setup
 const app = express();
@@ -72,7 +74,12 @@ app.get('/', (_req, res) => {
 
 // Debug: Environment & SDK version
 app.get('/debug/env', (_req, res) => {
-  const sdkVersion = '2.5.0'; // ✅ Hardcoded version
+  let sdkVersion = 'unknown';
+  try {
+    sdkVersion = requireCJS('@runwayml/sdk/package.json').version;
+  } catch (e) {
+    console.warn('⚠️ Could not read @runwayml/sdk version:', e.message);
+  }
   res.json({
     usedKeyName,
     keyPresent: !!(process.env.RUNWAYML_API_SECRET || process.env.RUNWAY_API_KEY),
@@ -102,7 +109,7 @@ app.post('/enhance', async (req, res) => {
       model: 'gen4_image',
       promptImage: imageUrl,
       promptText: prompt,
-      ratio: 'square',               // ✅ Valid value for Runway Gen-4
+      ratio: '1:1',              // ✅ FIXED: must be a valid ratio
       guidanceScale: 9,
       strength: 0.7,
       numInferenceSteps: 25
