@@ -1,50 +1,62 @@
-// ===================================
-// # server.js — Flip.ai Final Fix ✅
-// ===================================
+//#1 — Import required modules
+const express = require('express');
+const cors = require('cors');
+const bodyParser = require('body-parser');
+const fetch = require('node-fetch');
+require('dotenv').config();
 
-const express = require("express");
-const cors = require("cors");
-const dotenv = require("dotenv");
-const { createClient } = require("@runwayml/sdk");
-
-dotenv.config();
-
+//#2 — Setup Express app
 const app = express();
-const port = process.env.PORT || 3000;
-
+const PORT = process.env.PORT || 3000;
 app.use(cors());
-app.use(express.json());
+app.use(bodyParser.json());
 
-// ✅ CORRECT USAGE FOR RUNWAY SDK V2
-const client = createClient({ apiKey: process.env.RUNWAY_API_KEY });
-
-app.post("/enhance", async (req, res) => {
+//#3 — POST /enhance route for Flip.ai
+app.post('/enhance', async (req, res) => {
   const { prompt, imageURL, ratio } = req.body;
 
+  // Basic validation
   if (!prompt || !imageURL || !ratio) {
-    return res.status(400).json({ error: "Missing inputs" });
+    return res.status(400).json({ error: 'Missing inputs' });
   }
 
   try {
-    const result = await client.run({
-      model: "gen-2", // Use "gen-4" or "gen-1" if enabled
-      input: {
-        prompt,
-        image: imageURL,
-        ratio: ratio
-      }
+    // Runway Gen-4 API call
+    const runwayResponse = await fetch('https://api.runwayml.com/v1/inference/gen-4/image-to-image', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.RUNWAY_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        input: {
+          prompt: prompt,
+          image: imageURL,
+          ratio: ratio
+        }
+      })
     });
 
-    res.json({ image: result });
+    const result = await runwayResponse.json();
+
+    if (runwayResponse.ok && result.outputs && result.outputs.length > 0) {
+      return res.status(200).json({ image: result.outputs[0] });
+    } else {
+      return res.status(500).json({
+        error: 'Runway generation failed',
+        details: result.error || result
+      });
+    }
   } catch (err) {
-    console.error("❌ Runway Error:", err);
-    res.status(500).json({
-      error: "Runway generation failed",
-      details: err.message || err.toString()
+    console.error('Runway Server Error:', err);
+    return res.status(500).json({
+      error: 'Internal server error',
+      details: err.message
     });
   }
 });
 
-app.listen(port, () => {
-  console.log(`🔥 Flip.ai backend running on http://localhost:${port}`);
+//#4 — Start server
+app.listen(PORT, () => {
+  console.log(`✅ Flip.ai enhancement server running on port ${PORT}`);
 });
