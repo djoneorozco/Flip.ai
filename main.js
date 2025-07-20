@@ -9,9 +9,9 @@ const outputContainer = document.getElementById('enhancedResult');
 if (!firebase.apps.length) {
   const firebaseConfig = {
     apiKey: "AIzaSyDkS2K8aLmO1cn4eF2D_5w3-N0usmodPto",
-    authDomain: "orozcorealty-a7ce6.firebaseapp.com",
-    projectId: "orozcorealty-a7ce6",
-    storageBucket: "orozcorealty-a7ce6.appspot.com",
+    authDomain: "flip-26d24.firebaseapp.com",                         // ✅ Switched to correct project
+    projectId: "flip-26d24",
+    storageBucket: "flip-26d24.appspot.com",                          // ✅ THIS IS THE IMPORTANT LINE
     messagingSenderId: "510699377586",
     appId: "1:510699377586:web:de0887b54664a8edf08aab",
     measurementId: "G-761XKT7LBN"
@@ -27,6 +27,7 @@ async function uploadToFirebase(file) {
     const imageRef = storageRef.child(`uploads/${file.name}`);
     await imageRef.put(file);
     const downloadURL = await imageRef.getDownloadURL();
+    console.log("✅ Uploaded to Firebase:", downloadURL);
     return downloadURL;
   } catch (error) {
     console.error("❌ Firebase upload error:", error);
@@ -46,6 +47,7 @@ async function enhanceImageWithRunway(imageUrl, prompt) {
     if (!response.ok) throw new Error('Enhancement failed. Please try again.');
 
     const data = await response.json();
+    console.log("✅ Enhanced image received from backend");
     return data.image; // base64-encoded image string
   } catch (error) {
     console.error("❌ Enhancement error:", error);
@@ -78,5 +80,6 @@ generateBtn.addEventListener('click', async () => {
     outputContainer.appendChild(outputImage);
   } catch (err) {
     outputContainer.innerHTML = "❌ Enhancement failed. Try again.";
+    console.error("Final error handler:", err);
   }
 });
