@@ -1,49 +1,37 @@
-// /netlify/functions/runwayEnhance.js
-
-const Runway = require('@runwayml/sdk');
-require('dotenv').config();
+const fetch = require("node-fetch");
 
 exports.handler = async (event) => {
-  if (event.httpMethod !== 'POST') {
-    return {
-      statusCode: 405,
-      body: JSON.stringify({ error: 'Only POST allowed' }),
-    };
-  }
-
   try {
-    const { prompt, imageURL, ratio } = JSON.parse(event.body);
+    const { imageURL, description } = JSON.parse(event.body);
 
-    if (!prompt || !imageURL) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'Missing prompt or imageURL' }),
-      };
-    }
-
-    const output = await Runway.run({
-      model: 'gen-4',
-      input: {
-        prompt,
-        image: imageURL,
-        ratio: ratio || 'square',
+    const runwayResponse = await fetch("https://api.runwayml.com/v2/real-esrgan/enhance", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.RUNWAY_API_KEY}`,
+        "Content-Type": "application/json"
       },
-      apiKey: process.env.RUNWAY_API_KEY,
+      body: JSON.stringify({
+        input: {
+          image: imageURL,
+          prompt: description || "Enhance real estate photo with clearer details"
+        }
+      })
     });
+
+    const data = await runwayResponse.json();
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ result: output }),
+      body: JSON.stringify({
+        base64: data.outputs[0]?.image || null,
+        status: "success"
+      })
     };
-
   } catch (err) {
-    console.error('❌ Runway API error:', err);
+    console.error("Runway enhance error:", err);
     return {
       statusCode: 500,
-      body: JSON.stringify({
-        error: 'Runway generation failed',
-        details: err.message,
-      }),
+      body: JSON.stringify({ error: "Enhancement failed", details: err.message })
     };
   }
 };
