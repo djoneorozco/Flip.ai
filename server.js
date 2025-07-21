@@ -1,54 +1,51 @@
-// server.js
-import express from "express";
-import cors from "cors";
-import dotenv from "dotenv";
-import fetch from "node-fetch";
+//#1. IMPORTS
+const express = require('express');
+const cors = require('cors');
+const bodyParser = require('body-parser');
+const dotenv = require('dotenv');
+const Runway = require('@runwayml/sdk');
 
 dotenv.config();
 
+//#2. SETUP
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
-app.use(express.json());
+app.use(bodyParser.json());
 
-app.post("/enhance", async (req, res) => {
-  const { imageURL, description } = req.body;
+//#3. INIT RUNWAY CLIENT
+const runway = new Runway({ apiKey: process.env.RUNWAY_API_KEY });
 
-  if (!imageURL) {
-    return res.status(400).json({ error: "Missing imageURL." });
+//#4. POST ENDPOINT
+app.post('/enhance', async (req, res) => {
+  const { prompt, imageURL, ratio } = req.body;
+
+  if (!prompt || !imageURL) {
+    return res.status(400).json({ error: 'Missing prompt or imageURL' });
   }
 
   try {
-    const response = await fetch("https://api.runwayml.com/v2/production/models/gen-4/images", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${process.env.RUNWAY_API_KEY}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        input: {
-          image: imageURL,
-          prompt: description || "Enhance real estate photo",
-        }
-      })
+    const output = await runway.run({
+      model: 'gen-4',
+      input: {
+        prompt: prompt,
+        image: imageURL,
+        ratio: ratio || 'square'
+      }
     });
 
-    const data = await response.json();
-    const enhancedImageBase64 = data?.outputs?.[0]?.image_base64;
-
-    if (enhancedImageBase64) {
-      res.json({ base64: enhancedImageBase64 });
-    } else {
-      res.status(500).json({ error: "Enhancement failed." });
-    }
-
-  } catch (err) {
-    console.error("Server Error:", err);
-    res.status(500).json({ error: "Internal server error." });
+    return res.json({ result: output });
+  } catch (error) {
+    console.error('❌ Runway generation failed:', error);
+    return res.status(500).json({
+      error: 'Runway generation failed',
+      details: error.message || 'Unknown error'
+    });
   }
 });
 
+//#5. SERVER LAUNCH
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`🚀 Server is running on port ${PORT}`);
 });
