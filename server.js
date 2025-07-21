@@ -21,7 +21,7 @@ app.get('/', (req, res) => {
   res.send('🚀 Render backend is alive and working!');
 });
 
-//#5: MAIN ENHANCE ENDPOINT — ✅ FIXED: use `.generate` not `.run`
+//#5: MAIN ENHANCE ENDPOINT — ✅ FIXED: use `.generate` from model instance
 app.post('/api/enhance', async (req, res) => {
   const { image_url, prompt = 'modern home, clean lighting', ratio = 'square' } = req.body;
 
@@ -30,8 +30,8 @@ app.post('/api/enhance', async (req, res) => {
   }
 
   try {
-    const output = await runway.generate({
-      model: 'gen-4',
+    const model = runway.model('gen-4');
+    const result = await model.generate({
       input: {
         image: image_url,
         prompt: prompt,
@@ -39,17 +39,5 @@ app.post('/api/enhance', async (req, res) => {
       }
     });
 
-    res.json({ result: output });
-  } catch (error) {
-    console.error('❌ Runway failed:', error);
-    res.status(500).json({
-      error: 'Runway failed',
-      details: error.message || 'Unknown error'
-    });
-  }
-});
-
-//#6: START SERVER
-app.listen(PORT, () => {
-  console.log(`✅ Server running on port ${PORT}`);
-});
+    res.json({ result });
+  } catch (error)
