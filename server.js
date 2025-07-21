@@ -21,7 +21,7 @@ app.get('/', (req, res) => {
   res.send('🚀 Render backend is alive and working!');
 });
 
-//#5: MAIN ENHANCE ENDPOINT — ✅ FIXED: use `.generate` from model instance
+//#5: MAIN ENHANCE ENDPOINT — ✅ FINAL FIX uses `.run()` method
 app.post('/api/enhance', async (req, res) => {
   const { image_url, prompt = 'modern home, clean lighting', ratio = 'square' } = req.body;
 
@@ -30,8 +30,8 @@ app.post('/api/enhance', async (req, res) => {
   }
 
   try {
-    const model = runway.model('gen-4');
-    const result = await model.generate({
+    const result = await runway.run({
+      model: 'gen-4',
       input: {
         image: image_url,
         prompt: prompt,
