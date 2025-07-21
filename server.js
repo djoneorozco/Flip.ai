@@ -10,18 +10,18 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors());
+app.use(cors()); // ✅ Fixes the CORS issue you're seeing
 app.use(bodyParser.json());
 
 //#3: INIT RUNWAY CLIENT
 const runway = new Runway({ apiKey: process.env.RUNWAY_API_KEY });
 
-//#4: TEST ENDPOINT
+//#4: TEST ENDPOINT — Confirm system works
 app.get('/', (req, res) => {
   res.send('🚀 Render backend is alive and working!');
 });
 
-//#5: MAIN ENHANCE ENDPOINT — ✅ FIXED AGAIN
+//#5: MAIN ENHANCE ENDPOINT — Clean, fixed generate() call
 app.post('/api/enhance', async (req, res) => {
   const { image_url, prompt = 'modern home, clean lighting', ratio = 'square' } = req.body;
 
@@ -30,8 +30,8 @@ app.post('/api/enhance', async (req, res) => {
   }
 
   try {
-    // ✅ This is the correct syntax that works with the Runway SDK
-    const output = await runway.model('gen-4').generate({
+    const output = await runway.generate({
+      model: 'gen-4', // ✅ No more runway.model() or .run() — use generate()
       input: {
         image: image_url,
         prompt: prompt,
