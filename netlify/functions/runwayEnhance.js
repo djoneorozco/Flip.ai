@@ -1,13 +1,13 @@
-// 📁 /netlify/functions/runwayEnhance.js
+// /netlify/functions/runwayEnhance.js
 
-const fetch = require('node-fetch');
+const Runway = require('@runwayml/sdk');
 require('dotenv').config();
 
-exports.handler = async (event, context) => {
+exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
-      body: JSON.stringify({ error: 'Method Not Allowed' }),
+      body: JSON.stringify({ error: 'Only POST allowed' }),
     };
   }
 
@@ -17,46 +17,32 @@ exports.handler = async (event, context) => {
     if (!prompt || !imageURL) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ error: 'Missing required inputs: prompt or imageURL' }),
+        body: JSON.stringify({ error: 'Missing prompt or imageURL' }),
       };
     }
 
-    const response = await fetch('https://api.runwayml.com/v1/generate/gen4_turbo', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.RUNWAY_API_KEY}`,
-      },
-      body: JSON.stringify({
-        prompt: prompt,
-        image_url: imageURL,
+    const output = await Runway.run({
+      model: 'gen-4',
+      input: {
+        prompt,
+        image: imageURL,
         ratio: ratio || 'square',
-      }),
+      },
+      apiKey: process.env.RUNWAY_API_KEY,
     });
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      return {
-        statusCode: response.status,
-        body: JSON.stringify({
-          error: 'Runway generation failed',
-          details: result,
-        }),
-      };
-    }
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ result }),
+      body: JSON.stringify({ result: output }),
     };
-  } catch (error) {
-    console.error('❌ Runway error:', error);
+
+  } catch (err) {
+    console.error('❌ Runway API error:', err);
     return {
       statusCode: 500,
       body: JSON.stringify({
-        error: 'Unexpected server error',
-        details: error.message,
+        error: 'Runway generation failed',
+        details: err.message,
       }),
     };
   }
