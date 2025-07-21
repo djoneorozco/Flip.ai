@@ -1,4 +1,4 @@
-//#1: Firebase Config (MODULAR SDK)
+//#1: Firebase Config
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-app.js";
 import {
   getStorage,
@@ -7,7 +7,7 @@ import {
   getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-storage.js";
 
-//#2: Initialize Firebase App + Storage
+//#2: Initialize Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyCRuzVdgPFZ11Le9-BtzXxNEzic6K2610Y",
   authDomain: "flip-26d24.firebaseapp.com",
@@ -21,40 +21,71 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const storage = getStorage(app);
 
-//#3: Upload Logic for Image File
-const fileInput = document.getElementById("imageInput");        // 🔄 Updated ID to match your form
-const uploadStatus = document.createElement("p");
-const preview = document.createElement("img");
-preview.style.display = "none";
-preview.style.maxWidth = "300px";
-preview.style.marginTop = "20px";
+//#3: DOM Elements
+const fileInput = document.getElementById("imageUpload");
+const uploadStatus = document.getElementById("uploadStatus");
+const preview = document.getElementById("previewImage");
+const generateBtn = document.getElementById("generateBtn");
+const flipPlanInput = document.getElementById("flipPlan");
+const resultImage = document.getElementById("resultImage");
+const enhanceStatus = document.getElementById("enhanceStatus");
 
-// Attach elements below input field
-fileInput.parentNode.appendChild(uploadStatus);
-fileInput.parentNode.appendChild(preview);
-
-//#4: File Upload Handler
+//#4: Upload to Firebase
 fileInput.addEventListener("change", async (event) => {
   const file = event.target.files[0];
   if (!file) return;
 
   try {
-    uploadStatus.textContent = "⏳ Uploading image to Firebase...";
+    uploadStatus.textContent = "Uploading to Firebase...";
     const storageRef = ref(storage, `uploads/${file.name}`);
     await uploadBytes(storageRef, file);
-
     const url = await getDownloadURL(storageRef);
-    uploadStatus.textContent = "✅ Image uploaded! URL is ready.";
+
+    uploadStatus.textContent = "✅ Uploaded! Public URL ready.";
     preview.src = url;
     preview.style.display = "block";
+    window.imageURL = url;
 
-    console.log("🟢 Firebase Public URL:", url);
+    console.log("Public Firebase URL:", url);
+  } catch (err) {
+    console.error("Upload failed:", err);
+    uploadStatus.textContent = "❌ Upload failed. See console.";
+  }
+});
 
-    // 🌟 Make globally available for Runway generation
-    window.firebaseImageURL = url;
+//#5: Enhance with Runway API
+generateBtn.addEventListener("click", async () => {
+  const prompt = flipPlanInput.value;
+  const imageURL = window.imageURL;
+  const ratio = "square"; // You can let users choose later
 
+  if (!prompt || !imageURL) {
+    alert("Please upload an image and enter a flip plan.");
+    return;
+  }
+
+  try {
+    enhanceStatus.textContent = "⏳ Enhancing with AI...";
+    const response = await fetch("https://flip-ai.onrender.com/enhance", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ prompt, imageURL, ratio })
+    });
+
+    const data = await response.json();
+
+    if (data.result && data.result.image) {
+      resultImage.src = data.result.image;
+      resultImage.style.display = "block";
+      enhanceStatus.textContent = "✅ Enhancement complete!";
+    } else {
+      console.error("No image returned:", data);
+      enhanceStatus.textContent = "❌ Failed to enhance. Check logs.";
+    }
   } catch (error) {
-    console.error("❌ Firebase upload failed:", error);
-    uploadStatus.textContent = "❌ Upload failed. Check console for details.";
+    console.error("Error during enhancement:", error);
+    enhanceStatus.textContent = "❌ Enhancement error. See console.";
   }
 });
