@@ -21,30 +21,50 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const storage = getStorage(app);
 
-//#4: Upload Logic
+//#4: DOM Elements
 const uploadButton = document.getElementById('uploadBtn');
 const imageInput = document.getElementById('imageInput');
 const preview = document.getElementById('preview');
 const urlOutput = document.getElementById('downloadUrl');
+const flipPlan = document.getElementById('flipPlan');
+const enhancedPreview = document.getElementById('enhancedImage');
 
+//#5: Upload to Firebase + Trigger Render Enhance
 uploadButton.addEventListener('click', async () => {
   const file = imageInput.files[0];
-
-  if (!file) {
-    alert('Please select a file first.');
-    return;
-  }
+  if (!file) return alert('Please select a file.');
 
   const storageRef = ref(storage, 'uploads/' + file.name);
 
   try {
+    // Upload to Firebase
+    const uploading = "Uploading to Firebase...";
+    urlOutput.textContent = uploading;
     await uploadBytes(storageRef, file);
     const downloadURL = await getDownloadURL(storageRef);
-
     preview.src = downloadURL;
     urlOutput.textContent = downloadURL;
+
+    // Call Render Backend
+    const plan = flipPlan.value || "Enhance image for real estate listing";
+    const response = await fetch("https://flip-ai.onrender.com/enhance", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        imageURL: downloadURL,
+        description: plan
+      })
+    });
+
+    const result = await response.json();
+    if (result.base64) {
+      enhancedPreview.src = `data:image/png;base64,${result.base64}`;
+    } else {
+      alert("Enhancement failed.");
+    }
+
   } catch (err) {
-    console.error("Upload failed:", err);
-    alert("Upload failed. Check console for details.");
+    console.error("Error:", err);
+    alert("Something went wrong. Check the console.");
   }
 });
