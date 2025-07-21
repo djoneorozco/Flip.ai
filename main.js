@@ -8,10 +8,10 @@ const outputContainer = document.getElementById('enhancedResult');
 //#2 – Firebase Config (Updated to flip-26d24)
 if (!firebase.apps.length) {
   const firebaseConfig = {
-    apiKey: "AIzaSyD9VmWrU0ZVy0Lb8rxYV58SmEUxF1z4HHI", // replace if needed
+    apiKey: "AIzaSyD9VmWrU0ZVy0Lb8rxYV58SmEUxF1z4HHI",
     authDomain: "flip-26d24.firebaseapp.com",
     projectId: "flip-26d24",
-    storageBucket: "flip-26d24.firebasestorage.app", // ✅ FIXED HERE
+    storageBucket: "flip-26d24.appspot.com",
     messagingSenderId: "YOUR_SENDER_ID",
     appId: "YOUR_APP_ID"
   };
