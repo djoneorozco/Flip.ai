@@ -3,82 +3,48 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Flip.ai Firebase Upload</title>
+  <title>Flip.ai — Enhance Test</title>
   <style>
     body {
       background: #121212;
       color: #fff;
-      font-family: "Segoe UI", sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      margin: 0;
-    }
-
-    .card {
-      background: #1e1e1e;
-      padding: 40px;
-      border-radius: 12px;
-      box-shadow: 0 0 20px rgba(255, 105, 180, 0.15);
+      font-family: 'Arial', sans-serif;
       text-align: center;
+      padding: 2rem;
     }
-
-    h1 {
-      font-size: 28px;
-      margin-bottom: 20px;
-    }
-
-    input[type="file"] {
-      background: #333;
+    input, button {
+      margin: 10px;
       padding: 10px;
-      border-radius: 6px;
-      color: #fff;
+      font-size: 1rem;
+      border-radius: 5px;
       border: none;
-      margin-bottom: 20px;
     }
-
-    button {
-      padding: 12px 24px;
-      border: 2px solid #fff;
-      border-radius: 8px;
-      background: none;
-      color: #fff;
-      font-size: 16px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-
-    button:hover {
-      background-color: #ff3e81;
-      border-color: #ff3e81;
-    }
-
-    img {
-      margin-top: 20px;
+    #original, #enhanced {
       max-width: 300px;
-      border-radius: 8px;
-      box-shadow: 0 0 10px rgba(255,255,255,0.1);
+      margin: 20px auto;
+      display: block;
+      border-radius: 10px;
     }
-
-    #downloadUrl {
-      margin-top: 10px;
-      word-break: break-all;
-      color: #aaa;
+    .section {
+      margin-bottom: 2rem;
     }
   </style>
 </head>
 <body>
-  <div class="card">
-    <h1>🔥 Flip.ai Firebase Upload</h1>
+  <h1>🛠️ Flip.ai — Runway Enhance Test</h1>
 
-    <input type="file" id="imageInput" accept="image/*"/>
-    <br/><br/>
-    <button id="uploadBtn">Upload to Firebase</button>
+  <div class="section">
+    <p>Original Firebase Image:</p>
+    <img id="original" src="https://firebasestorage.googleapis.com/v0/b/flip-26d24.firebasestorage.app/o/uploads%2Fimages.jpg?alt=media&token=554f9e08-f28a-47b1-89b8-5c7d09c01936" />
+  </div>
 
-    <img id="preview" src="" alt="Preview will appear here"/>
-    <p id="downloadUrl"></p>
+  <div class="section">
+    <button id="runEnhance">Enhance Image</button>
+  </div>
+
+  <div class="section">
+    <p>Enhanced Image:</p>
+    <img id="enhanced" src="" />
   </div>
 
   <script type="module" src="main.js"></script>
