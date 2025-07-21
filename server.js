@@ -3,7 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const dotenv = require('dotenv');
-const Runway = require('@runwayml/sdk'); // Correct import
+const Runway = require('@runwayml/sdk'); // Still correct
 
 dotenv.config();
 
@@ -14,7 +14,10 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(bodyParser.json());
 
-//# 3. POST ENDPOINT
+//# 3. INIT RUNWAY CLIENT (✅ FIXED HERE)
+const runway = new Runway({ apiKey: process.env.RUNWAY_API_KEY });
+
+//# 4. POST ENDPOINT
 app.post('/enhance', async (req, res) => {
   const { prompt, imageURL, ratio } = req.body;
 
@@ -23,14 +26,13 @@ app.post('/enhance', async (req, res) => {
   }
 
   try {
-    const output = await Runway.run({
+    const output = await runway.run({
       model: 'gen-4',
       input: {
         prompt: prompt,
         image: imageURL,
         ratio: ratio || 'square', // fallback
-      },
-      apiKey: process.env.RUNWAY_API_KEY,
+      }
     });
 
     return res.json({ result: output });
@@ -43,7 +45,7 @@ app.post('/enhance', async (req, res) => {
   }
 });
 
-//# 4. SERVER LAUNCH
+//# 5. SERVER LAUNCH
 app.listen(PORT, () => {
   console.log(`🚀 Server is running on port ${PORT}`);
 });
