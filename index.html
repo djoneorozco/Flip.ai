@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Firebase Upload Test</title>
+  <title>Flip.ai — Firebase Upload</title>
   <style>
     body {
       background: #121212;
@@ -33,7 +33,7 @@
     }
     .url-output {
       margin-top: 10px;
-      word-break: break-all;
+      word-break: break-word;
       font-size: 0.9rem;
       color: #00ff9d;
     }
@@ -41,59 +41,14 @@
 </head>
 <body>
   <div class="box">
-    <h2>🔥 Firebase Image Upload Test</h2>
-    <input type="file" id="imageInput" />
+    <h2>🔥 Flip.ai Firebase Upload</h2>
+    <input type="file" id="imageUpload" />
     <button onclick="uploadImage()">Upload to Firebase</button>
     <div class="url-output" id="downloadUrl"></div>
-    <img id="preview" src="" />
+    <img id="previewImage" src="" />
   </div>
 
-  <!-- Firebase JS SDKs -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-app.js";
-    import {
-      getStorage,
-      ref,
-      uploadBytes,
-      getDownloadURL
-    } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-storage.js";
-
-    // Firebase Config
-    const firebaseConfig = {
-      apiKey: "AIzaSyDkS2K8aLmO1cn4eF2D_5w3-N0usmodPto",
-      authDomain: "orozcorealty-a7ce6.firebaseapp.com",
-      projectId: "orozcorealty-a7ce6",
-      storageBucket: "orozcorealty-a7ce6.appspot.com",
-      messagingSenderId: "510699377586",
-      appId: "1:510699377586:web:de0887b54664a8edf08aab"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const storage = getStorage(app);
-
-    // Upload function
-    window.uploadImage = async function () {
-      const fileInput = document.getElementById('imageInput');
-      const file = fileInput.files[0];
-
-      if (!file) {
-        alert('Please select an image first.');
-        return;
-      }
-
-      const storageRef = ref(storage, 'test-uploads/' + file.name);
-
-      try {
-        await uploadBytes(storageRef, file);
-        const downloadURL = await getDownloadURL(storageRef);
-
-        document.getElementById('downloadUrl').textContent = downloadURL;
-        document.getElementById('preview').src = downloadURL;
-      } catch (error) {
-        console.error('Upload failed:', error);
-        alert('Upload failed. Check console for details.');
-      }
-    };
-  </script>
+  <!-- Firebase JS SDK -->
+  <script type="module" src="./main.js"></script>
 </body>
 </html>
