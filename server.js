@@ -40,4 +40,16 @@ app.post('/api/enhance', async (req, res) => {
     });
 
     res.json({ result });
-  } catch (error)
+  } catch (error) {
+    console.error('❌ Runway failed:', error);
+    res.status(500).json({
+      error: 'Runway failed',
+      details: error.message || 'Unknown error'
+    });
+  }
+});
+
+//#6: START SERVER
+app.listen(PORT, () => {
+  console.log(`✅ Server running on port ${PORT}`);
+});
