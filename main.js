@@ -1,81 +1,51 @@
-//#1 – DOM Elements
-const uploadInput = document.getElementById('imageInput');
-const generateBtn = document.getElementById('enhanceBtn');
-const outputImage = document.createElement('img');
-const loader = document.createElement('div');
-const outputContainer = document.getElementById('enhancedResult');
+//#1: Firebase Config
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-app.js";
+import {
+  getStorage,
+  ref,
+  uploadBytes,
+  getDownloadURL
+} from "https://www.gstatic.com/firebasejs/10.5.2/firebase-storage.js";
 
-//#2 – Firebase Config (Updated to flip-26d24.firebasestorage.app)
-if (!firebase.apps.length) {
-  const firebaseConfig = {
-    apiKey: "AIzaSyD9VmWrU0ZVy0Lb8rxYV58SmEUxF1z4HHI",
-    authDomain: "flip-26d24.firebaseapp.com",
-    projectId: "flip-26d24",
-    storageBucket: "flip-26d24.firebasestorage.app", // ✅ FIXED LINE
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
-  };
-  firebase.initializeApp(firebaseConfig);
-}
-const storage = firebase.storage();
+//#2: Initialize Firebase
+const firebaseConfig = {
+  apiKey: "AIzaSyCRuzVdgPFZ11Le9-BtzXxNEzic6K2610Y",
+  authDomain: "flip-26d24.firebaseapp.com",
+  projectId: "flip-26d24",
+  storageBucket: "flip-26d24.appspot.com",
+  messagingSenderId: "1093213350372",
+  appId: "1:1093213350372:web:9b39594ef5a4cce6acbff1",
+  measurementId: "G-GS51GRBJ43"
+};
 
-//#3 – Upload to Firebase Storage
-async function uploadToFirebase(file) {
-  try {
-    const storageRef = storage.ref();
-    const imageRef = storageRef.child(`uploads/${file.name}`);
-    await imageRef.put(file);
-    const downloadURL = await imageRef.getDownloadURL();
-    return downloadURL;
-  } catch (error) {
-    console.error("❌ Firebase upload error:", error);
-    throw new Error("Image upload failed.");
-  }
-}
+const app = initializeApp(firebaseConfig);
+const storage = getStorage(app);
 
-//#4 – Enhance Image via Render Backend
-async function enhanceImageWithRunway(imageUrl, prompt) {
-  try {
-    const response = await fetch('https://flip-ai.onrender.com/enhance', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ imageUrl, prompt })
-    });
+//#3: Listen for file input and upload
+const fileInput = document.getElementById("imageUpload");
+const uploadStatus = document.getElementById("uploadStatus");
+const preview = document.getElementById("previewImage");
 
-    if (!response.ok) throw new Error('Enhancement failed. Please try again.');
-    const data = await response.json();
-    return data.image;
-  } catch (error) {
-    console.error("❌ Enhancement error:", error);
-    throw new Error("AI enhancement failed.");
-  }
-}
-
-//#5 – Handle Button Click
-generateBtn.addEventListener('click', async () => {
-  const file = uploadInput.files[0];
-  const prompt = "Enhance this image for flip potential";
-
-  if (!file) {
-    alert('📂 Please upload an image first.');
-    return;
-  }
+fileInput.addEventListener("change", async (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
 
   try {
-    outputContainer.innerHTML = "⏳ Enhancing image... please wait.";
-    outputContainer.style.display = 'block';
+    uploadStatus.textContent = "Uploading to Firebase...";
+    const storageRef = ref(storage, `uploads/${file.name}`);
+    await uploadBytes(storageRef, file);
 
-    const imageUrl = await uploadToFirebase(file);
-    const enhancedImage = await enhanceImageWithRunway(imageUrl, prompt);
+    const url = await getDownloadURL(storageRef);
+    uploadStatus.textContent = "✅ Uploaded! Public URL ready.";
+    preview.src = url;
+    preview.style.display = "block";
 
-    outputImage.src = enhancedImage;
-    outputImage.style.maxWidth = "100%";
-    outputImage.style.border = "1px solid #666";
+    console.log("Public Firebase URL:", url);
+    // Store this URL for Runway API in next step
+    window.imageURL = url;
 
-    outputContainer.innerHTML = "<p><strong>Enhanced Image:</strong></p>";
-    outputContainer.appendChild(outputImage);
   } catch (err) {
-    console.error("❌ Final error handler:", err);
-    outputContainer.innerHTML = "❌ Enhancement failed. Try again.";
+    console.error("Upload failed:", err);
+    uploadStatus.textContent = "❌ Upload failed. See console.";
   }
 });
