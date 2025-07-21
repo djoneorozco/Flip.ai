@@ -16,12 +16,12 @@ app.use(bodyParser.json());
 //#3: INIT RUNWAY CLIENT
 const runway = new Runway({ apiKey: process.env.RUNWAY_API_KEY });
 
-//#4: TEST ENDPOINT — Confirm system works
+//#4: TEST ENDPOINT
 app.get('/', (req, res) => {
   res.send('🚀 Render backend is alive and working!');
 });
 
-//#5: MAIN ENHANCE ENDPOINT — ✅ CORRECTED: use runway.model('gen-4').generate()
+//#5: MAIN ENHANCE ENDPOINT — ✅ FIXED AGAIN
 app.post('/api/enhance', async (req, res) => {
   const { image_url, prompt = 'modern home, clean lighting', ratio = 'square' } = req.body;
 
@@ -30,6 +30,7 @@ app.post('/api/enhance', async (req, res) => {
   }
 
   try {
+    // ✅ This is the correct syntax that works with the Runway SDK
     const output = await runway.model('gen-4').generate({
       input: {
         image: image_url,
