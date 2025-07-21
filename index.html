@@ -2,76 +2,98 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Flip.ai ROI Analyzer</title>
-  <link rel="stylesheet" href="style.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
-
-  <!-- Firebase SDKs (v9 compat for main.js) -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Firebase Upload Test</title>
+  <style>
+    body {
+      background: #121212;
+      color: #fff;
+      font-family: 'Arial', sans-serif;
+      padding: 2rem;
+    }
+    .box {
+      background: #1e1e1e;
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 500px;
+      margin: auto;
+    }
+    input, button {
+      margin-top: 10px;
+      width: 100%;
+      padding: 10px;
+      border-radius: 6px;
+      border: none;
+      font-size: 1rem;
+    }
+    img {
+      margin-top: 20px;
+      max-width: 100%;
+      border-radius: 10px;
+    }
+    .url-output {
+      margin-top: 10px;
+      word-break: break-all;
+      font-size: 0.9rem;
+      color: #00ff9d;
+    }
+  </style>
 </head>
 <body>
-
-  <!-- 🌙 Dark Mode Toggle -->
-  <div class="toggle-container">
-    <label>
-      <input type="checkbox" id="themeToggle" />
-      🌙 Dark Mode
-    </label>
+  <div class="box">
+    <h2>🔥 Firebase Image Upload Test</h2>
+    <input type="file" id="imageInput" />
+    <button onclick="uploadImage()">Upload to Firebase</button>
+    <div class="url-output" id="downloadUrl"></div>
+    <img id="preview" src="" />
   </div>
 
-  <!-- 🎥 Ambient Corner Video Background -->
-  <video id="lightVideo" autoplay muted loop playsinline>
-    <source src="/images/uploads/lightcornervideo.mp4" type="video/mp4" />
-    Your browser does not support the video tag.
-  </video>
+  <!-- Firebase JS SDKs -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-app.js";
+    import {
+      getStorage,
+      ref,
+      uploadBytes,
+      getDownloadURL
+    } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-storage.js";
 
-  <video id="darkVideo" autoplay muted loop playsinline>
-    <source src="/images/uploads/darkcornervideo.mp4" type="video/mp4" />
-    Your browser does not support the video tag.
-  </video>
+    // Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyDkS2K8aLmO1cn4eF2D_5w3-N0usmodPto",
+      authDomain: "orozcorealty-a7ce6.firebaseapp.com",
+      projectId: "orozcorealty-a7ce6",
+      storageBucket: "orozcorealty-a7ce6.appspot.com",
+      messagingSenderId: "510699377586",
+      appId: "1:510699377586:web:de0887b54664a8edf08aab"
+    };
 
-  <!-- 💼 Main Content -->
-  <div class="container">
-    <h2>Flip.ai ROI Analyzer</h2>
-    <p>Unlock your property’s true investment potential</p>
+    const app = initializeApp(firebaseConfig);
+    const storage = getStorage(app);
 
-    <!-- ROI Form -->
-    <form id="roiForm">
-      <label for="purchasePrice">Purchase Price</label>
-      <input type="number" id="purchasePrice" placeholder="e.g. 180000" required />
+    // Upload function
+    window.uploadImage = async function () {
+      const fileInput = document.getElementById('imageInput');
+      const file = fileInput.files[0];
 
-      <label for="rehabBudget">Rehab Budget</label>
-      <input type="number" id="rehabBudget" placeholder="e.g. 35000" required />
+      if (!file) {
+        alert('Please select an image first.');
+        return;
+      }
 
-      <label for="arv">After Repair Value (ARV)</label>
-      <input type="number" id="arv" placeholder="e.g. 290000" required />
+      const storageRef = ref(storage, 'test-uploads/' + file.name);
 
-      <label for="zipCode">Property ZIP Code</label>
-      <input type="text" id="zipCode" placeholder="e.g. 78245" required />
+      try {
+        await uploadBytes(storageRef, file);
+        const downloadURL = await getDownloadURL(storageRef);
 
-      <button type="submit">Analyze Deal</button>
-    </form>
-
-    <hr style="margin: 40px 0; border-color: #333;">
-
-    <!-- 🖼️ Image Enhancement -->
-    <h3>Optional: Upload Image to Enhance</h3>
-    <input type="file" id="imageInput" accept="image/*" />
-    <button id="enhanceBtn">Enhance Image</button>
-
-    <div id="enhancedResult" style="margin-top: 20px;"></div>
-  </div>
-
-  <!-- 🌗 Theme Toggle Script -->
-  <script>
-    document.getElementById('themeToggle').addEventListener('change', function () {
-      document.body.classList.toggle('dark-mode');
-    });
+        document.getElementById('downloadUrl').textContent = downloadURL;
+        document.getElementById('preview').src = downloadURL;
+      } catch (error) {
+        console.error('Upload failed:', error);
+        alert('Upload failed. Check console for details.');
+      }
+    };
   </script>
-
-  <!-- 🚀 App Logic as ES6 Module -->
-  <script type="module" src="main.js"></script>
 </body>
 </html>
