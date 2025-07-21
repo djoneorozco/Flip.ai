@@ -5,13 +5,13 @@ const outputImage = document.createElement('img');
 const loader = document.createElement('div');
 const outputContainer = document.getElementById('enhancedResult');
 
-//#2 – Firebase Config (Updated to flip-26d24)
+//#2 – Firebase Config (Updated to flip-26d24.firebasestorage.app)
 if (!firebase.apps.length) {
   const firebaseConfig = {
     apiKey: "AIzaSyD9VmWrU0ZVy0Lb8rxYV58SmEUxF1z4HHI",
     authDomain: "flip-26d24.firebaseapp.com",
     projectId: "flip-26d24",
-    storageBucket: "flip-26d24.appspot.com",
+    storageBucket: "flip-26d24.firebasestorage.app", // ✅ FIXED LINE
     messagingSenderId: "YOUR_SENDER_ID",
     appId: "YOUR_APP_ID"
   };
@@ -75,6 +75,7 @@ generateBtn.addEventListener('click', async () => {
     outputContainer.innerHTML = "<p><strong>Enhanced Image:</strong></p>";
     outputContainer.appendChild(outputImage);
   } catch (err) {
+    console.error("❌ Final error handler:", err);
     outputContainer.innerHTML = "❌ Enhancement failed. Try again.";
   }
 });
