@@ -3,148 +3,50 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>e-SaSS – Smart Email Engine</title>
-  <link rel="stylesheet" href="style.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+  <title>Flip.ai — Enhance Test</title>
+  <style>
+    body {
+      background: #121212;
+      color: #fff;
+      font-family: 'Arial', sans-serif;
+      text-align: center;
+      padding: 2rem;
+    }
+    input, button {
+      margin: 10px;
+      padding: 10px;
+      font-size: 1rem;
+      border-radius: 5px;
+      border: none;
+    }
+    #original, #enhanced {
+      max-width: 300px;
+      margin: 20px auto;
+      display: block;
+      border-radius: 10px;
+    }
+    .section {
+      margin-bottom: 2rem;
+    }
+  </style>
 </head>
 <body>
-  <!-- 🌙 Dark Mode Toggle -->
-  <div class="toggle-container">
-    <label>
-      <input type="checkbox" id="themeToggle" />
-      🌙 Dark Mode
-    </label>
+  <h1>🛠️ Flip.ai — Runway Enhance Test</h1>
+
+  <div class="section">
+    <p>Original Firebase Image:</p>
+    <img id="original" src="https://firebasestorage.googleapis.com/v0/b/flip-26d24.firebasestorage.app/o/uploads%2Fimages.jpg?alt=media&token=554f9e08-f28a-47b1-89b8-5c7d09c01936" />
   </div>
 
-  <!-- 💼 Form Card -->
-  <form id="eSaSSForm" autocomplete="off">
-    <h2>e-SaSS – Eloquent Email Generator</h2>
-    <p>Let AI craft your perfect real estate message—<span style="font-weight:600;">tailored for you</span>.</p>
-
-    <!-- Purpose Dropdown -->
-    <label for="purpose">Purpose of Message</label>
-    <select name="purpose" id="purpose" required>
-      <option value="" disabled selected>Select purpose...</option>
-      <option value="Inform">Inform</option>
-      <option value="Persuade">Persuade</option>
-      <option value="Clarify">Clarify</option>
-      <option value="Apologize">Apologize</option>
-      <option value="Congratulate">Congratulate</option>
-    </select>
-
-    <!-- Audience Dropdown -->
-    <label for="audience">Who It's For</label>
-    <select name="audience" id="audience" required>
-      <option value="" disabled selected>Select recipient...</option>
-      <option value="Buyer">Buyer</option>
-      <option value="Seller">Seller</option>
-      <option value="Connect New Client">Connect New Client</option>
-      <option value="Connect Old Client">Connect Old Client</option>
-    </select>
-
-    <!-- Tone Slider -->
-    <label for="sassLevel">SaSS Level (Tone)</label>
-    <input type="range" name="sassLevel" id="sassLevel" min="1" max="10" value="5" />
-    <div style="font-size:13px; margin-bottom:18px;">
-      <span>Professional/Direct</span>
-      <span style="float:right;">Friendly/Casual</span>
-    </div>
-
-    <!-- Context Depth Slider -->
-    <label for="contextDepth">Context Depth</label>
-    <input type="range" name="contextDepth" id="contextDepth" min="1" max="10" value="5" />
-    <div style="font-size:13px; margin-bottom:18px;">
-      <span>Low</span>
-      <span style="float:right;">High</span>
-    </div>
-
-    <!-- Emoji/Slang Slider -->
-    <label for="emojiSlang">Emoji/Slang Level</label>
-    <input type="range" name="emojiSlang" id="emojiSlang" min="0" max="10" value="0" />
-    <div style="font-size:13px; margin-bottom:18px;">
-      <span>None</span>
-      <span style="float:right;">Heavy</span>
-    </div>
-
-    <!-- Message Context (Background) -->
-    <label for="background">What’s the situation or background?</label>
-    <textarea name="background" id="background" rows="4" placeholder="E.g. The buyer had a late appraisal, we need to inform them of the closing delay..." required></textarea>
-
-    <!-- Upload Field (Optional) -->
-    <label for="upload">Attach a file (optional)</label>
-    <input type="file" name="upload" id="upload" />
-
-    <!-- Lens Toggle -->
-    <div style="margin:20px 0 10px 0;">
-      <input type="checkbox" id="lensToggle" name="lensToggle" />
-      <label for="lensToggle" style="display:inline;font-weight:600;">Show Lens Depth Controls (Why AI wrote it this way)</label>
-    </div>
-    <!-- Lens Controls (hidden unless toggled on) -->
-    <div id="lensControls" style="display:none;">
-      <label for="psychology">Psychology Lens</label>
-      <input type="range" name="psychology" id="psychology" min="1" max="10" value="5" />
-      <div style="font-size:13px; margin-bottom:14px;">
-        <span>Quick read</span>
-        <span style="float:right;">Deep science</span>
-      </div>
-      <label for="business">Business Lens</label>
-      <input type="range" name="business" id="business" min="1" max="10" value="5" />
-      <div style="font-size:13px; margin-bottom:14px;">
-        <span>Justification</span>
-        <span style="float:right;">MBA-level</span>
-      </div>
-      <label for="technical">Insight Lens</label>
-      <input type="range" name="technical" id="technical" min="1" max="10" value="5" />
-      <div style="font-size:13px; margin-bottom:18px;">
-        <span>Simple</span>
-        <span style="float:right;">Research-grade</span>
-      </div>
-    </div>
-
-    <button type="submit">Generate Email</button>
-    <div id="progress" style="margin-top:12px;min-height:20px;color:#9647ff;font-weight:600;"></div>
-  </form>
-
-  <!-- =================== -->
-  <!-- Email Output Card   -->
-  <!-- =================== -->
-  <div id="outputWrapper">
-    <div class="email-card">
-      <button class="copy-btn" onclick="copyEmailOutput()">Copy All</button>
-      <div id="emailOutput"></div>
-    </div>
+  <div class="section">
+    <button id="runEnhance">Enhance Image</button>
   </div>
 
-  <!-- =================== -->
-  <!-- Lens Explanation    -->
-  <!-- =================== -->
-  <div id="lensResults"></div>
+  <div class="section">
+    <p>Enhanced Image:</p>
+    <img id="enhanced" src="" />
+  </div>
 
-  <!-- =================== -->
-  <!-- SCRIPTS             -->
-  <!-- =================== -->
-  <script>
-    // Dark mode toggle
-    document.getElementById('themeToggle').addEventListener('change', function () {
-      document.body.classList.toggle('dark-mode');
-    });
-
-    // Lens toggle logic
-    document.getElementById('lensToggle').addEventListener('change', function () {
-      document.getElementById('lensControls').style.display =
-        this.checked ? 'block' : 'none';
-    });
-
-    // Copy email output
-    function copyEmailOutput() {
-      const text = document.getElementById('emailOutput').innerText;
-      navigator.clipboard.writeText(text).then(() => {
-        const btn = document.querySelector('.copy-btn');
-        btn.innerText = "Copied!";
-        setTimeout(() => (btn.innerText = "Copy All"), 1200);
-      });
-    }
-  </script>
   <script type="module" src="main.js"></script>
 </body>
 </html>
