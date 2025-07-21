@@ -21,7 +21,7 @@ app.get('/', (req, res) => {
   res.send('🚀 Render backend is alive and working!');
 });
 
-//#5: MAIN ENHANCE ENDPOINT — ✅ FINAL FIX uses `.run()` method
+//#5: MAIN ENHANCE ENDPOINT
 app.post('/api/enhance', async (req, res) => {
   const { image_url, prompt = 'modern home, clean lighting', ratio = 'square' } = req.body;
 
@@ -38,6 +38,9 @@ app.post('/api/enhance', async (req, res) => {
         ratio: ratio
       }
     });
+
+    // OPTIONAL: Log for debugging — can remove after success
+    console.log("✅ Runway result:", result);
 
     res.json({ result });
   } catch (error) {
