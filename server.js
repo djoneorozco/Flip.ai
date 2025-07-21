@@ -21,7 +21,7 @@ app.get('/', (req, res) => {
   res.send('🚀 Render backend is alive and working!');
 });
 
-//#5: MAIN ENHANCE ENDPOINT
+//#5: MAIN ENHANCE ENDPOINT — ✅ FIXED: use `.generate` not `.run`
 app.post('/api/enhance', async (req, res) => {
   const { image_url, prompt = 'modern home, clean lighting', ratio = 'square' } = req.body;
 
@@ -30,7 +30,7 @@ app.post('/api/enhance', async (req, res) => {
   }
 
   try {
-    const output = await runway.call({   // ✅ FIXED LINE (was `runway.run`)
+    const output = await runway.generate({
       model: 'gen-4',
       input: {
         image: image_url,
