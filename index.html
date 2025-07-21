@@ -1,65 +1,77 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Flip.ai Runway Test</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #111;
-      color: #eee;
-      padding: 2rem;
-    }
-    input, button {
-      padding: 0.5rem;
-      margin: 0.5rem 0;
-      width: 100%;
-      max-width: 400px;
-    }
-    #result {
-      margin-top: 2rem;
-    }
-    img {
-      max-width: 100%;
-      border: 1px solid #444;
-      margin-top: 1rem;
-    }
-  </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flip.ai ROI Analyzer</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Firebase SDKs (v9 compat for main.js) -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
 </head>
 <body>
-  <h1>🛠️ Flip.ai – RunwayML Gen-4 Test</h1>
-  <p>Enter a renovation prompt:</p>
-  <input type="text" id="promptInput" placeholder="e.g., modern farmhouse kitchen with island">
-  <button onclick="generateImage()">Generate</button>
 
-  <div id="result"></div>
+  <!-- 🌙 Dark Mode Toggle -->
+  <div class="toggle-container">
+    <label>
+      <input type="checkbox" id="themeToggle" />
+      🌙 Dark Mode
+    </label>
+  </div>
 
+  <!-- 🎥 Ambient Corner Video Background -->
+  <video id="lightVideo" autoplay muted loop playsinline>
+    <source src="/images/uploads/lightcornervideo.mp4" type="video/mp4" />
+    Your browser does not support the video tag.
+  </video>
+
+  <video id="darkVideo" autoplay muted loop playsinline>
+    <source src="/images/uploads/darkcornervideo.mp4" type="video/mp4" />
+    Your browser does not support the video tag.
+  </video>
+
+  <!-- 💼 Main Content -->
+  <div class="container">
+    <h2>Flip.ai ROI Analyzer</h2>
+    <p>Unlock your property’s true investment potential</p>
+
+    <!-- ROI Form -->
+    <form id="roiForm">
+      <label for="purchasePrice">Purchase Price</label>
+      <input type="number" id="purchasePrice" placeholder="e.g. 180000" required />
+
+      <label for="rehabBudget">Rehab Budget</label>
+      <input type="number" id="rehabBudget" placeholder="e.g. 35000" required />
+
+      <label for="arv">After Repair Value (ARV)</label>
+      <input type="number" id="arv" placeholder="e.g. 290000" required />
+
+      <label for="zipCode">Property ZIP Code</label>
+      <input type="text" id="zipCode" placeholder="e.g. 78245" required />
+
+      <button type="submit">Analyze Deal</button>
+    </form>
+
+    <hr style="margin: 40px 0; border-color: #333;">
+
+    <!-- 🖼️ Image Enhancement -->
+    <h3>Optional: Upload Image to Enhance</h3>
+    <input type="file" id="imageInput" accept="image/*" />
+    <button id="enhanceBtn">Enhance Image</button>
+
+    <div id="enhancedResult" style="margin-top: 20px;"></div>
+  </div>
+
+  <!-- 🌗 Theme Toggle Script -->
   <script>
-    async function generateImage() {
-      const prompt = document.getElementById('promptInput').value;
-      const resultBox = document.getElementById('result');
-      resultBox.innerHTML = '⏳ Generating image...';
-
-      try {
-        const response = await fetch('/.netlify/functions/runwayEnhance', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ prompt })
-        });
-
-        const data = await response.json();
-
-        if (data?.result?.image) {
-          resultBox.innerHTML = `<p>✅ Image Generated:</p><img src="${data.result.image}" alt="Generated Image">`;
-        } else {
-          resultBox.innerHTML = `<p>❌ No image returned. Response:</p><pre>${JSON.stringify(data, null, 2)}</pre>`;
-        }
-      } catch (error) {
-        resultBox.innerHTML = `<p>🚫 Error:</p><pre>${error.message}</pre>`;
-      }
-    }
+    document.getElementById('themeToggle').addEventListener('change', function () {
+      document.body.classList.toggle('dark-mode');
+    });
   </script>
+
+  <!-- 🚀 App Logic -->
+  <script src="main.js"></script>
 </body>
 </html>
