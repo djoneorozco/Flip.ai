@@ -30,8 +30,7 @@ app.post('/api/enhance', async (req, res) => {
   }
 
   try {
-    // ✅ FIXED LINE 27 — changed from `runway.run(...)` to `runway(...)`
-    const output = await runway({
+    const output = await runway.call({   // ✅ FIXED LINE (was `runway.run`)
       model: 'gen-4',
       input: {
         image: image_url,
